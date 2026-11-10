@@ -122,7 +122,7 @@ export default function PlatformScenes() {
       const loc = Math.min(1, Math.max(0, p * n - idx));
       setScene(idx);
       setLocal(loc);
-      setLid(-88 + Math.min(1, loc / 0.32) * 88);
+      setLid(-90 + Math.min(1, loc / 0.3) * 90);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -179,7 +179,7 @@ export default function PlatformScenes() {
             </div>
             {/* tampa abrindo: o painel gira conforme a rolagem */}
             <div
-              className="pointer-events-none absolute inset-0 rounded-xl border border-white/15 bg-[#1b241d] [transform-style:preserve-3d]"
+              className="pointer-events-none absolute inset-0 rounded-xl border border-white/20 [transform-style:preserve-3d] [background:linear-gradient(160deg,#2a332c_0%,#1a221c_55%,#121813_100%)]"
               style={{
                 transform: `rotateX(${lid}deg)`,
                 transformOrigin: "top center",
@@ -188,7 +188,11 @@ export default function PlatformScenes() {
                 boxShadow: "inset 0 -20px 40px rgba(0,0,0,0.5)",
               }}
             >
-              <div className="absolute inset-x-0 bottom-0 h-6 rounded-b-xl bg-[#141a15]" />
+              <div className="absolute inset-x-0 bottom-0 h-6 rounded-b-xl bg-[#0f1511]" />
+              <div className="absolute inset-x-6 top-5 h-2 rounded-full bg-white/[0.06]" />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-2xl font-extrabold tracking-[-0.05em] text-white/25">
+                get<span className="text-[#8fe04a]/40">TMS</span>
+              </span>
             </div>
             <div className="mx-auto mt-2 h-2 w-2/3 rounded-b-xl bg-[#1b241d]" />
             <div className="mt-4 text-center text-[11px] text-white/35">role para abrir a próxima frente</div>
