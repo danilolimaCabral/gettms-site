@@ -1347,23 +1347,23 @@ hub.scale.setScalar(1.15);
   clientDc.position.set(38, 0, -64);
   scene.add(clientDc);
 
-  const dcDoorX = [-25, -15, -5, 5, 15, 25];
+  const dcDoorX = [-30, -18, -6, 6, 18, 30];
 
-  const dcBody = new THREE.Mesh(round(62, 12, 22, 0.6, 3), wallMat);
+  const dcBody = new THREE.Mesh(round(76, 12, 22, 0.6, 3), wallMat);
   dcBody.position.y = 6;
   clientDc.add(dcBody);
 
-  const dcRoof = new THREE.Mesh(round(63.6, 0.6, 23.6, 0.3, 2), roofMat);
+  const dcRoof = new THREE.Mesh(round(77.6, 0.6, 23.6, 0.3, 2), roofMat);
   dcRoof.position.y = 12.2;
   clientDc.add(dcRoof);
 
-  const dcPlinth = new THREE.Mesh(round(62.6, 0.8, 22.6, 0.2, 2), trimMat);
+  const dcPlinth = new THREE.Mesh(round(76.6, 0.8, 22.6, 0.2, 2), trimMat);
   dcPlinth.position.y = 0.4;
   clientDc.add(dcPlinth);
 
   // faixa de vidro e letreiro
   const dcGlassBand = new THREE.Mesh(
-    round(60, 5.2, 0.4, 0.1, 2),
+    round(74, 5.2, 0.4, 0.1, 2),
     new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.15, metalness: 0.85 }),
   );
   dcGlassBand.position.set(0, 9, 11.15);
@@ -1392,18 +1392,18 @@ hub.scale.setScalar(1.15);
   clientDc.add(dcSign);
 
   // cobertura contínua das docas
-  const dcCanopy = new THREE.Mesh(round(58, 0.25, 4.4, 0.1, 2), concreteMat);
+  const dcCanopy = new THREE.Mesh(round(72, 0.25, 4.4, 0.1, 2), concreteMat);
   dcCanopy.position.set(0, 6.9, 13.4);
   clientDc.add(dcCanopy);
-  const dcCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(58, 0.12, 0.16), stripMat);
-  const dcRoofLed = new THREE.Mesh(new THREE.BoxGeometry(62.4, 0.1, 0.12), new THREE.MeshBasicMaterial({ color: BRAND }));
+  const dcCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(72, 0.12, 0.16), stripMat);
+  const dcRoofLed = new THREE.Mesh(new THREE.BoxGeometry(76.4, 0.1, 0.12), new THREE.MeshBasicMaterial({ color: BRAND }));
   dcRoofLed.position.set(0, 12.5, 11.7);
   clientDc.add(dcRoofLed);
   dcCanopyEdge.position.set(0, 6.8, 15.6);
   clientDc.add(dcCanopyEdge);
   for (let i = 0; i < 8; i += 1) {
     const column = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 6.6, 8), poleMat);
-    column.position.set(-28 + i * 8, 3.3, 16);
+    column.position.set(-32 + i * 8, 3.3, 16);
     clientDc.add(column);
   }
 
@@ -1444,32 +1444,32 @@ hub.scale.setScalar(1.15);
 
   // pátio de estacionamento em frente
   const lotBase = new THREE.Mesh(
-    round(74, 0.2, 22, 0.3, 2),
+    round(88, 0.2, 22, 0.3, 2),
     new THREE.MeshStandardMaterial({ color: 0xe6ecdf, roughness: 0.9 }),
   );
   lotBase.position.set(0, 0.04, 27);
   clientDc.add(lotBase);
 
   const lot = new THREE.Mesh(
-    round(70, 0.1, 18.5, 0.2, 2),
+    round(84, 0.1, 18.5, 0.2, 2),
     new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.92, metalness: 0.05 }),
   );
   lot.position.set(0, 0.12, 27);
   clientDc.add(lot);
 
   const bayMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.6 });
-  for (let i = 0; i < 9; i += 1) {
+  for (let i = 0; i < 11; i += 1) {
     const bay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 5.6), bayMat);
-    bay.position.set(-32 + i * 8, 0.19, 30.5);
+    bay.position.set(-40 + i * 8, 0.19, 30.5);
     clientDc.add(bay);
   }
-  const bayBar = new THREE.Mesh(new THREE.BoxGeometry(64, 0.02, 0.16), bayMat);
+  const bayBar = new THREE.Mesh(new THREE.BoxGeometry(80, 0.02, 0.16), bayMat);
   bayBar.position.set(0, 0.19, 33.3);
   clientDc.add(bayBar);
 
   // canteiro central
   const island = new THREE.Mesh(
-    round(30, 0.5, 3, 0.2, 2),
+    round(34, 0.5, 3, 0.2, 2),
     new THREE.MeshStandardMaterial({ color: 0xdfe8d4, roughness: 0.9 }),
   );
   island.position.set(0, 0.25, 22.5);
@@ -1483,25 +1483,25 @@ hub.scale.setScalar(1.15);
 
   // portaria e cancela na entrada do pátio
   const gatehouse = new THREE.Mesh(round(4, 2.8, 3.4, 0.25, 2), wallMat);
-  gatehouse.position.set(-36, 1.4, 19);
+  gatehouse.position.set(-44, 1.4, 19);
   clientDc.add(gatehouse);
   const gateRoof = new THREE.Mesh(round(4.8, 0.3, 4.2, 0.1, 2), roofMat);
-  gateRoof.position.set(-36, 2.95, 19);
+  gateRoof.position.set(-44, 2.95, 19);
   clientDc.add(gateRoof);
   const gateWindow = new THREE.Mesh(round(2.6, 1, 0.12, 0.06, 2), new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.2, metalness: 0.8 }));
-  gateWindow.position.set(-36, 1.8, 20.72);
+  gateWindow.position.set(-44, 1.8, 20.72);
   clientDc.add(gateWindow);
   const barrierPost = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.3, 8), trimMat);
-  barrierPost.position.set(-33, 0.65, 21);
+  barrierPost.position.set(-41, 0.65, 21);
   clientDc.add(barrierPost);
   const barrier = new THREE.Mesh(new THREE.BoxGeometry(6, 0.14, 0.14), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-  barrier.position.set(-30, 1.25, 21);
+  barrier.position.set(-38, 1.25, 21);
   clientDc.add(barrier);
   const barrierStripe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
-  barrierStripe.position.set(-31.5, 1.25, 21);
+  barrierStripe.position.set(-39.5, 1.25, 21);
   clientDc.add(barrierStripe);
   const barrierStripe2 = barrierStripe.clone();
-  barrierStripe2.position.x = -28.5;
+  barrierStripe2.position.x = -36.5;
   clientDc.add(barrierStripe2);
 
   // setas e travas de roda nas vagas
@@ -1513,12 +1513,12 @@ hub.scale.setScalar(1.15);
   }
   for (let i = 0; i < 8; i += 1) {
     const stop = new THREE.Mesh(round(1.6, 0.18, 0.4, 0.06, 1), concreteMat);
-    stop.position.set(-28 + i * 8, 0.24, 33.6);
+    stop.position.set(-36 + i * 8, 0.24, 33.6);
     clientDc.add(stop);
   }
 
   // postes do pátio
-  [-30, -10, 10, 30].forEach((x) => {
+  [-38, -14, 14, 38].forEach((x) => {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 7, 8), poleMat);
     pole.position.set(x, 3.5, 37);
     clientDc.add(pole);
@@ -1549,13 +1549,74 @@ hub.scale.setScalar(1.15);
       wheel.position.set(x, 0.36, z);
       car.add(wheel);
     });
-    car.position.set(-24 + index * 8, 0.18, 30.5);
+    car.position.set(-30 + index * 10, 0.18, 30.5);
     car.rotation.y = index % 2 === 0 ? 0 : Math.PI;
     car.scale.setScalar(0.001);
     car.userData.delay = 0.02 * index;
     clientDc.add(car);
     parkedCars.push(car);
   });
+
+  // pátio de contêineres ao lado do CD
+  const yardGroup = new THREE.Group();
+  yardGroup.position.set(-44, 0, 22);
+  clientDc.add(yardGroup);
+
+  const yardPad = new THREE.Mesh(
+    round(34, 0.12, 30, 0.3, 2),
+    new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.92 }),
+  );
+  yardPad.position.set(0, 0.1, 4);
+  yardGroup.add(yardPad);
+
+  const containerColors = [0x63b32e, 0x2f6f4f, 0xdbe3d2, 0xf2f5ee, 0x8aa86f, 0xc4552f];
+  const containerGeo = round(6.1, 2.6, 2.5, 0.08, 1);
+  const containerMats = containerColors.map(
+    (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.3 }),
+  );
+  const stackSlots: [number, number, number][] = [];
+  for (let row = 0; row < 4; row += 1) {
+    for (let col = 0; col < 4; col += 1) {
+      const height = col === 1 ? 3 : col === 3 ? 2 : 1;
+      for (let level = 0; level < height; level += 1) {
+        const mat = containerMats[(row * 3 + col + level) % containerMats.length];
+        const box = new THREE.Mesh(containerGeo, mat);
+        box.position.set(-11 + row * 7.4, 1.4 + level * 2.62, -6 + col * 3);
+        yardGroup.add(box);
+        stackSlots.push([box.position.x, box.position.y, box.position.z]);
+      }
+    }
+  }
+
+  // empilhadeira com contêiner na garra
+  const yardLift = new THREE.Group();
+  const yardLiftBody = new THREE.Mesh(round(3.4, 1.8, 1.9, 0.25, 2), new THREE.MeshStandardMaterial({ color: 0xe8b02a, roughness: 0.5, metalness: 0.4 }));
+  yardLiftBody.position.y = 1.5;
+  yardLift.add(yardLiftBody);
+  const yardLiftCabin = new THREE.Mesh(round(1.5, 1.5, 1.7, 0.25, 2), glassMat);
+  yardLiftCabin.position.set(-0.7, 2.9, 0);
+  yardLift.add(yardLiftCabin);
+  const yardLiftMast = new THREE.Mesh(round(0.3, 5.4, 0.3, 0.08, 1), new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.5, metalness: 0.6 }));
+  yardLiftMast.position.set(1.9, 3, 0);
+  yardLift.add(yardLiftMast);
+  const yardLiftLoad = new THREE.Mesh(containerGeo, containerMats[2]);
+  yardLiftLoad.position.set(3.4, 4.4, 0);
+  yardLift.add(yardLiftLoad);
+  const yardLiftWheel = new THREE.CylinderGeometry(0.6, 0.6, 0.5, 10);
+  yardLiftWheel.rotateZ(Math.PI / 2);
+  [
+    [1.1, 0.95],
+    [1.1, -0.95],
+    [-1.1, 0.95],
+    [-1.1, -0.95],
+  ].forEach(([x, z]) => {
+    const wheel = new THREE.Mesh(yardLiftWheel, tireMat);
+    wheel.position.set(x, 0.6, z);
+    yardLift.add(wheel);
+  });
+  yardLift.position.set(-30, 0, 26);
+  yardLift.rotation.y = Math.PI * 0.5;
+  clientDc.add(yardLift);
 
   // torre de controle / escritório de análise
   const office = new THREE.Group();
@@ -1748,9 +1809,10 @@ hub.scale.setScalar(1.15);
     if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
     parked.position.set(doorX, 0, 19.5);
-    parked.rotation.y = Math.PI;
+    parked.rotation.y = 0;
     parked.scale.setScalar(0.001);
     parked.userData.delay = index * 0.015;
+    parked.userData.dockX = doorX;
     clientDc.add(parked);
     dcTrucks.push(parked);
   });
@@ -1923,10 +1985,11 @@ hub.scale.setScalar(1.15);
     let truckRot = 0;
 
     if (p > 0.6) {
-      truckZ = lerp(-6, -40, drive);
-      truckX = lerp(0, 43, swing);
-      truckZ = lerp(-40, -41.5, swing);
-      truckZ = lerp(-41.5, -47.2, reverse);
+      truckZ = lerp(-6, -38, drive);
+      truckX = lerp(0, 44, swing);
+      truckZ = lerp(-38, -40, swing);
+      truckRot = lerp(0, Math.PI, swing);
+      truckZ = lerp(-40, -45.2, reverse);
     }
 
     truck.position.set(truckX + Math.sin(time * 0.9) * 0.03, 0, truckZ);
@@ -1936,6 +1999,15 @@ hub.scale.setScalar(1.15);
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpin;
     });
+
+    const forkCycle = (time * 0.16) % 2;
+    const forkPhase = forkCycle < 1 ? forkCycle : 2 - forkCycle;
+    const forkEase = forkPhase * forkPhase * (3 - 2 * forkPhase);
+    yardLift.position.x = lerp(-30, 22, forkEase);
+    yardLift.position.z = lerp(26, 24, forkEase);
+    yardLift.rotation.y = Math.PI * 0.5;
+    yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.35;
+    yardLift.visible = p > 0.3;
 
     // furgão no sentido oposto, em loop
     const vanTravel = (time * 0.06 + p * 0.4) % 1;
@@ -2056,9 +2128,12 @@ hub.scale.setScalar(1.15);
     dcLight.intensity = 35 * dcIn;
     dcTrucks.forEach((clone, index) => {
       const delay = (clone.userData.delay as number) || 0;
-      const t = easeOut(range(pb, 0.72 + delay, 0.82 + delay));
+      const t = easeOut(range(pb, 0.72 + delay, 0.84 + delay));
+      const side = (index % 2 === 0 ? 1 : -1) as number;
       clone.scale.setScalar(Math.max(0.001, t * 0.94));
-      clone.position.z = lerp(30, 20, t);
+      clone.position.z = lerp(34, 19.5, t);
+      clone.position.x = (clone.userData.dockX as number) + (1 - t) * 4 * side;
+      clone.rotation.y = (1 - t) * 0.24 * side;
     });
     parkedCars.forEach((car) => {
       const delay = (car.userData.delay as number) || 0;
