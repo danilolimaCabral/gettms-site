@@ -122,7 +122,7 @@ export default function PlatformScenes() {
       const loc = Math.min(1, Math.max(0, p * n - idx));
       setScene(idx);
       setLocal(loc);
-      setLid(-88 + Math.min(1, p * 3.2) * 88);
+      setLid(-88 + Math.min(1, loc / 0.32) * 88);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -143,8 +143,8 @@ export default function PlatformScenes() {
     <section id="plataforma" ref={sectionRef} className="relative bg-[#0b100c]" style={{ height: `${FEATURES.length * 150}vh` }}>
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="pointer-events-none absolute inset-0 [background:radial-gradient(80%_60%_at_70%_40%,rgba(143,224,74,0.12),transparent_70%)]" />
-        <div className="container-wide relative grid w-full items-center gap-10 lg:grid-cols-[0.85fr_1.15fr]">
-          <div key={scene} className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
+        <div className="container-wide relative grid w-full items-center gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
+          <div key={scene} className="order-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-500 lg:order-1">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">
               {feature.number} · Plataforma
             </p>
@@ -170,18 +170,26 @@ export default function PlatformScenes() {
           </div>
 
           {/* notebook */}
-          <div className="relative mx-auto w-full max-w-[640px] [perspective:1400px]">
+          <div className="relative order-1 mx-auto w-full max-w-[560px] [perspective:1400px] lg:order-2 lg:max-w-[640px]">
             <div className="relative aspect-[16/10] w-full rounded-xl border border-white/10 bg-[#151c17] p-2 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
               <div className="h-full w-full overflow-hidden rounded-lg">
                 <Screen index={scene} progress={local} />
               </div>
               <div className="absolute left-1/2 top-1 h-1 w-1 -translate-x-1/2 rounded-full bg-white/25" />
             </div>
-            {/* tampa abrindo */}
+            {/* tampa abrindo: o painel gira conforme a rolagem */}
             <div
-              className="pointer-events-none absolute inset-x-0 -bottom-2 h-3 rounded-b-xl bg-[#1b241d]"
-              style={{ transform: `rotateX(${Math.max(0, lid + 88) * 0.02}deg)`, transformOrigin: "top center" }}
-            />
+              className="pointer-events-none absolute inset-0 rounded-xl border border-white/15 bg-[#1b241d] [transform-style:preserve-3d]"
+              style={{
+                transform: `rotateX(${lid}deg)`,
+                transformOrigin: "top center",
+                opacity: lid < -4 ? 1 : 0,
+                transition: "opacity 120ms linear",
+                boxShadow: "inset 0 -20px 40px rgba(0,0,0,0.5)",
+              }}
+            >
+              <div className="absolute inset-x-0 bottom-0 h-6 rounded-b-xl bg-[#141a15]" />
+            </div>
             <div className="mx-auto mt-2 h-2 w-2/3 rounded-b-xl bg-[#1b241d]" />
             <div className="mt-4 text-center text-[11px] text-white/35">role para abrir a próxima frente</div>
           </div>
