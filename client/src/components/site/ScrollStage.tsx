@@ -320,6 +320,7 @@ export default function ScrollStage() {
                     const move = (e: PointerEvent) => sceneRef.current?.orbitBy((e.clientX - startX) * 0.004);
                     window.addEventListener("pointermove", move);
                     window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
+                    window.addEventListener("wheel", (e) => sceneRef.current?.orbitZoom(e.deltaY * 0.05), { passive: true });
                   }}
                   className={`btn btn-ghost ${orbit ? "!border-brand !text-brand-dark" : ""}`}
                 >

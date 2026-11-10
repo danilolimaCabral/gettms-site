@@ -12,6 +12,7 @@ export type LogisticsSceneHandle = {
   setPointer: (x: number, y: number) => void;
   setOrbit: (active: boolean) => void;
   orbitBy: (delta: number) => void;
+  orbitZoom: (delta: number) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -823,6 +824,35 @@ hub.scale.setScalar(1.15);
     lamp.position.set(x, 1.75, 5.62);
     truck.add(lamp);
   });
+  const tagCanvas = document.createElement("canvas");
+  tagCanvas.width = 640;
+  tagCanvas.height = 200;
+  const tagCtx = tagCanvas.getContext("2d")!;
+  tagCtx.fillStyle = "rgba(10,16,11,0.92)";
+  tagCtx.beginPath();
+  tagCtx.roundRect(8, 8, 624, 184, 28);
+  tagCtx.fill();
+  tagCtx.fillStyle = "#8fe04a";
+  tagCtx.beginPath();
+  tagCtx.arc(46, 66, 12, 0, Math.PI * 2);
+  tagCtx.fill();
+  tagCtx.fillStyle = "#f4f8ef";
+  tagCtx.font = "700 44px Sora, Inter, sans-serif";
+  tagCtx.textBaseline = "middle";
+  tagCtx.fillText("GT-1024", 74, 66);
+  tagCtx.fillStyle = "#8fe04a";
+  tagCtx.font = "600 26px Inter, sans-serif";
+  tagCtx.fillText("SAIU DO CD · EM ROTA PARA O CLIENTE", 74, 128);
+  tagCtx.fillStyle = "rgba(244,248,239,0.55)";
+  tagCtx.font = "500 22px Inter, sans-serif";
+  tagCtx.fillText("Tracking em tempo real · getTMS", 74, 166);
+  const tagTex = track(new THREE.CanvasTexture(tagCanvas));
+  tagTex.colorSpace = THREE.SRGBColorSpace;
+  const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
+  tagSprite.scale.set(11, 3.4, 1);
+  tagSprite.position.set(0, 8.4, -2);
+  truck.add(tagSprite);
+
   const headGlow = new THREE.PointLight(0xffe7b0, 26, 26, 2);
   headGlow.position.set(0, 1.9, 6.4);
   truck.add(headGlow);
@@ -1628,18 +1658,19 @@ hub.scale.setScalar(1.15);
   clientDc.add(bayBar);
 
   // canteiro central
+  const carLot = new THREE.Mesh(
+    round(46, 0.08, 14, 0.3, 1),
+    new THREE.MeshStandardMaterial({ color: 0x2f3830, roughness: 0.95 }),
+  );
+  carLot.position.set(-92, 0.08, 26);
+  clientDc.add(carLot);
   const island = new THREE.Mesh(
     round(34, 0.5, 3, 0.2, 2),
     new THREE.MeshStandardMaterial({ color: 0xdfe8d4, roughness: 0.9 }),
   );
   island.position.set(0, 0.25, 22.5);
   clientDc.add(island);
-  for (let i = 0; i < 5; i += 1) {
-    const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7, 1), leafMat);
-    bush.position.set(-12 + i * 6, 0.9, 22.5);
-    bush.scale.set(1, 0.8, 1);
-    clientDc.add(bush);
-  }
+
 
   // portaria e cancela na entrada do pátio
   const gatehouse = new THREE.Mesh(round(4, 2.8, 3.4, 0.25, 2), wallMat);
@@ -1719,7 +1750,7 @@ hub.scale.setScalar(1.15);
       wheel.position.set(x, 0.36, z);
       car.add(wheel);
     });
-    car.position.set(-30 + index * 10, 0.18, 30.5);
+    car.position.set(-96 + index * 9, 0.18, 26);
     car.rotation.y = index % 2 === 0 ? 0 : Math.PI;
     car.scale.setScalar(0.001);
     car.userData.delay = 0.02 * index;
@@ -2087,6 +2118,7 @@ hub.scale.setScalar(1.15);
   let current = 0;
   let orbitActive = false;
   let orbitAngle = 0.6;
+  let orbitRadius = 58;
   let orbitDrag = 0;
   let pointerX = 0;
   let pointerY = 0;
@@ -2373,7 +2405,7 @@ hub.scale.setScalar(1.15);
     if (orbitActive) {
       orbitAngle += orbitDrag;
       orbitDrag *= 0.85;
-      const radius = 58;
+      const radius = orbitRadius;
       camPos.set(
         lookTarget.x + Math.sin(orbitAngle) * radius,
         26,
@@ -2419,6 +2451,9 @@ hub.scale.setScalar(1.15);
     },
     orbitBy(delta: number) {
       orbitDrag += delta;
+    },
+    orbitZoom(delta: number) {
+      orbitRadius = Math.min(140, Math.max(26, orbitRadius + delta));
     },
     setPointer(x: number, y: number) {
       pointerX = x;
