@@ -2897,7 +2897,7 @@ hub.scale.setScalar(1.15);
         officeRight.set(1, 0, 0).applyQuaternion(officeQuat).normalize();
         segTarget
           .copy(officePos)
-          .addScaledVector(officeFwd, 2.2 * segmentZoom)
+          .addScaledVector(officeFwd, 5.4 * segmentZoom)
           .addScaledVector(officeRight, -2.2)
           .add(new THREE.Vector3(0, 0.1, 0));
         overrideLook.lerp(officePos, 0.25);
