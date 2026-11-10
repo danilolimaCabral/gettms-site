@@ -2897,16 +2897,18 @@ hub.scale.setScalar(1.15);
         officeRight.set(1, 0, 0).applyQuaternion(officeQuat).normalize();
         segTarget
           .copy(officePos)
-          .addScaledVector(officeFwd, 2.9 * segmentZoom)
-          .addScaledVector(officeRight, -1.5)
-          .add(new THREE.Vector3(0, 0.15, 0));
-        overrideLook.lerp(officePos, 0.12);
+          .addScaledVector(officeFwd, 2.2 * segmentZoom)
+          .addScaledVector(officeRight, -2.2)
+          .add(new THREE.Vector3(0, 0.1, 0));
+        overrideLook.lerp(officePos, 0.25);
+        camera.position.copy(segTarget);
+        camera.lookAt(overrideLook);
       } else {
         segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
         overrideLook.lerp(segmentView.look, 0.05);
+        camera.position.lerp(segTarget, 0.12);
+        camera.lookAt(overrideLook);
       }
-      camera.position.lerp(segTarget, 0.12);
-      camera.lookAt(overrideLook);
     }
 
     applyProgress(current, elapsed);
