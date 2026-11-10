@@ -845,7 +845,7 @@ hub.scale.setScalar(1.15);
 
   const truck = new THREE.Group();
   const proceduralBodies: { group: THREE.Group; parts: THREE.Object3D[] }[] = [];
-  type GlbRequest = { key: string; holder: THREE.Group; parts?: THREE.Object3D[]; length: number; rotY: number; color?: number };
+  type GlbRequest = { key: string; holder: THREE.Group; parts?: THREE.Object3D[]; length: number; rotY: number; color?: number; label?: string };
   const glbRequests: GlbRequest[] = [];
   const glbSources: Record<string, THREE.Object3D> = {};
 
@@ -1498,7 +1498,7 @@ hub.scale.setScalar(1.15);
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
-    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color });
+    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color, label: name });
     return group;
   }
 
@@ -1514,6 +1514,20 @@ hub.scale.setScalar(1.15);
     const body = new THREE.Mesh(round(30, 9, 16, 0.5, 3), wallMat);
     body.position.y = 4.5;
     dc.add(body);
+    const access = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 46), roadMat);
+    access.rotation.x = -Math.PI / 2;
+    access.position.set(0, 0.06, 30);
+    dc.add(access);
+    for (let i = 0; i < 5; i += 1) {
+      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 2.6), dashMat);
+      dash.position.set(0, 0.09, 18 + i * 7);
+      dc.add(dash);
+    }
+    [-3.5, 3.5].forEach((side) => {
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 46), edgeMat);
+      edge.position.set(side, 0.09, 30);
+      dc.add(edge);
+    });
     const roof = new THREE.Mesh(round(31.2, 0.5, 17.2, 0.25, 2), roofMat);
     roof.position.y = 9.2;
     dc.add(roof);
@@ -1568,6 +1582,27 @@ hub.scale.setScalar(1.15);
     });
 
     const visitor = makeSimpleTruck(`GT-${3100 + Math.round(Math.abs(x))}`);
+    const orderCanvas = document.createElement("canvas");
+    orderCanvas.width = 512;
+    orderCanvas.height = 128;
+    const orderCtx = orderCanvas.getContext("2d")!;
+    orderCtx.fillStyle = "rgba(12,18,13,0.92)";
+    orderCtx.beginPath();
+    orderCtx.roundRect(6, 6, 500, 116, 22);
+    orderCtx.fill();
+    orderCtx.fillStyle = "#f4f8ef";
+    orderCtx.font = "600 26px Inter, sans-serif";
+    orderCtx.textBaseline = "middle";
+    orderCtx.fillText(name.toUpperCase(), 30, 38);
+    orderCtx.fillStyle = "#8fe04a";
+    orderCtx.font = "700 40px Sora, Inter, sans-serif";
+    orderCtx.fillText(`PEDIDO #${4800 + Math.round(Math.abs(x) * 3) % 180}`, 30, 84);
+    const orderTex = track(new THREE.CanvasTexture(orderCanvas));
+    orderTex.colorSpace = THREE.SRGBColorSpace;
+    const orderTag = new THREE.Sprite(new THREE.SpriteMaterial({ map: orderTex, transparent: true, depthWrite: false }));
+    orderTag.scale.set(9, 2.25, 1);
+    orderTag.position.set(0, 7.6, 0);
+    visitor.add(orderTag);
     visitor.scale.setScalar(0.92);
     visitor.position.set(0, 0, 42);
     dc.add(visitor);
@@ -1896,7 +1931,7 @@ hub.scale.setScalar(1.15);
 
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
-  yardGroup.position.set(96, 0, -34);
+  yardGroup.position.set(150, 0, -46);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
@@ -2300,6 +2335,7 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
+    yardGroup.visible = p > 0.72;
     const frameDt = Math.min(0.05, Math.max(0.001, time - lastFrameTime));
     lastFrameTime = time;
     const pb = Math.max(0.86, p);
@@ -2625,6 +2661,9 @@ hub.scale.setScalar(1.15);
       -(box.min.z + size.z / 2) * scale,
     );
     clone.traverse((child) => {
+      if (child.name.toLowerCase().includes("wheel")) {
+        child.scale.multiplyScalar(0.62);
+      }
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.castShadow = false;
@@ -2645,6 +2684,31 @@ hub.scale.setScalar(1.15);
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map(tint) : tint(mesh.material);
     });
     wrapper.add(clone);
+    if (request.label) {
+      const plateCanvas = document.createElement("canvas");
+      plateCanvas.width = 1024;
+      plateCanvas.height = 256;
+      const plateCtx = plateCanvas.getContext("2d")!;
+      plateCtx.fillStyle = "#f6f8f2";
+      plateCtx.fillRect(0, 0, 1024, 256);
+      plateCtx.fillStyle = "#1d2a20";
+      plateCtx.font = "700 96px Sora, Inter, sans-serif";
+      plateCtx.textAlign = "center";
+      plateCtx.textBaseline = "middle";
+      plateCtx.fillText(request.label, 512, 96);
+      plateCtx.fillStyle = "#63b32e";
+      plateCtx.font = "600 44px Inter, sans-serif";
+      plateCtx.fillText("PLATAFORMA TMS · GETTMS", 512, 186);
+      const plateTex = track(new THREE.CanvasTexture(plateCanvas));
+      plateTex.colorSpace = THREE.SRGBColorSpace;
+      const plateMat = new THREE.MeshBasicMaterial({ map: plateTex, transparent: true });
+      [-1, 1].forEach((side) => {
+        const plate = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.6), plateMat);
+        plate.position.set(side * 1.32, 2.5, -4.2);
+        plate.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+        wrapper.add(plate);
+      });
+    }
     request.holder.add(wrapper);
   }
 
