@@ -845,6 +845,9 @@ hub.scale.setScalar(1.15);
 
   const truck = new THREE.Group();
   const proceduralBodies: { group: THREE.Group; parts: THREE.Object3D[] }[] = [];
+  type GlbRequest = { key: string; holder: THREE.Group; parts?: THREE.Object3D[]; length: number; rotY: number };
+  const glbRequests: GlbRequest[] = [];
+  const glbSources: Record<string, THREE.Object3D> = {};
 
   const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
   [-0.95, 0.95].forEach((x) => {
@@ -1489,6 +1492,7 @@ hub.scale.setScalar(1.15);
     shadow.position.y = 0.2;
     group.add(shadow);
     proceduralBodies.push({ group, parts: procedural });
+    queueGlb({ key: "semi-truck", holder: group, parts: procedural, length: 17.6, rotY: Math.PI });
     return group;
   }
 
@@ -1930,6 +1934,7 @@ hub.scale.setScalar(1.15);
     wheel.position.set(x, 0.6, z);
     yardLift.add(wheel);
   });
+  queueGlb({ key: "forklift", holder: yardLift, parts: [...yardLift.children], length: 3.6, rotY: Math.PI / 2 });
   yardLift.position.set(6, 0, -43.4);
   yardLift.rotation.y = Math.PI * 0.5;
   clientDc.add(yardLift);
@@ -2580,40 +2585,60 @@ hub.scale.setScalar(1.15);
   resize();
   frame = requestAnimationFrame(render);
 
-  new GLTFLoader().load("/models/semi-truck.glb", (gltf) => {
-    if (disposed) return;
-    const source = gltf.scene;
+  function queueGlb(request: GlbRequest) {
+    if (glbSources[request.key]) applyGlb(request, glbSources[request.key]);
+    else glbRequests.push(request);
+  }
+  function applyGlb(request: GlbRequest, source: THREE.Object3D) {
     source.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(source);
     const size = box.getSize(new THREE.Vector3());
-    const scale = 17.6 / Math.max(0.001, size.z);
-    proceduralBodies.forEach(({ group, parts }) => {
-      parts.forEach((part) => {
-        part.visible = false;
-      });
-      const wrapper = new THREE.Group();
-      wrapper.rotation.y = -Math.PI / 2;
-      const clone = source.clone(true);
-      clone.traverse((child) => {
-        const mesh = child as THREE.Mesh;
-        if (!mesh.isMesh) return;
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        mats.forEach((material) => {
-          const std = material as THREE.MeshStandardMaterial;
-          if (!std.color) return;
-          std.color.lerp(new THREE.Color(0xf4f7f0), 0.55);
-          if (std.metalness !== undefined) std.metalness = Math.min(std.metalness, 0.35);
+    const longest = Math.max(size.x, size.z);
+    const scale = request.length / Math.max(0.001, longest);
+    request.parts?.forEach((part) => {
+      part.visible = false;
+    });
+    const wrapper = new THREE.Group();
+    wrapper.rotation.y = request.rotY;
+    const clone = source.clone(true);
+    clone.scale.setScalar(scale);
+    clone.position.set(
+      -(box.min.x + size.x / 2) * scale,
+      -box.min.y * scale,
+      -(box.min.z + size.z / 2) * scale,
+    );
+    clone.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.castShadow = false;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((material) => {
+        const std = material as THREE.MeshStandardMaterial;
+        if (std.color) {
+          std.color.lerp(new THREE.Color(0xf6f8f2), 0.35);
+          if (std.metalness !== undefined) std.metalness = Math.min(std.metalness, 0.4);
           std.needsUpdate = true;
-        });
+        }
       });
-      clone.scale.setScalar(scale);
-      clone.position.set(
-        -(box.min.x + size.x / 2) * scale,
-        -box.min.y * scale,
-        -(box.min.z + size.z / 2) * scale,
-      );
-      wrapper.add(clone);
-      group.add(wrapper);
+    });
+    wrapper.add(clone);
+    request.holder.add(wrapper);
+  }
+
+  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 17.6, rotY: Math.PI };
+  proceduralBodies.push({ group: truck, parts: truckRequest.parts });
+  queueGlb(truckRequest);
+
+  ["semi-truck", "1990s-sedan", "1990s-hatchback", "1990s-suv", "1990s-delivery-van", "forklift"].forEach((key) => {
+    new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
+      if (disposed) return;
+      glbSources[key] = gltf.scene;
+      for (let i = glbRequests.length - 1; i >= 0; i -= 1) {
+        if (glbRequests[i].key === key) {
+          applyGlb(glbRequests[i], gltf.scene);
+          glbRequests.splice(i, 1);
+        }
+      }
     });
   });
 
