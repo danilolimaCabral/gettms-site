@@ -2236,6 +2236,21 @@ hub.scale.setScalar(1.15);
   // frota getTMS estacionada nas 6 docas
   const dcTrucks: THREE.Group[] = [];
   const fleetNames = ["GT-4821", "GT-1937", "GT-7712", "GT-3048", "GT-6620", "GT-9155"];
+  // via de serviço conectando as docas à avenida
+  const serviceRoad = new THREE.Mesh(new THREE.PlaneGeometry(9, 86), roadMat);
+  serviceRoad.rotation.x = -Math.PI / 2;
+  serviceRoad.position.set(0, 0.05, 60);
+  clientDc.add(serviceRoad);
+  for (let i = 0; i < 12; i += 1) {
+    const dash = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 2.8), dashMat);
+    dash.position.set(0, 0.08, 22 + i * 6.4);
+    clientDc.add(dash);
+  }
+  [-4.4, 4.4].forEach((side) => {
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 86), edgeMat);
+    edge.position.set(side, 0.08, 60);
+    clientDc.add(edge);
+  });
   dcDoorX.forEach((doorX, index) => {
     if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
