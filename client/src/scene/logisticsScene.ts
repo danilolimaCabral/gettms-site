@@ -2226,6 +2226,33 @@ hub.scale.setScalar(1.15);
     parked.scale.setScalar(0.001);
     parked.userData.delay = index * 0.015;
     parked.userData.dockX = doorX;
+    const orderCanvas = document.createElement("canvas");
+    orderCanvas.width = 640;
+    orderCanvas.height = 160;
+    const orderCtx = orderCanvas.getContext("2d")!;
+    orderCtx.fillStyle = "rgba(10,16,11,0.94)";
+    orderCtx.beginPath();
+    orderCtx.roundRect(6, 6, 628, 148, 26);
+    orderCtx.fill();
+    orderCtx.fillStyle = "#8fe04a";
+    orderCtx.beginPath();
+    orderCtx.arc(44, 52, 11, 0, Math.PI * 2);
+    orderCtx.fill();
+    orderCtx.fillStyle = "#f4f8ef";
+    orderCtx.font = "700 38px Sora, Inter, sans-serif";
+    orderCtx.textBaseline = "middle";
+    orderCtx.fillText("PEDIDO #" + (4820 + index * 37), 70, 52);
+    orderCtx.fillStyle = "#9fe86a";
+    orderCtx.font = "600 28px Inter, sans-serif";
+    orderCtx.fillText("CARREGANDO · CD GETTMS", 44, 112);
+    const orderTex = track(new THREE.CanvasTexture(orderCanvas));
+    orderTex.colorSpace = THREE.SRGBColorSpace;
+    const orderTag = new THREE.Sprite(new THREE.SpriteMaterial({ map: orderTex, transparent: true, depthWrite: false }));
+    orderTag.scale.set(11, 2.75, 1);
+    orderTag.position.set(0, 9.6, 0);
+    orderTag.visible = false;
+    parked.add(orderTag);
+    parked.userData.orderTag = orderTag;
     clientDc.add(parked);
     dcTrucks.push(parked);
   });
@@ -2407,11 +2434,6 @@ hub.scale.setScalar(1.15);
 
     // velocidade com aceleração e frenagem nas docas
     const dockBell = Math.exp(-Math.pow((truckPhase - 0.62) / 0.09, 2));
-    dcDoorMeshes.forEach((door, index) => {
-      const open = dockBell * (index === 2 || index === 3 ? 1 : 0.12);
-      door.scale.y = 1 - open * 0.94;
-      door.position.y = 2.8 + open * 2.45;
-    });
     const speedTarget = 0.017 * (1 - 0.72 * dockBell);
     const accel = (speedTarget - truckSpeed) * Math.min(1, frameDt * 2.2);
     truckSpeed += accel;
@@ -2574,12 +2596,40 @@ hub.scale.setScalar(1.15);
     dcLight.intensity = 35 * dcIn;
     dcTrucks.forEach((clone, index) => {
       const delay = (clone.userData.delay as number) || 0;
-      const t = easeOut(range(pb, 0.72 + delay, 0.84 + delay));
+      const appear = easeOut(range(pb, 0.72 + delay, 0.78 + delay));
       const side = (index % 2 === 0 ? 1 : -1) as number;
-      clone.scale.setScalar(Math.max(0.001, t * 0.94));
-      clone.position.z = lerp(34, 19.5, t);
-      clone.position.x = (clone.userData.dockX as number) + (1 - t) * 4 * side;
-      clone.rotation.y = (1 - t) * 0.24 * side;
+      const dockX = clone.userData.dockX as number;
+      // ciclo: entra (4 s) -> carrega 20 s -> sai (5 s) -> aguarda
+      const cycle = ((time + index * 6.4) % 31) / 31;
+      let approach = 0;
+      let docked = 0;
+      if (cycle < 0.13) {
+        approach = cycle / 0.13;
+      } else if (cycle < 0.13 + 0.645) {
+        approach = 1;
+        docked = 1;
+      } else if (cycle < 0.94) {
+        approach = 1 - (cycle - 0.775) / 0.165;
+      }
+      const eased = approach * approach * (3 - 2 * approach);
+      const present = appear > 0.5;
+      clone.visible = present;
+      clone.scale.setScalar(Math.max(0.001, appear * 0.94));
+      clone.position.z = lerp(62, 19.5, eased);
+      clone.position.x = dockX + (1 - eased) * 3.2 * side;
+      clone.rotation.y = (1 - eased) * 0.22 * side;
+      const tag = clone.userData.orderTag as THREE.Sprite | undefined;
+      if (tag) tag.visible = docked > 0.5 && cycle < 0.775;
+    });
+    dcDoorMeshes.forEach((door, index) => {
+      const clone = dcTrucks[index === 2 || index === 3 ? (index === 2 ? 2 : 3) : index];
+      let open = 0;
+      if (clone) {
+        const cycle = ((time + index * 6.4) % 31) / 31;
+        open = cycle >= 0.13 && cycle < 0.775 ? 1 : 0;
+      }
+      door.scale.y = 1 - open * 0.94;
+      door.position.y = 2.8 + open * 2.45;
     });
     parkedCars.forEach((car) => {
       const delay = (car.userData.delay as number) || 0;
