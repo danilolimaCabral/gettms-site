@@ -893,6 +893,30 @@ hub.scale.setScalar(1.15);
   const truckBumper = new THREE.Mesh(round(2.95, 0.38, 0.3, 0.1, 2), truckChrome);
   truckBumper.position.set(0, 0.95, 5.72);
   truck.add(truckBumper);
+  const cabGrille = new THREE.Mesh(round(2.2, 1.1, 0.16, 0.08, 2), darkMat);
+  cabGrille.position.set(0, 2.05, 5.7);
+  truck.add(cabGrille);
+  for (let i = 0; i < 3; i += 1) {
+    const grilleBar = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.07, 0.1), truckChrome);
+    grilleBar.position.set(0, 1.72 + i * 0.32, 5.78);
+    truck.add(grilleBar);
+  }
+  const cabFuelTank = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.7, 16), truckChrome);
+  cabFuelTank.rotation.x = Math.PI / 2;
+  cabFuelTank.position.set(-1.42, 1.05, 2.2);
+  truck.add(cabFuelTank);
+  const cabFuelTank2 = cabFuelTank.clone();
+  cabFuelTank2.position.x = 1.42;
+  truck.add(cabFuelTank2);
+  const cabExhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.6, 10), truckChrome);
+  cabExhaust.position.set(-1.32, 3.6, 2.6);
+  truck.add(cabExhaust);
+  [-1.1, 1.1].forEach((x) => {
+    const cabMudFlap = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.06), darkMat);
+    cabMudFlap.position.set(x, 0.45, -9.6);
+    truck.add(cabMudFlap);
+  });
+
   const truckLedBar = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.09, 0.08), new THREE.MeshBasicMaterial({ color: 0xf4ffe4 }));
   truckLedBar.position.set(0, 3.05, 5.66);
   truck.add(truckLedBar);
@@ -1453,6 +1477,7 @@ hub.scale.setScalar(1.15);
 
   const parkedCars: THREE.Group[] = [];
 
+  const visitors: { mesh: THREE.Group; phase: number }[] = [];
   // centros de distribuição espalhados pelo mapa
   function makeSmallDc(x: number, z: number, rotation: number, name: string, accent: number) {
     const dc = new THREE.Group();
@@ -1514,6 +1539,12 @@ hub.scale.setScalar(1.15);
       parked.scale.setScalar(0.9);
       dc.add(parked);
     });
+
+    const visitor = makeSimpleTruck(`GT-${3100 + Math.round(Math.abs(x))}`);
+    visitor.scale.setScalar(0.92);
+    visitor.position.set(0, 0, 42);
+    dc.add(visitor);
+    visitors.push({ mesh: visitor, phase: Math.abs(x) * 0.013 });
 
     scene.add(dc);
     return dc;
@@ -2261,6 +2292,14 @@ hub.scale.setScalar(1.15);
     const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpin;
+    });
+
+    visitors.forEach((item) => {
+      const cycle = (time * 0.09 + item.phase) % 1;
+      const inbound = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
+      const eased = inbound * inbound * (3 - 2 * inbound);
+      item.mesh.position.z = lerp(44, 15, eased);
+      item.mesh.rotation.y = cycle < 0.5 ? 0 : Math.PI;
     });
 
     roadFleet.forEach((item) => {
