@@ -1449,11 +1449,23 @@ hub.scale.setScalar(1.15);
 
     const cab = new THREE.Mesh(round(2.85, 3, 2.3, 0.5, 3), whiteMat);
     cab.position.set(0, 2.45, 4.4);
+    const cabGlass = new THREE.Mesh(round(2.6, 1.5, 2.34, 0.3, 3), new THREE.MeshStandardMaterial({ color: 0x243029, roughness: 0.15, metalness: 0.85 }));
+    cabGlass.position.set(0, 3.1, 4.42);
     const windshield = new THREE.Mesh(round(2.55, 1.6, 0.12, 0.1, 1), glassMat);
     windshield.position.set(0, 3.15, 5.58);
+    const cabRoof = new THREE.Mesh(round(2.9, 0.22, 2.36, 0.12, 2), whiteMat);
+    cabRoof.position.set(0, 4.02, 4.4);
     const fairing = new THREE.Mesh(round(2.75, 0.8, 1.6, 0.35, 2), whiteMat);
     fairing.position.set(0, 4.3, 4.3);
-    group.add(cab, windshield, fairing);
+    const grille = new THREE.Mesh(round(2.3, 0.9, 0.14, 0.08, 2), darkMat);
+    grille.position.set(0, 1.95, 5.62);
+    const lampL = new THREE.Mesh(round(0.5, 0.26, 0.1, 0.06, 1), new THREE.MeshBasicMaterial({ color: 0xfff6dc }));
+    lampL.position.set(0.86, 1.5, 5.64);
+    const lampR = lampL.clone();
+    lampR.position.x = -0.86;
+    const bumper = new THREE.Mesh(round(2.9, 0.42, 0.3, 0.1, 2), new THREE.MeshStandardMaterial({ color: 0xd8dee2, roughness: 0.2, metalness: 0.9 }));
+    bumper.position.set(0, 0.85, 5.66);
+    group.add(cab, cabGlass, windshield, cabRoof, fairing, grille, lampL, lampR, bumper);
 
     const simpleWheel = new THREE.CylinderGeometry(0.7, 0.7, 0.55, 12);
     simpleWheel.rotateZ(Math.PI / 2);
@@ -2217,6 +2229,10 @@ hub.scale.setScalar(1.15);
   let orbitActive = false;
   let orbitAngle = 0.6;
   let orbitRadius = 58;
+  let truckPhase = 0;
+  let truckSpeed = 0;
+  let wheelSpinAcc = 0;
+  let lastFrameTime = 0;
   let orbitDrag = 0;
   let pointerX = 0;
   let pointerY = 0;
@@ -2257,6 +2273,8 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
+    const frameDt = Math.min(0.05, Math.max(0.001, time - lastFrameTime));
+    lastFrameTime = time;
     const pb = Math.max(0.86, p);
     groundUniforms.uProgress.value = easeOut(range(pb, 0.0, 0.22));
 
@@ -2283,15 +2301,23 @@ hub.scale.setScalar(1.15);
     const swing = easeInOut(range(pb, 0.78, 0.85));
     const reverse = easeInOut(range(pb, 0.85, 0.92));
 
-    const loopT = (time * 0.03) % 1;
+    // velocidade com aceleração e frenagem nas docas
+    const dockBell = Math.exp(-Math.pow((truckPhase - 0.62) / 0.09, 2));
+    const speedTarget = 0.032 * (1 - 0.72 * dockBell);
+    const accel = (speedTarget - truckSpeed) * Math.min(1, frameDt * 2.2);
+    truckSpeed += accel;
+    truckPhase = (truckPhase + truckSpeed * frameDt) % 1;
+    const loopT = truckPhase;
     const truckPoint = truckPath.getPointAt(loopT);
     const truckTangent = truckPath.getTangentAt(loopT);
     truck.position.set(truckPoint.x, 0, truckPoint.z);
     truck.rotation.y = Math.atan2(truckTangent.x, truckTangent.z);
+    truck.rotation.z = THREE.MathUtils.clamp(accel * 6, -0.02, 0.02);
+    truck.rotation.x = -Math.abs(accel) * 1.2;
     truck.visible = true;
-    const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
+    wheelSpinAcc += truckSpeed * frameDt * 520;
     wheels.forEach((wheel) => {
-      wheel.rotation.x = wheelSpin;
+      wheel.rotation.x = wheelSpinAcc;
     });
 
     visitors.forEach((item) => {
