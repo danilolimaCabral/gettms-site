@@ -217,7 +217,7 @@ export function createLogisticsScene(
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xdbe9f4);
+  scene.background = new THREE.Color(0xa9c9e2);
   scene.fog = new THREE.FogExp2(0xe2edf5, 0.0014);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
@@ -237,8 +237,8 @@ export function createLogisticsScene(
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        uTop: { value: new THREE.Color(0xdfe8d6) },
-        uBottom: { value: new THREE.Color(0xf4f7ef) },
+        uTop: { value: new THREE.Color(0x8fb8d8) },
+        uBottom: { value: new THREE.Color(0xdcebf5) },
       },
       vertexShader: /* glsl */ `
         varying vec3 vPos;
@@ -309,6 +309,34 @@ export function createLogisticsScene(
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.03;
   scene.add(ground);
+  // base opaca para o piso não deixar o céu aparecer
+  const floorBase = new THREE.Mesh(
+    new THREE.PlaneGeometry(900, 900),
+    new THREE.MeshStandardMaterial({ color: 0xeef2e6, roughness: 1, metalness: 0 }),
+  );
+  floorBase.rotation.x = -Math.PI / 2;
+  floorBase.position.y = -0.06;
+  scene.add(floorBase);
+  // nuvens
+  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 });
+  const cloudGeo = new THREE.SphereGeometry(1, 12, 10);
+  const clouds = new THREE.Group();
+  for (let c = 0; c < 9; c += 1) {
+    const cluster = new THREE.Group();
+    const puffs = 4 + (c % 3);
+    for (let i = 0; i < puffs; i += 1) {
+      const puff = new THREE.Mesh(cloudGeo, cloudMat);
+      puff.position.set((i - puffs / 2) * 9 + Math.sin(i * 2.1) * 3, Math.cos(i * 1.7) * 2.4, Math.sin(i * 3.3) * 4);
+      puff.scale.set(9 - i * 0.5, 4.2, 7);
+      cluster.add(puff);
+    }
+    const angle = (c / 9) * Math.PI * 2;
+    const radius = 120 + (c % 4) * 32;
+    cluster.position.set(Math.cos(angle) * radius, 62 + (c % 3) * 22, Math.sin(angle) * radius - 50);
+    cluster.rotation.y = angle;
+    clouds.add(cluster);
+  }
+  scene.add(clouds);
 
   // ---------------------------------------------------------------- luzes
   scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3c2, 1.1));
@@ -436,39 +464,7 @@ export function createLogisticsScene(
   });
 
   // ---------------------------------------------------------------- viaduto
-  const overpass = new THREE.Group();
-  overpass.position.set(0, 0, -74);
-  scene.add(overpass);
-
   const concreteMat = new THREE.MeshStandardMaterial({ color: 0xdfe5d9, roughness: 0.85, metalness: 0.05 });
-  const deck = new THREE.Mesh(round(56, 0.95, 7.5, 0.3, 3), concreteMat);
-  deck.position.set(0, 11.4, 0);
-  overpass.add(deck);
-
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(64, 0.85, 0.22), new THREE.MeshStandardMaterial({ color: 0xb9c4b2, roughness: 0.6, metalness: 0.3 }));
-  rail.position.set(0, 12.3, 3.6);
-  overpass.add(rail);
-
-  const railBack = rail.clone();
-  railBack.position.z = -3.6;
-  overpass.add(railBack);
-
-  const overpassAccent = new THREE.Mesh(new THREE.BoxGeometry(64, 0.16, 0.28), new THREE.MeshBasicMaterial({ color: BRAND }));
-  overpassAccent.position.set(0, 10.85, 3.8);
-  overpass.add(overpassAccent);
-
-  [-24, 0, 24].forEach((x) => {
-    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.05, 11.4, 16), concreteMat);
-    pillar.position.set(x, 5.7, 0);
-    overpass.add(pillar);
-    const cap = new THREE.Mesh(round(4.2, 0.7, 3.2, 0.3, 2), concreteMat);
-    cap.position.set(x, 10.9, 0);
-    overpass.add(cap);
-  });
-
-  overpass.scale.y = 0.001;
-  overpass.visible = false;
-
   // ---------------------------------------------------------------- armazém
   const warehouse = new THREE.Group();
   warehouse.position.set(-40, 0, -26);
@@ -728,6 +724,24 @@ export function createLogisticsScene(
     { x: -34, z: 22, w: 10, d: 10, h: 20 },
   ];
 
+  // horizonte distante
+  const skyline = new THREE.Group();
+  for (let i = 0; i < 64; i += 1) {
+    const angle = (i / 64) * Math.PI * 2 + Math.sin(i) * 0.06;
+    const radius = 200 + ((i * 37) % 150);
+    const w = 8 + ((i * 13) % 14);
+    const h = 16 + ((i * 29) % 62);
+    const facade = facadeTextures[i % facadeTextures.length].clone();
+    facade.repeat.set(Math.max(1, Math.round(w / 8)), Math.max(2, Math.round(h / 8)));
+    facade.needsUpdate = true;
+    const tower = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, w * 0.9),
+      new THREE.MeshStandardMaterial({ map: facade, color: i % 3 === 0 ? 0xe3e9dd : 0xf2f5ee, roughness: 0.95 }),
+    );
+    tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 40);
+    skyline.add(tower);
+  }
+  scene.add(skyline);
   towerLayout.forEach((tower, index) => {
     const texture = facadeTextures[index % facadeTextures.length].clone();
     texture.repeat.set(Math.max(1, Math.round(tower.w / 8)), Math.max(2, Math.round(tower.h / 12)));
@@ -2450,8 +2464,6 @@ hub.scale.setScalar(1.15);
 
     // viaduto
     const bridgeIn = easeOut(range(pb, 0.4, 0.52));
-    overpass.visible = bridgeIn > 0.001;
-    overpass.scale.y = Math.max(0.001, bridgeIn);
 
     // cidade
     towers.forEach((tower) => {
