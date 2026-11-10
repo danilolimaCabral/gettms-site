@@ -1,3 +1,4 @@
+import SegmentVisual from "./SegmentVisual";
 import { ArrowUpRight } from "lucide-react";
 import Reveal from "./Reveal";
 import { SEGMENTS, whatsappLink } from "@/content/site";
@@ -29,15 +30,9 @@ export default function Segments() {
               className="group grid gap-8 border-b border-ink/10 py-10 md:grid-cols-[0.9fr_1.1fr] md:gap-14 md:py-14 lg:grid-cols-[0.85fr_1.15fr]"
             >
               <div className="relative overflow-hidden rounded-2xl">
-                <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-ink/12 bg-[#0b100c]">
-                  <img
-                    src={segment.image}
-                    alt={segment.kicker}
-                    loading="lazy"
-                    className="h-full w-full object-cover opacity-90 transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-                  />
+                <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-ink/12">
+                  <SegmentVisual kind={segment.id as "alimentos" | "farma" | "construcao" | "ecommerce"} />
                 </div>
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                 <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-paper px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-ink/70 backdrop-blur">
                   {String(index + 1).padStart(2, "0")} · {segment.kicker}
                 </span>

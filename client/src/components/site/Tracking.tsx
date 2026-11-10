@@ -2,8 +2,8 @@ import { useState } from "react";
 import { ArrowUpRight, CheckCircle2, Radio } from "lucide-react";
 import Reveal from "./Reveal";
 import { DEMO_URL, TRACKING_STEPS } from "@/content/site";
+import SegmentVisual from "./SegmentVisual";
 
-const CONTROL_IMAGE = "/img/control-tower.webp";
 
 export default function Tracking() {
   const [active, setActive] = useState(0);
@@ -28,12 +28,9 @@ export default function Tracking() {
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <Reveal className="relative overflow-hidden rounded-2xl border border-ink/12">
-            <img
-              src={CONTROL_IMAGE}
-              alt="Central de operações logísticas com rotas monitoradas"
-              loading="lazy"
-              className="h-full min-h-[360px] w-full object-cover opacity-80"
-            />
+            <div className="min-h-[360px] w-full">
+              <SegmentVisual kind="tracking" />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-[#060b07] via-[#060b07]/45 to-transparent" />
 
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
