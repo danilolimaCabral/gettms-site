@@ -35,7 +35,7 @@ export default function FinalCta() {
 
   return (
     <>
-      <section className="relative border-y border-ink/10 bg-white">
+      <section className="relative border-y border-ink/10 bg-surface">
         <div className="container-wide grid grid-cols-2 divide-x divide-white/8 md:grid-cols-4">
           {IMPACT.map((item) => (
             <Reveal key={item.value} className="px-4 py-10 first:pl-0 md:px-8">
@@ -133,7 +133,7 @@ export default function FinalCta() {
                       value={form.name}
                       onChange={update("name")}
                       placeholder="Seu nome"
-                      className="h-11 rounded-xl border border-ink/12 bg-white px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
+                      className="h-11 rounded-xl border border-ink/12 bg-white/5 px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
@@ -143,7 +143,7 @@ export default function FinalCta() {
                       value={form.company}
                       onChange={update("company")}
                       placeholder="Nome da empresa"
-                      className="h-11 rounded-xl border border-ink/12 bg-white px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
+                      className="h-11 rounded-xl border border-ink/12 bg-white/5 px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
@@ -154,7 +154,7 @@ export default function FinalCta() {
                       value={form.email}
                       onChange={update("email")}
                       placeholder="voce@empresa.com.br"
-                      className="h-11 rounded-xl border border-ink/12 bg-white px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
+                      className="h-11 rounded-xl border border-ink/12 bg-white/5 px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
@@ -163,7 +163,7 @@ export default function FinalCta() {
                       value={form.phone}
                       onChange={update("phone")}
                       placeholder="(41) 99999-9999"
-                      className="h-11 rounded-xl border border-ink/12 bg-white px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
+                      className="h-11 rounded-xl border border-ink/12 bg-white/5 px-3.5 text-sm text-ink placeholder:text-ink/25 focus:border-brand/60 focus:outline-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5 sm:col-span-2">
@@ -171,7 +171,7 @@ export default function FinalCta() {
                     <select
                       value={form.volume}
                       onChange={update("volume")}
-                      className="h-11 rounded-xl border border-ink/12 bg-white px-3 text-sm text-ink focus:border-brand/60 focus:outline-none"
+                      className="h-11 rounded-xl border border-ink/12 bg-white/5 px-3 text-sm text-ink focus:border-brand/60 focus:outline-none"
                     >
                       <option>Até 200 fretes/mês</option>
                       <option>200 a 1.000 fretes/mês</option>

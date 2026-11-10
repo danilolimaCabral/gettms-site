@@ -37,32 +37,32 @@
 
 :root {
   --radius: 1rem;
-  --background: #f5f7f2;
-  --foreground: #0a0f0b;
-  --card: #ffffff;
-  --card-foreground: #0a0f0b;
-  --popover: #ffffff;
-  --popover-foreground: #0a0f0b;
+  --background: #070a08;
+  --foreground: #f2f5ef;
+  --card: #0f1511;
+  --card-foreground: #f2f5ef;
+  --popover: #0f1511;
+  --popover-foreground: #f2f5ef;
   --primary: #63b32e;
   --primary-foreground: #ffffff;
-  --secondary: #eef2ea;
-  --secondary-foreground: #0a0f0b;
-  --muted: #eef2ea;
-  --muted-foreground: #5c675e;
-  --accent: #e7f4d9;
-  --accent-foreground: #1f3a0e;
+  --secondary: #121a14;
+  --secondary-foreground: #f2f5ef;
+  --muted: #121a14;
+  --muted-foreground: #9aa79d;
+  --accent: #16220f;
+  --accent-foreground: #cff3b0;
   --destructive: #d2483a;
   --destructive-foreground: #ffffff;
-  --border: rgba(10, 15, 11, 0.1);
-  --input: rgba(10, 15, 11, 0.14);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
   --ring: #63b32e;
 
-  --ink: #0a0f0b;
-  --paper: #f5f7f2;
-  --surface: #ffffff;
-  --brand: #63b32e;
-  --brand-dark: #3f7a1c;
-  --brand-soft: #e9f6dd;
+  --ink: #f2f5ef;
+  --paper: #070a08;
+  --surface: #0f1511;
+  --brand: #8fe04a;
+  --brand-dark: #b6f472;
+  --brand-soft: rgba(143, 224, 74, 0.12);
 }
 
 @layer base {
@@ -252,7 +252,7 @@
   }
 
   .text-gradient {
-    background: linear-gradient(100deg, #0a0f0b 0%, #3f7a1c 55%, #63b32e 100%);
+    background: linear-gradient(100deg, #e9ffd4 0%, #b6f472 45%, #8fe04a 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

@@ -246,9 +246,9 @@ export default function ScrollStage() {
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
         {/* atmosfera / vinheta */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,rgba(245,247,242,0)_0%,rgba(245,247,242,0.45)_58%,rgba(245,247,242,0.96)_100%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-paper via-paper/60 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-paper via-paper/75 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(7,10,8,0)_0%,rgba(7,10,8,0.25)_62%,rgba(7,10,8,0.75)_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-paper/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-paper/70 to-transparent" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,15,11,0.05)_1px,transparent_1px)] [background-size:100%_4px]" />
 
         {/* HUD superior */}
@@ -320,13 +320,13 @@ export default function ScrollStage() {
             style={{ willChange: "opacity, transform" }}
           >
             <div className="container-wide">
-              <div className="max-w-xl rounded-2xl border border-ink/10 bg-white/85 p-6 shadow-[0_30px_80px_-50px_rgba(10,15,11,0.6)] backdrop-blur-md md:p-8">
-                <div className="mb-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-brand-dark">
+              <div className="max-w-md rounded-2xl border border-white/10 bg-[#0b110d]/85 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)] backdrop-blur-sm md:p-6">
+                <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-brand-dark">
                   <span className="font-display">{chapter.index}</span>
                   <span className="h-px w-8 bg-brand/50" />
                   <span className="text-ink/50">{chapter.label}</span>
                 </div>
-                <h2 className="display-md text-ink">{chapter.title}</h2>
+                <h2 className="font-display text-2xl font-semibold leading-tight tracking-tight text-ink md:text-3xl">{chapter.title}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-ink/55 md:text-base">{chapter.body}</p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {chapter.chips.map((chip) => (

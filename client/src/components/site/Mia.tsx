@@ -136,7 +136,7 @@ export default function Mia() {
         aria-label="Assistente Mia"
         aria-hidden={!open}
       >
-        <div className="overflow-hidden rounded-3xl border border-ink/15 bg-white/95 shadow-[0_30px_80px_-25px_rgba(10,15,11,0.35)] backdrop-blur-xl">
+        <div className="overflow-hidden rounded-3xl border border-ink/15 bg-[#0f1511]/95 shadow-[0_30px_80px_-25px_rgba(10,15,11,0.35)] backdrop-blur-xl">
           <div className="relative flex items-center gap-3 border-b border-ink/10 bg-gradient-to-r from-[#e9f6dd] to-transparent px-4 py-3.5">
             <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#b6f472] to-[#4f9e22] font-display text-sm font-extrabold text-[#061004]">
               M
@@ -253,7 +253,7 @@ export default function Mia() {
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-label={open ? "Fechar chat da Mia" : "Falar com a Mia"}
-        className={`fixed bottom-4 right-4 z-[65] flex items-center gap-2.5 rounded-full border border-brand/30 bg-white/90 py-2 pl-2 pr-4 shadow-[0_18px_45px_-18px_rgba(10,15,11,0.45)] backdrop-blur-xl transition-all duration-300 hover:border-brand/60 sm:bottom-6 sm:right-6 ${
+        className={`fixed bottom-4 right-4 z-[65] flex items-center gap-2.5 rounded-full border border-brand/30 bg-[#0f1511]/90 py-2 pl-2 pr-4 shadow-[0_18px_45px_-18px_rgba(10,15,11,0.45)] backdrop-blur-xl transition-all duration-300 hover:border-brand/60 sm:bottom-6 sm:right-6 ${
           open ? "pointer-events-none translate-y-3 opacity-0" : "opacity-100"
         }`}
       >

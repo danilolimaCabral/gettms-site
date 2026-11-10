@@ -209,12 +209,12 @@ export function createLogisticsScene(
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.2 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 0.95;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xedf1e8);
-  scene.fog = new THREE.FogExp2(0xedf1e8, 0.0042);
+  scene.background = new THREE.Color(0x0a0e0b);
+  scene.fog = new THREE.FogExp2(0x070c09, 0.0026);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
   camera.position.set(38, 17, 42);
@@ -233,8 +233,8 @@ export function createLogisticsScene(
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        uTop: { value: new THREE.Color(0xdfe8d6) },
-        uBottom: { value: new THREE.Color(0xf4f7ef) },
+        uTop: { value: new THREE.Color(0x03060a) },
+        uBottom: { value: new THREE.Color(0x16241a) },
       },
       vertexShader: /* glsl */ `
         varying vec3 vPos;
@@ -259,8 +259,8 @@ export function createLogisticsScene(
   // ---------------------------------------------------------------- chão
   const groundUniforms = {
     uProgress: { value: 0 },
-    uLine: { value: new THREE.Color(0x93a98a) },
-    uBase: { value: new THREE.Color(0xdde4d6) },
+    uLine: { value: new THREE.Color(0x2a3a2e) },
+    uBase: { value: new THREE.Color(0x0f140f) },
   };
 
   const ground = new THREE.Mesh(
@@ -307,14 +307,14 @@ export function createLogisticsScene(
   scene.add(ground);
 
   // ---------------------------------------------------------------- luzes
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3c2, 1.15));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.42));
+  scene.add(new THREE.HemisphereLight(0x35503f, 0x050806, 0.55));
+  scene.add(new THREE.AmbientLight(0x9fb3a6, 0.16));
 
-  const key = new THREE.DirectionalLight(0xfff8ec, 2.35);
+  const key = new THREE.DirectionalLight(0xc9dcf0, 1.7);
   key.position.set(30, 50, 30);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xb8e88f, 0.7);
+  const rim = new THREE.DirectionalLight(0x9df05a, 0.28);
   rim.position.set(-40, 18, -34);
   scene.add(rim);
 
@@ -340,7 +340,7 @@ export function createLogisticsScene(
   const trunkGeo = new THREE.CylinderGeometry(0.14, 0.2, 1.6, 6);
   const leafGeo = new THREE.IcosahedronGeometry(1, 1);
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6f6049, roughness: 0.9 });
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0x6f9a4a, roughness: 0.85, flatShading: true });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x3f6032, roughness: 0.85, flatShading: true });
   const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
   const leaves = new THREE.InstancedMesh(leafGeo, leafMat, treeCount);
   const treeDummy = new THREE.Object3D();
@@ -371,7 +371,7 @@ export function createLogisticsScene(
   scene.add(road);
 
   const asphaltMat = new THREE.MeshStandardMaterial({
-    color: 0x1d251f,
+    color: 0x151c17,
     roughness: 0.9,
     metalness: 0.12,
     transparent: true,
@@ -470,7 +470,7 @@ export function createLogisticsScene(
   warehouse.position.set(-24, 0, -18);
   scene.add(warehouse);
 
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf7f9f2, roughness: 0.72, metalness: 0.12 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x3d4a40, roughness: 0.65, metalness: 0.25 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0xd3dcc8, roughness: 0.75, metalness: 0.25 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x2b352c, roughness: 0.6, metalness: 0.4 });
   const stripMat = new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0.9 });
@@ -795,10 +795,21 @@ hub.scale.setScalar(1.15);
 
   // ---------------------------------------------------------------- caminhão
   const truck = new THREE.Group();
+
+  const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
+  [-0.95, 0.95].forEach((x) => {
+    const lamp = new THREE.Mesh(round(0.5, 0.26, 0.1, 0.06, 1), headlightMat);
+    lamp.position.set(x, 1.75, 5.62);
+    truck.add(lamp);
+  });
+  const headGlow = new THREE.PointLight(0xffe7b0, 26, 26, 2);
+  headGlow.position.set(0, 1.9, 6.4);
+  truck.add(headGlow);
+
   truck.scale.setScalar(0.9);
   scene.add(truck);
 
-  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf3f6ef, roughness: 0.32, metalness: 0.42 });
+  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f7f2, roughness: 0.38, metalness: 0.12 });
   const shellMat = new THREE.MeshStandardMaterial({ color: 0xe3e9dc, roughness: 0.4, metalness: 0.35 });
   const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a221c, roughness: 0.4, metalness: 0.7 });
   const greenMat = new THREE.MeshBasicMaterial({ color: BRAND });
@@ -1420,7 +1431,11 @@ hub.scale.setScalar(1.15);
     clientDc.add(unit);
   });
 
-  const dcLight = new THREE.PointLight(0xffd9a0, 45, 60, 2);
+  const whDockGlow = new THREE.PointLight(0xffc98a, 120, 70, 2);
+  whDockGlow.position.set(-11, 5, 6);
+  scene.add(whDockGlow);
+
+  const dcLight = new THREE.PointLight(0xffd9a0, 140, 90, 2);
   dcLight.position.set(0, 6, 18);
   clientDc.add(dcLight);
 
@@ -1677,8 +1692,8 @@ hub.scale.setScalar(1.15);
   dcDoorX.forEach((doorX, index) => {
     if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
-    parked.position.set(doorX + (index % 2 === 0 ? 1.2 : -1.2), 0, 20);
-    parked.rotation.y = Math.PI * 0.82 + (index % 2 === 0 ? 0.08 : -0.08);
+    parked.position.set(doorX, 0, 19.5);
+    parked.rotation.y = Math.PI;
     parked.scale.setScalar(0.001);
     parked.userData.delay = index * 0.015;
     clientDc.add(parked);
@@ -1822,19 +1837,20 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
-    groundUniforms.uProgress.value = easeOut(range(p, 0.0, 0.22));
+    const pb = Math.max(0.4, p);
+    groundUniforms.uProgress.value = easeOut(range(pb, 0.0, 0.22));
 
-    const roadReveal = easeOut(range(p, 0.0, 0.1));
+    const roadReveal = easeOut(range(pb, 0.0, 0.1));
     asphaltMat.opacity = roadReveal;
     curbMat.opacity = roadReveal;
     edgeMat.opacity = roadReveal * 0.5;
     dashMat.opacity = roadReveal * 0.85;
 
-    const treesIn = easeOut(range(p, 0.06, 0.22));
+    const treesIn = easeOut(range(pb, 0.06, 0.22));
     treeGroup.scale.y = Math.max(0.001, treesIn);
 
     nodes.forEach((node) => {
-      const t = easeOut(range(p, 0.48 + node.delay, 0.6 + node.delay));
+      const t = easeOut(range(pb, 0.48 + node.delay, 0.6 + node.delay));
       node.group.scale.setScalar(Math.max(0.001, t));
       const breathe = 0.55 + Math.sin(time * 2 + node.delay * 14) * 0.25;
       (node.ring.material as THREE.MeshBasicMaterial).opacity = t * breathe;
@@ -1842,29 +1858,25 @@ hub.scale.setScalar(1.15);
     });
 
     // caminhão: aproxima, estaciona na doca e depois parte
-    const enter = easeInOut(range(p, 0.05, 0.24));
-    const turn = easeInOut(range(p, 0.6, 0.65));
-    const drive = easeInOut(range(p, 0.65, 0.76));
-    const swing = easeInOut(range(p, 0.76, 0.83));
-    const reverse = easeInOut(range(p, 0.83, 0.9));
+    const enter = easeInOut(range(pb, 0.05, 0.24));
+    const drive = easeInOut(range(pb, 0.62, 0.78));
+    const swing = easeInOut(range(pb, 0.78, 0.85));
+    const reverse = easeInOut(range(pb, 0.85, 0.92));
 
     let truckX = 0;
-    let truckZ = lerp(46, -6, enter);
+    let truckZ = lerp(22, -6, enter);
     let truckRot = 0;
 
     if (p > 0.6) {
-      truckRot = lerp(0, Math.PI, turn);
-      truckZ = lerp(-6, -34, drive);
+      truckZ = lerp(-6, -40, drive);
       truckX = lerp(0, 43, swing);
-      truckZ = lerp(-34, -40, swing);
-      truckRot = lerp(Math.PI, Math.PI * 1.5, swing);
-      truckZ = lerp(-40, -46.5, reverse);
-      truckRot = lerp(Math.PI * 1.5, Math.PI * 2, reverse);
+      truckZ = lerp(-40, -41.5, swing);
+      truckZ = lerp(-41.5, -46.5, reverse);
     }
 
     truck.position.set(truckX + Math.sin(time * 0.9) * 0.03, 0, truckZ);
     truck.rotation.y = truckRot;
-    truck.visible = p > 0.03;
+    truck.visible = true;
     const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpin;
@@ -1876,38 +1888,38 @@ hub.scale.setScalar(1.15);
     van.visible = p > 0.08;
 
     // armazém
-    const rise = easeOut(range(p, 0.12, 0.28));
+    const rise = easeOut(range(pb, 0.12, 0.28));
     warehouse.scale.y = Math.max(0.001, rise);
     doorMaterials.forEach((material) => {
       material.opacity = Math.min(1, rise * 1.1);
     });
     dockLight.intensity = 40 * rise;
 
-    const forkliftIn = easeOut(range(p, 0.2, 0.3));
+    const forkliftIn = easeOut(range(pb, 0.2, 0.3));
     forklift.scale.setScalar(Math.max(0.001, forkliftIn));
     forklift.position.z = 4 + Math.sin(time * 0.8) * 0.6;
 
     palletGroup.children.forEach((pallet, index) => {
-      const t = easeOut(range(p, 0.22 + index * 0.03, 0.3 + index * 0.03));
+      const t = easeOut(range(pb, 0.22 + index * 0.03, 0.3 + index * 0.03));
       pallet.scale.setScalar(Math.max(0.001, t));
     });
 
     // contêineres
     crates.forEach((crate) => {
-      const t = easeOut(range(p, 0.2 + crate.delay, 0.3 + crate.delay));
+      const t = easeOut(range(pb, 0.2 + crate.delay, 0.3 + crate.delay));
       crate.mesh.scale.setScalar(Math.max(0.001, t));
       crate.mesh.position.y = lerp(crate.baseY + 10, crate.baseY, t);
       crate.mesh.rotation.y = crate.spin * (1 - t);
     });
 
     // viaduto
-    const bridgeIn = easeOut(range(p, 0.4, 0.52));
+    const bridgeIn = easeOut(range(pb, 0.4, 0.52));
     overpass.visible = bridgeIn > 0.001;
     overpass.scale.y = Math.max(0.001, bridgeIn);
 
     // cidade
     towers.forEach((tower) => {
-      const t = easeOut(range(p, 0.4 + tower.delay, 0.54 + tower.delay));
+      const t = easeOut(range(pb, 0.4 + tower.delay, 0.54 + tower.delay));
       tower.mesh.scale.y = Math.max(0.001, t);
       tower.mesh.position.y = (tower.height / 2) * t;
       const cap = tower.mesh.userData.cap as THREE.Mesh | undefined;
@@ -1918,16 +1930,16 @@ hub.scale.setScalar(1.15);
     });
 
     // hub de entrega
-    const hubIn = easeOut(range(p, 0.74, 0.86));
+    const hubIn = easeOut(range(pb, 0.74, 0.86));
     hub.scale.y = Math.max(0.001, hubIn) * 1.15;
     parcels.children.forEach((parcel, index) => {
-      const t = easeOut(range(p, 0.84 + index * 0.03, 0.92 + index * 0.03));
+      const t = easeOut(range(pb, 0.84 + index * 0.03, 0.92 + index * 0.03));
       parcel.scale.setScalar(Math.max(0.001, t));
     });
 
     // pessoas
     people.forEach((person, index) => {
-      const t = easeOut(range(p, 0.1 + person.delay, 0.2 + person.delay));
+      const t = easeOut(range(pb, 0.1 + person.delay, 0.2 + person.delay));
       person.group.scale.setScalar(Math.max(0.001, t * 1.12));
       const speed = person.walkAxis ? 1.4 : 0.7;
       const swing = Math.sin(time * speed + person.phase) * (person.walkAxis ? 0.55 : 0.12);
@@ -1946,7 +1958,7 @@ hub.scale.setScalar(1.15);
 
     // carros
     cars.forEach((car) => {
-      const t = easeOut(range(p, 0.08 + car.delay, 0.16 + car.delay));
+      const t = easeOut(range(pb, 0.08 + car.delay, 0.16 + car.delay));
       car.group.scale.setScalar(Math.max(0.001, t));
       const span = 180;
       const progress = (time * car.speed + car.offset + p * 0.15) % 1;
@@ -1959,7 +1971,7 @@ hub.scale.setScalar(1.15);
     });
 
     // drone
-    const droneIn = easeOut(range(p, 0.18, 0.28));
+    const droneIn = easeOut(range(pb, 0.18, 0.28));
     drone.scale.setScalar(Math.max(0.001, droneIn));
     const orbit = time * 0.35;
     drone.position.set(10 + Math.cos(orbit) * 9, 13 + Math.sin(time * 1.4) * 0.6, -4 + Math.sin(orbit) * 9);
@@ -1970,18 +1982,18 @@ hub.scale.setScalar(1.15);
     (droneLed.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(time * 6) > 0 ? 0xff6b5a : 0x5a2a24);
 
     // antena e anéis de dados
-    const antennaIn = easeOut(range(p, 0.46, 0.58));
+    const antennaIn = easeOut(range(pb, 0.46, 0.58));
     antenna.scale.y = Math.max(0.001, antennaIn);
     (antennaLed.material as THREE.MeshBasicMaterial).color.setHex(Math.sin(time * 3) > 0.2 ? 0xff6b5a : 0x4a2420);
     dataRings.forEach((ring, index) => {
-      const t = easeOut(range(p, 0.5 + index * 0.04, 0.6 + index * 0.04));
+      const t = easeOut(range(pb, 0.5 + index * 0.04, 0.6 + index * 0.04));
       ring.scale.setScalar(Math.max(0.001, t));
       ring.rotation.z = time * (0.12 + index * 0.05);
       (ring.material as THREE.MeshBasicMaterial).opacity = t * (0.2 - index * 0.04) * (0.7 + Math.sin(time * 2 + index) * 0.3);
     });
 
     // CD do cliente, caminhões na doca e escritório
-    const dcIn = easeOut(range(p, 0.68, 0.8));
+    const dcIn = easeOut(range(pb, 0.68, 0.8));
     clientDc.scale.y = Math.max(0.001, dcIn);
     dcDoorMaterials.forEach((material) => {
       material.opacity = Math.min(1, dcIn * 1.2) * (0.75 + Math.sin(time * 1.6) * 0.15);
@@ -1989,21 +2001,21 @@ hub.scale.setScalar(1.15);
     dcLight.intensity = 35 * dcIn;
     dcTrucks.forEach((clone, index) => {
       const delay = (clone.userData.delay as number) || 0;
-      const t = easeOut(range(p, 0.72 + delay, 0.82 + delay));
+      const t = easeOut(range(pb, 0.72 + delay, 0.82 + delay));
       clone.scale.setScalar(Math.max(0.001, t * 0.94));
       clone.position.z = lerp(30, 20, t);
     });
     parkedCars.forEach((car) => {
       const delay = (car.userData.delay as number) || 0;
-      const t = easeOut(range(p, 0.76 + delay, 0.84 + delay));
+      const t = easeOut(range(pb, 0.76 + delay, 0.84 + delay));
       car.scale.setScalar(Math.max(0.001, t));
     });
     monitorMats.forEach((material, index) => {
-      const t = easeOut(range(p, 0.88 + (index % 5) * 0.012, 0.95 + (index % 5) * 0.012));
+      const t = easeOut(range(pb, 0.88 + (index % 5) * 0.012, 0.95 + (index % 5) * 0.012));
       material.opacity = t * (0.88 + Math.sin(time * 2.4 + index) * 0.1);
     });
     dataFlows.forEach((flow, index) => {
-      const t = easeOut(range(p, 0.86 + index * 0.02, 0.94 + index * 0.02));
+      const t = easeOut(range(pb, 0.86 + index * 0.02, 0.94 + index * 0.02));
       (flow.tube.material as THREE.MeshBasicMaterial).opacity = t * 0.35;
       const dot = flowDots[index];
       (dot.material as THREE.MeshBasicMaterial).opacity = t;
@@ -2013,7 +2025,7 @@ hub.scale.setScalar(1.15);
     });
 
     // rota
-    const routeT = easeInOut(range(p, 0.48, 0.82));
+    const routeT = easeInOut(range(pb, 0.48, 0.82));
     const indexCount = tubeGeo.index ? tubeGeo.index.count : 0;
     routeLine.geometry.setDrawRange(0, Math.floor((indexCount * routeT) / 3) * 3);
     routeLine.visible = routeT > 0.001;
@@ -2029,7 +2041,7 @@ hub.scale.setScalar(1.15);
       }
     }
 
-    const arrival = easeOut(range(p, 0.88, 1));
+    const arrival = easeOut(range(pb, 0.88, 1));
     (arrivalRing.material as THREE.MeshBasicMaterial).opacity = arrival * (0.35 + Math.sin(time * 3) * 0.2);
     arrivalRing.scale.setScalar(0.8 + arrival * 0.7 + Math.sin(time * 3) * 0.06);
 
@@ -2040,7 +2052,7 @@ hub.scale.setScalar(1.15);
       if (data[i * 3 + 1] > 28) data[i * 3 + 1] = 0;
     }
     array.needsUpdate = true;
-    (particles.material as THREE.PointsMaterial).opacity = 0.25 + 0.35 * range(p, 0.05, 0.5);
+    (particles.material as THREE.PointsMaterial).opacity = 0.25 + 0.35 * range(pb, 0.05, 0.5);
   }
 
   function render() {
