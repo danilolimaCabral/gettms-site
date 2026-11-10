@@ -359,23 +359,23 @@ export default function ScrollStage() {
         ))}
 
         {/* mapa da operação */}
-        <div className="absolute bottom-6 right-6 hidden w-60 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md lg:block">
+        <div className="absolute bottom-24 right-6 hidden w-64 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md sm:block">
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-[9px] uppercase tracking-[0.28em] text-ink/40">Mapa da operação</p>
             <span className="text-[9px] font-medium text-brand-dark">
-              {CHAPTERS[Math.max(0, active)]?.label ?? "Operação"}
+              {CHAPTERS[Math.max(0, active >= 0 ? active : CHAPTERS.findIndex((c) => progress >= c.start && progress <= c.end))]?.label ?? "Operação"}
             </span>
           </div>
           <svg viewBox="0 0 210 96" className="w-full" role="img" aria-label="Mapa das etapas da operação">
             <polyline
-              points="18,72 46,50 74,60 102,36 130,46 158,28 186,38"
+              points="16,76 38,58 60,66 82,44 104,52 126,34 148,42 170,26 188,34 198,16"
               fill="none"
               stroke="rgba(10,15,11,0.16)"
               strokeWidth="1.4"
               strokeDasharray="3 3"
             />
             <polyline
-              points="18,72 46,50 74,60 102,36 130,46 158,28 186,38"
+              points="16,76 38,58 60,66 82,44 104,52 126,34 148,42 170,26 188,34 198,16"
               fill="none"
               stroke="#63b32e"
               strokeWidth="2"
@@ -385,24 +385,42 @@ export default function ScrollStage() {
               strokeDashoffset={1 - Math.min(1, Math.max(0, progress))}
             />
             {[
-              [18, 72],
-              [46, 50],
-              [74, 60],
-              [102, 36],
-              [130, 46],
-              [158, 28],
-              [186, 38],
+              [16, 76],
+              [38, 58],
+              [60, 66],
+              [82, 44],
+              [104, 52],
+              [126, 34],
+              [148, 42],
+              [170, 26],
+              [188, 34],
+              [198, 16],
             ].map(([x, y], index) => {
-              const chapterIndex = Math.min(CHAPTERS.length - 1, Math.round((index / 6) * (CHAPTERS.length - 1)));
-              const isActive = active === chapterIndex;
+              const chapter = CHAPTERS[index];
+              const isActive = active === index;
               return (
-                <g key={`${x}-${y}`} onClick={() => jumpTo((CHAPTERS[chapterIndex].start + CHAPTERS[chapterIndex].end) / 2)} className="cursor-pointer">
-                  {isActive && <circle cx={x} cy={y} r="7" fill="rgba(99,179,46,0.2)" />}
-                  <circle cx={x} cy={y} r={isActive ? 4 : 2.6} fill={isActive ? "#63b32e" : "#0a0f0b"} opacity={isActive ? 1 : 0.35} />
+                <g
+                  key={`${x}-${y}`}
+                  onClick={() => jumpTo((chapter.start + chapter.end) / 2)}
+                  className="cursor-pointer"
+                  role="button"
+                  aria-label={chapter.label}
+                >
+                  <title>{`${chapter.index} · ${chapter.label}`}</title>
+                  <circle cx={x} cy={y} r="9" fill="transparent" />
+                  {isActive && <circle cx={x} cy={y} r="7.5" fill="rgba(99,179,46,0.22)" />}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isActive ? 4.2 : 2.8}
+                    fill={isActive ? "#63b32e" : "#0a0f0b"}
+                    opacity={isActive ? 1 : 0.35}
+                  />
                 </g>
               );
             })}
           </svg>
+          <p className="mt-1 text-center text-[9px] text-ink/35">Clique em um ponto para ir à cena</p>
         </div>
 
         {/* trilho de progresso */}
