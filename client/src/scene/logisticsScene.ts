@@ -2488,7 +2488,8 @@ hub.scale.setScalar(1.15);
       const cycle = (time * 0.05 + item.phase) % 1;
       const inbound = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
       const eased = inbound * inbound * (3 - 2 * inbound);
-      item.mesh.position.z = lerp(44, 15, eased);
+      item.mesh.position.z = lerp(48, 14, eased);
+      item.mesh.position.x = 0;
       item.mesh.rotation.y = cycle < 0.5 ? 0 : Math.PI;
     });
 
