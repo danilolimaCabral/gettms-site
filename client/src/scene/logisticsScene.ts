@@ -794,6 +794,25 @@ hub.scale.setScalar(1.15);
   hub.scale.y = 0.001;
 
   // ---------------------------------------------------------------- caminhão
+  const truckPath = new THREE.CatmullRomCurve3(
+    [
+      new THREE.Vector3(-2.6, 0, -6),
+      new THREE.Vector3(-2.6, 0, -22),
+      new THREE.Vector3(4, 0, -34),
+      new THREE.Vector3(28, 0, -36),
+      new THREE.Vector3(50, 0, -36),
+      new THREE.Vector3(58, 0, -40),
+      new THREE.Vector3(58, 0, -46),
+      new THREE.Vector3(58, 0, -38),
+      new THREE.Vector3(46, 0, -26),
+      new THREE.Vector3(20, 0, -16),
+      new THREE.Vector3(-1, 0, -10),
+    ],
+    true,
+    "catmullrom",
+    0.5,
+  );
+
   const truck = new THREE.Group();
 
   const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
@@ -1400,11 +1419,11 @@ hub.scale.setScalar(1.15);
   const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
     const vehicle = makeSimpleTruck(name);
     const dir = index % 2 === 0 ? -1 : 1;
-    vehicle.rotation.y = dir < 0 ? Math.PI : 0;
+    vehicle.rotation.y = Math.PI;
     vehicle.scale.setScalar(0.94);
-    vehicle.position.set(dir < 0 ? 1.8 : -1.8, 0, 0);
+    vehicle.position.set(2.8, 0, 0);
     scene.add(vehicle);
-    return { mesh: vehicle, lane: dir < 0 ? 1.8 : -1.8, speed: 7 + index * 2, offset: index * 46, dir };
+    return { mesh: vehicle, lane: 2.8, speed: 7 + index * 2, offset: index * 46, dir };
   });
 
   // ---------------------------------------------------------------- CD do cliente
@@ -2019,7 +2038,7 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
-    const pb = Math.max(0.4, p);
+    const pb = Math.max(0.86, p);
     groundUniforms.uProgress.value = easeOut(range(pb, 0.0, 0.22));
 
     const roadReveal = easeOut(range(pb, 0.0, 0.1));
@@ -2045,20 +2064,11 @@ hub.scale.setScalar(1.15);
     const swing = easeInOut(range(pb, 0.78, 0.85));
     const reverse = easeInOut(range(pb, 0.85, 0.92));
 
-    let truckX = 0;
-    let truckZ = -6;
-    let truckRot = 0;
-
-    if (p > 0.6) {
-      truckZ = lerp(-6, -38, drive);
-      truckX = lerp(0, 58, swing);
-      truckZ = lerp(-38, -40, swing);
-      truckRot = lerp(0, Math.PI, swing);
-      truckZ = lerp(-40, -45.2, reverse);
-    }
-
-    truck.position.set(truckX + Math.sin(time * 0.9) * 0.03, 0, truckZ);
-    truck.rotation.y = Math.PI + truckRot;
+    const loopT = (time * 0.03) % 1;
+    const truckPoint = truckPath.getPointAt(loopT);
+    const truckTangent = truckPath.getTangentAt(loopT);
+    truck.position.set(truckPoint.x, 0, truckPoint.z);
+    truck.rotation.y = Math.atan2(truckTangent.x, truckTangent.z);
     truck.visible = true;
     const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
     wheels.forEach((wheel) => {
