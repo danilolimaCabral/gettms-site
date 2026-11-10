@@ -418,7 +418,7 @@ export function createLogisticsScene(
   // postes com braço curvo
   const poleMat = new THREE.MeshStandardMaterial({ color: 0x7c877c, roughness: 0.7, metalness: 0.3 });
   const lampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  [-7.9, 7.9].forEach((x) => {
+  [-9.6, 9.6].forEach((x) => {
     for (let i = 0; i < 7; i += 1) {
       const z = 40 - i * 22;
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 8.4, 8), poleMat);
@@ -799,27 +799,27 @@ hub.scale.setScalar(1.15);
   // ---------------------------------------------------------------- caminhão
   const roadMat = new THREE.MeshStandardMaterial({ color: 0x39423a, roughness: 0.95 });
   const laneMat = new THREE.MeshBasicMaterial({ color: 0xe9f2e0 });
-  const accessRoad = new THREE.Mesh(new THREE.PlaneGeometry(9, 104), roadMat);
+  const accessRoad = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 104), roadMat);
   accessRoad.rotation.x = -Math.PI / 2;
-  accessRoad.position.set(-2.6, 0.05, -52);
+  accessRoad.position.set(0, 0.05, -52);
   scene.add(accessRoad);
   for (let i = 0; i < 12; i += 1) {
     const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.4), laneMat);
     dash.rotation.x = -Math.PI / 2;
-    dash.position.set(-2.6, 0.06, -4 - i * 8.5);
+    dash.position.set(0, 0.06, -4 - i * 8.5);
     scene.add(dash);
   }
   const dockRoad = new THREE.Mesh(new THREE.PlaneGeometry(78, 9), roadMat);
   dockRoad.rotation.x = -Math.PI / 2;
   dockRoad.position.set(30, 0.05, -99);
   scene.add(dockRoad);
-  const sideRoad = new THREE.Mesh(new THREE.PlaneGeometry(64, 9), roadMat);
+  const sideRoad = new THREE.Mesh(new THREE.PlaneGeometry(200, 9), roadMat);
   sideRoad.rotation.x = -Math.PI / 2;
-  sideRoad.position.set(-36, 0.05, 18);
+  sideRoad.position.set(-70, 0.05, 18);
   scene.add(sideRoad);
-  const dockRoadLink = new THREE.Mesh(new THREE.PlaneGeometry(9, 40), roadMat);
+  const dockRoadLink = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 40), roadMat);
   dockRoadLink.rotation.x = -Math.PI / 2;
-  dockRoadLink.position.set(-2.6, 0.05, -90);
+  dockRoadLink.position.set(0, 0.05, -90);
   scene.add(dockRoadLink);
 
   const truckPath = new THREE.CatmullRomCurve3(
@@ -1523,6 +1523,9 @@ hub.scale.setScalar(1.15);
   makeSmallDc(-72, 30, Math.PI, "CD OESTE", 0x39443a);
   makeSmallDc(-118, 8, Math.PI * 0.5, "CD ALFA", 0x2f6f4f);
   makeSmallDc(-100, -92, Math.PI * 0.5, "CD BETA", 0x39443a);
+  makeSmallDc(-150, -20, Math.PI * 0.5, "CD GAMA", 0x2f6f4f);
+  makeSmallDc(-138, 52, Math.PI, "CD DELTA", 0x39443a);
+  makeSmallDc(-172, -86, Math.PI * 0.5, "CD ÔMEGA", 0x2f6f4f);
   makeSmallDc(104, 30, -Math.PI * 0.5, "CD SUL", 0x39443a);
   makeSmallDc(-52, -112, Math.PI, "CD LESTE", 0x2f6f4f);
 
@@ -1824,7 +1827,7 @@ hub.scale.setScalar(1.15);
 
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
-  yardGroup.position.set(58, 0, -26);
+  yardGroup.position.set(76, 0, -22);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
@@ -1842,7 +1845,7 @@ hub.scale.setScalar(1.15);
   const stackSlots: [number, number, number][] = [];
   for (let row = 0; row < 4; row += 1) {
     for (let col = 0; col < 4; col += 1) {
-      const height = col === 1 ? 3 : col === 3 ? 2 : 1;
+      const height = col === 1 ? 2 : col === 3 ? 2 : 1;
       for (let level = 0; level < height; level += 1) {
         const mat = containerMats[(row * 3 + col + level) % containerMats.length];
         const box = new THREE.Mesh(containerGeo, mat);
