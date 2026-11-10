@@ -2,7 +2,7 @@ import ScrollStage from "@/components/site/ScrollStage";
 import SiteHeader from "@/components/site/SiteHeader";
 import ScrollFlow from "@/components/site/ScrollFlow";
 import Segments from "@/components/site/Segments";
-import Platform from "@/components/site/Platform";
+import PlatformScenes from "@/components/site/PlatformScenes";
 import Maturity from "@/components/site/Maturity";
 import Tracking from "@/components/site/Tracking";
 import Steps from "@/components/site/Steps";
@@ -20,9 +20,7 @@ export default function Home() {
         <ScrollFlow id="segmentos">
           <Segments />
         </ScrollFlow>
-        <ScrollFlow id="plataforma">
-          <Platform />
-        </ScrollFlow>
+        <PlatformScenes />
         <ScrollFlow id="maturidade">
           <Maturity />
         </ScrollFlow>
