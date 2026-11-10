@@ -1784,7 +1784,7 @@ hub.scale.setScalar(1.15);
     wheel.position.set(x, 0.6, z);
     yardLift.add(wheel);
   });
-  yardLift.position.set(-2, 0, -44.6);
+  yardLift.position.set(6, 0, -43.4);
   yardLift.rotation.y = Math.PI * 0.5;
   clientDc.add(yardLift);
 
@@ -2175,13 +2175,13 @@ hub.scale.setScalar(1.15);
     const forkPhase = forkCycle < 1 ? forkCycle : 2 - forkCycle;
     const forkEase = forkPhase * forkPhase * (3 - 2 * forkPhase);
     // descarga: da doca do caminhão até a porta do CD e volta
-    yardLift.position.x = lerp(-2, 30, forkEase);
-    yardLift.position.z = -44.6;
+    yardLift.position.x = lerp(6, 26, forkEase);
+    yardLift.position.z = -43.4;
     yardLift.rotation.y = forkCycle < 1 ? Math.PI * 0.5 : -Math.PI * 0.5;
     yardLiftLoad.visible = forkCycle < 1;
     yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.25;
     yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.35;
-    yardLift.visible = true;
+    yardLift.visible = p > 0.66;
 
     // furgão no sentido oposto, em loop
     const vanTravel = (time * 0.06 + p * 0.4) % 1;
@@ -2196,7 +2196,7 @@ hub.scale.setScalar(1.15);
     });
     dockLight.intensity = 40 * rise;
 
-    const forkliftIn = easeOut(range(pb, 0.2, 0.3));
+    const forkliftIn = easeOut(range(pb, 0.2, 0.3)) * (p > 0.18 && p < 0.5 ? 1 : 0);
     forklift.scale.setScalar(Math.max(0.001, forkliftIn));
     forklift.position.z = 4 + Math.sin(time * 0.8) * 0.6;
 
