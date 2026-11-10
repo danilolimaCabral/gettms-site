@@ -1541,6 +1541,24 @@ hub.scale.setScalar(1.15);
   }
 
   const parkedCars: THREE.Group[] = [];
+  // estacionamento com vagas pintadas
+  const lotPad = new THREE.Mesh(new THREE.PlaneGeometry(78, 22), new THREE.MeshStandardMaterial({ color: 0x2b332c, roughness: 0.95 }));
+  lotPad.rotation.x = -Math.PI / 2;
+  lotPad.position.set(-96, 0.05, 26);
+  scene.add(lotPad);
+  const bayLineMat = new THREE.MeshBasicMaterial({ color: 0xf3f7ee });
+  for (let i = 0; i <= 9; i += 1) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.02, 5), bayLineMat);
+    line.position.set(-96 - 4.5 + i * 9, 0.08, 26);
+    scene.add(line);
+  }
+  const bayTop = new THREE.Mesh(new THREE.BoxGeometry(81, 0.02, 0.14), bayLineMat);
+  bayTop.position.set(-96, 0.08, 23.5);
+  scene.add(bayTop);
+  const bayBottom = bayTop.clone();
+  bayBottom.position.z = 28.5;
+  scene.add(bayBottom);
+
 
   const visitors: { mesh: THREE.Group; phase: number }[] = [];
   // centros de distribuição espalhados pelo mapa
