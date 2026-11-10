@@ -80,6 +80,12 @@
     overflow-x: hidden;
   }
 
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
   ::selection {
     background: rgba(99, 179, 46, 0.22);
     color: #0a0f0b;

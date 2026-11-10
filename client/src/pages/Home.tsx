@@ -4,6 +4,7 @@ import Clients from "@/components/site/Clients";
 import Manifesto from "@/components/site/Manifesto";
 import Segments from "@/components/site/Segments";
 import Platform from "@/components/site/Platform";
+import Steps from "@/components/site/Steps";
 import Maturity from "@/components/site/Maturity";
 import Tracking from "@/components/site/Tracking";
 import FinalCta from "@/components/site/FinalCta";
@@ -20,6 +21,7 @@ export default function Home() {
         <Manifesto />
         <Segments />
         <Platform />
+        <Steps />
         <Maturity />
         <Tracking />
         <FinalCta />

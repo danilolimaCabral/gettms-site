@@ -12,9 +12,15 @@ export default function Clients() {
             Operações que confiam a rotina ao GetTMS
           </h2>
         </div>
-        <p className="max-w-sm text-sm leading-relaxed text-ink/50">
-          Indústrias, distribuidores e varejistas que precisam de previsibilidade em cada embarque.
-        </p>
+        <div className="max-w-sm">
+          <p className="text-sm leading-relaxed text-ink/50">
+            Indústrias, distribuidores e varejistas que precisam de previsibilidade em cada embarque.
+          </p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper px-3 py-1.5 text-[11px] text-ink/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            Operações atendidas em todo o Brasil
+          </p>
+        </div>
       </div>
 
       <div className="relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
@@ -22,7 +28,7 @@ export default function Clients() {
           {items.map((client, index) => (
             <span
               key={`${client}-${index}`}
-              className="whitespace-nowrap font-display text-xl font-semibold tracking-[-0.02em] text-ink/35 transition-colors hover:text-brand-dark md:text-2xl"
+              className="whitespace-nowrap rounded-xl border border-ink/8 bg-paper px-5 py-2.5 font-display text-lg font-semibold tracking-[-0.02em] text-ink/45 transition-colors hover:border-brand/30 hover:text-brand-dark md:text-xl"
             >
               {client}
             </span>

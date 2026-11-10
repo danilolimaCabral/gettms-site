@@ -187,6 +187,9 @@ export default function Maturity() {
                         Falar com especialista
                         <ArrowUpRight className="h-4 w-4" />
                       </a>
+                      <a href="#contato" className="btn btn-ghost">
+                        Preencher o formulário
+                      </a>
                       <button type="button" onClick={restart} className="btn btn-ghost">
                         <RotateCcw className="h-3.5 w-3.5" />
                         Refazer

@@ -16,11 +16,11 @@ export function whatsappLink(message: string) {
 }
 
 export const NAV_LINKS = [
-  { label: "Plataforma", href: "#plataforma" },
   { label: "Segmentos", href: "#segmentos" },
-  { label: "Tracking", href: "#tracking" },
+  { label: "Plataforma", href: "#plataforma" },
+  { label: "Implantação", href: "#implantacao" },
   { label: "Maturidade", href: "#maturidade" },
-  { label: "Clientes", href: "#clientes" },
+  { label: "Tracking", href: "#tracking" },
   { label: "Contato", href: "#contato" },
 ];
 

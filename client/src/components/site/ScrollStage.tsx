@@ -69,21 +69,39 @@ const CHAPTERS: Chapter[] = [
     end: 0.78,
   },
   {
-    id: "entrega",
+    id: "chegada",
     index: "07",
-    label: "A entrega",
-    title: "Chegou. E todo mundo sabe.",
-    body: "Comprovante, ocorrência ou reagendamento registrados no mesmo instante em que acontecem — para a operação, o cliente e a conferência da fatura.",
-    start: 0.8,
+    label: "A chegada",
+    title: "O caminhão chega ao CD do cliente.",
+    body: "Docas, janelas de recebimento e fila de descarga organizadas no mesmo ambiente em que o frete foi simulado — sem retrabalho de planilha na portaria.",
+    start: 0.74,
+    end: 0.82,
+  },
+  {
+    id: "doca",
+    index: "08",
+    label: "A doca",
+    title: "Recebimento conferido na hora.",
+    body: "Cada caminhão é identificado, o volume é conferido e a ocorrência — falta, avaria ou sobra — é registrada no celular do conferente, não no papel.",
+    start: 0.835,
     end: 0.9,
   },
   {
-    id: "dados",
-    index: "08",
-    label: "O ciclo",
-    title: "O ciclo fecha com dados.",
-    body: "Faturas conferidas, indicadores de desempenho e redução da conta frete comprovada em relatório — não em sensação.",
-    start: 0.92,
+    id: "escritorio",
+    index: "09",
+    label: "O escritório",
+    title: "A informação sobe para o escritório.",
+    body: "O que aconteceu na doca vira dado no painel em segundos: prazo, custo, transportadora e status da carga na mesma tela da análise.",
+    start: 0.915,
+    end: 0.96,
+  },
+  {
+    id: "analise",
+    index: "10",
+    label: "A análise",
+    title: "Decisão com o dado do dia.",
+    body: "Relatórios de desempenho, aferição de faturas e redução da conta frete comprovada em números — não em sensação.",
+    start: 0.97,
     end: 1.2,
   },
 ];
@@ -228,7 +246,8 @@ export default function ScrollStage() {
           ref={heroRef}
           className="absolute inset-0 flex items-end pb-24 md:items-center md:pb-0"
         >
-          <div className="container-wide">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/80 md:to-transparent" />
+          <div className="container-wide relative">
             <div className="max-w-3xl">
               <p className="eyebrow mb-6 flex items-center gap-3">
                 <span className="h-px w-10 bg-brand/70" />

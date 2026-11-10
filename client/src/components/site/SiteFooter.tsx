@@ -130,7 +130,10 @@ export default function SiteFooter() {
           <p>
             GETTMS® {new Date().getFullYear()} | Todos os direitos reservados · CNPJ: {CNPJ}
           </p>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <a href="#top" className="inline-flex items-center gap-1.5 text-white/50 transition-colors hover:text-[#8fe04a]">
+              Voltar ao topo <span aria-hidden="true">↑</span>
+            </a>
             <a
               href="https://www.gettms.com.br/pt/politica-de-privacidade/"
               target="_blank"

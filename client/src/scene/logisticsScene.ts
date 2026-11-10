@@ -36,9 +36,9 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.5, pos: [20, 24, 22], look: [0, 4, -70] },
   { t: 0.6, pos: [10, 24, 24], look: [0, 3, -50] },
   { t: 0.7, pos: [6, 26, 34], look: [0, 2, -60] },
-  { t: 0.8, pos: [18, 28, 44], look: [8, 2, -58] },
-  { t: 0.9, pos: [28, 34, 36], look: [10, 1, -66] },
-  { t: 1.0, pos: [20, 46, 44], look: [8, 0, -72] },
+  { t: 0.8, pos: [6, 20, 0], look: [30, 6, -50] },
+  { t: 0.9, pos: [0, 22, -6], look: [34, 6, -50] },
+  { t: 1.0, pos: [-8, 30, 2], look: [32, 4, -50] },
 ];
 
 const ROUTE_POINTS: [number, number, number][] = [
@@ -63,6 +63,26 @@ function makeShadowTexture() {
   gradient.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeTruckSideTexture(name: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 384;
+  const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, 1024, 384);
+  ctx.fillStyle = "#0d150f";
+  ctx.font = "800 150px Sora, Inter, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText("get", 210, 150);
+  ctx.fillStyle = "#63b32e";
+  ctx.fillText("TMS", 452, 150);
+  ctx.fillStyle = "rgba(13,21,15,0.55)";
+  ctx.font = "600 54px Inter, sans-serif";
+  ctx.fillText(`FRETE ${name}`, 214, 268);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -233,8 +253,8 @@ export function createLogisticsScene(
   for (let i = 0; i < 9; i += 1) {
     const hill = new THREE.Mesh(hillGeo, hillMat);
     const r = 26 + Math.random() * 34;
-    hill.scale.set(r * 1.6, r * 0.55, r * 1.3);
-    hill.position.set(-230 + i * 58 + Math.random() * 20, -r * 0.24, -230 - Math.random() * 70);
+    hill.scale.set(r * 1.7, r * 0.32, r * 1.4);
+    hill.position.set(-260 + i * 62 + Math.random() * 20, -r * 0.16, -300 - Math.random() * 70);
     hills.add(hill);
   }
   scene.add(hills);
@@ -686,6 +706,7 @@ hub.scale.setScalar(1.15);
   });
   hub.add(parcels);
 
+  hub.visible = false;
   const hubShadow = new THREE.Mesh(
     new THREE.PlaneGeometry(34, 22),
     new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity: 0.4, depthWrite: false }),
@@ -739,10 +760,16 @@ hub.scale.setScalar(1.15);
   stripe.position.set(0, 1.55, -3.8);
   truck.add(stripe);
 
-  [-1.5, 1.5].forEach((x) => {
-    const panel = new THREE.Mesh(round(0.06, 1.4, 3.6, 0.06, 2), greenMat);
-    panel.position.set(x, 3.35, -3.8);
-    truck.add(panel);
+  const truckNames = ["GT-4821", "GT-1937", "GT-7712"];
+  const truckNameTexture = track(makeTruckSideTexture(truckNames[0]));
+  [-1.51, 1.51].forEach((x) => {
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.4, 2.02),
+      new THREE.MeshBasicMaterial({ map: truckNameTexture, transparent: true }),
+    );
+    plate.position.set(x, 3.3, -3.8);
+    plate.rotation.y = x > 0 ? Math.PI / 2 : -Math.PI / 2;
+    truck.add(plate);
   });
 
   // portas traseiras com dobradiças
@@ -1177,6 +1204,177 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
+  // ---------------------------------------------------------------- CD do cliente
+  const clientDc = new THREE.Group();
+  clientDc.position.set(38, 0, -62);
+  scene.add(clientDc);
+
+  const dcBody = new THREE.Mesh(round(34, 11, 20, 0.6, 3), wallMat);
+  dcBody.position.y = 5.5;
+  clientDc.add(dcBody);
+
+  const dcRoof = new THREE.Mesh(round(35.6, 0.6, 21.6, 0.3, 2), roofMat);
+  dcRoof.position.y = 11.2;
+  clientDc.add(dcRoof);
+
+  const dcPlinth = new THREE.Mesh(round(34.6, 0.7, 20.6, 0.2, 2), trimMat);
+  dcPlinth.position.y = 0.35;
+  clientDc.add(dcPlinth);
+
+  const dcAccent = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 20.2), stripMat);
+  dcAccent.position.set(-17.05, 10.1, 0);
+  clientDc.add(dcAccent);
+
+  // nome da empresa cliente na fachada
+  const dcSignCanvas = document.createElement("canvas");
+  dcSignCanvas.width = 1024;
+  dcSignCanvas.height = 256;
+  const dcSignCtx = dcSignCanvas.getContext("2d")!;
+  dcSignCtx.clearRect(0, 0, 1024, 256);
+  dcSignCtx.fillStyle = "#0d150f";
+  dcSignCtx.font = "700 120px Sora, Inter, sans-serif";
+  dcSignCtx.textBaseline = "middle";
+  dcSignCtx.textAlign = "center";
+  dcSignCtx.fillText("MATSUYAMA", 512, 120);
+  dcSignCtx.fillStyle = "#63b32e";
+  dcSignCtx.font = "600 44px Inter, sans-serif";
+  dcSignCtx.fillText("CENTRO DE DISTRIBUIÇÃO · getTMS", 512, 206);
+  const dcSignTexture = track(new THREE.CanvasTexture(dcSignCanvas));
+  dcSignTexture.colorSpace = THREE.SRGBColorSpace;
+  const dcSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 5),
+    new THREE.MeshBasicMaterial({ map: dcSignTexture, transparent: true }),
+  );
+  dcSign.position.set(0, 9.1, 10.12);
+  dcSign.scale.set(1, 0.72, 1);
+  clientDc.add(dcSign);
+
+  // docas voltadas para a estrada (-x)
+  const dcDoorMaterials: THREE.MeshBasicMaterial[] = [];
+  const dcDoorX = [-14, 0, 14];
+  for (let i = 0; i < 3; i += 1) {
+    const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0 });
+    dcDoorMaterials.push(doorMat);
+    const door = new THREE.Mesh(round(4.4, 5, 0.2, 0.08, 2), doorMat);
+    door.position.set(dcDoorX[i], 2.7, 10.06);
+    clientDc.add(door);
+    const lintel = new THREE.Mesh(round(4.8, 0.45, 0.9, 0.12, 2), trimMat);
+    lintel.position.set(dcDoorX[i], 5.5, 10.15);
+    clientDc.add(lintel);
+    const canopy = new THREE.Mesh(round(5.2, 0.28, 3.6, 0.1, 2), trimMat);
+    canopy.position.set(dcDoorX[i], 6.2, 11.4);
+    clientDc.add(canopy);
+  }
+
+  const dcLight = new THREE.PointLight(0xffd9a0, 35, 40, 2);
+  dcLight.position.set(0, 5, 14);
+  clientDc.add(dcLight);
+
+  // escritório de análise, anexo à frente do CD
+  const office = new THREE.Group();
+  office.position.set(6, 11.4, 0);
+  clientDc.add(office);
+
+  const officeShell = new THREE.Mesh(round(18, 9, 10, 0.4, 3), wallMat);
+  officeShell.position.y = 4.5;
+  office.add(officeShell);
+
+  const officeRoof = new THREE.Mesh(round(19, 0.5, 11, 0.25, 2), roofMat);
+  officeRoof.position.y = 9.2;
+  office.add(officeRoof);
+
+  const officeGlassMat = new THREE.MeshStandardMaterial({
+    color: 0xd2e9ef,
+    roughness: 0.08,
+    metalness: 0.9,
+    transparent: true,
+    opacity: 0.16,
+  });
+  const officeGlass = new THREE.Mesh(round(17.2, 7.6, 0.2, 0.1, 2), officeGlassMat);
+  officeGlass.position.set(0, 4.4, 5.75);
+  office.add(officeGlass);
+
+  const officeInterior = new THREE.Mesh(round(17, 7.4, 0.12, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x2a3830, roughness: 0.85 }));
+  officeInterior.position.set(0, 4.2, 4.95);
+  office.add(officeInterior);
+
+  const monitorMats: THREE.MeshBasicMaterial[] = [];
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < 5; col += 1) {
+      const monitorMat = new THREE.MeshBasicMaterial({ color: 0x9ff0c0, transparent: true, opacity: 0 });
+      monitorMats.push(monitorMat);
+      const monitor = new THREE.Mesh(round(1.8, 1.1, 0.12, 0.06, 2), monitorMat);
+      monitor.position.set(-6.4 + col * 3.2, 3.15 + row * 3.4, 5.15);
+      office.add(monitor);
+
+      const desk = new THREE.Mesh(round(2.4, 0.14, 1.2, 0.06, 2), unitMat);
+      desk.position.set(-6.4 + col * 3.2, 2.4 + row * 3.4, 5.35);
+      office.add(desk);
+
+      const analyst = new THREE.Mesh(round(0.62, 0.9, 0.5, 0.24, 2), new THREE.MeshStandardMaterial({ color: 0x3b4a3f, roughness: 0.8 }));
+      analyst.position.set(-6.4 + col * 3.2, 2.95 + row * 3.4, 5.6);
+      office.add(analyst);
+
+      const analystHead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), skinMats[(row * 5 + col) % skinMats.length]);
+      analystHead.position.set(-6.4 + col * 3.2, 3.5 + row * 3.4, 5.6);
+      office.add(analystHead);
+    }
+  }
+
+  // fluxo de dados das docas para o escritório
+  const dataFlows: { curve: THREE.CatmullRomCurve3; tube: THREE.Mesh; speed: number }[] = [];
+  [-6, 0, 6].forEach((z, index) => {
+    const flowCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-19, 6.4, z),
+      new THREE.Vector3(-16, 10.5, z),
+      new THREE.Vector3(-10, 14, 2),
+      new THREE.Vector3(-2, 15.6, 3.5),
+      new THREE.Vector3(4, 14.6, 4),
+    ]);
+    const tube = new THREE.Mesh(
+      new THREE.TubeGeometry(flowCurve, 90, 0.07, 6, false),
+      new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0 }),
+    );
+    clientDc.add(tube);
+    dataFlows.push({ curve: flowCurve, tube, speed: 0.35 + index * 0.08 });
+  });
+
+  const flowDots = [0, 1, 2].map(() => {
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xeaffd2, transparent: true, opacity: 0 }),
+    );
+    clientDc.add(dot);
+    return dot;
+  });
+
+  clientDc.scale.y = 0.001;
+
+  // caminhões parados nas docas do CD, com nome no baú
+  const dcTrucks: THREE.Group[] = [];
+  dcDoorX.forEach((doorX, index) => {
+    const clone = truck.clone(true);
+    clone.traverse((child) => {
+      const light = child as THREE.PointLight;
+      if (light.isPointLight) light.intensity = 0;
+    });
+    const sideTexture = track(makeTruckSideTexture(truckNames[index]));
+    clone.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh && mesh.material) {
+        const material = mesh.material as THREE.MeshBasicMaterial;
+        if (material.map && material.map.image && (material.map.image as HTMLCanvasElement).height === 384) {
+          mesh.material = new THREE.MeshBasicMaterial({ map: sideTexture, transparent: true });
+        }
+      }
+    });
+    clone.position.set(doorX, 0, 16);
+    clone.rotation.y = Math.PI / 2;
+    clone.scale.setScalar(0.001);
+    clientDc.add(clone);
+    dcTrucks.push(clone);
+  });
+
   // ---------------------------------------------------------------- nós da rota
   type Node = { group: THREE.Group; ring: THREE.Mesh; beam: THREE.Mesh; delay: number };
   const nodes: Node[] = [];
@@ -1314,15 +1512,15 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
-    groundUniforms.uProgress.value = easeOut(range(p, -0.08, 0.24));
+    groundUniforms.uProgress.value = easeOut(range(p, 0.0, 0.22));
 
-    const roadReveal = easeOut(range(p, -0.1, 0.14));
+    const roadReveal = easeOut(range(p, 0.0, 0.1));
     asphaltMat.opacity = roadReveal;
     curbMat.opacity = roadReveal;
     edgeMat.opacity = roadReveal * 0.5;
     dashMat.opacity = roadReveal * 0.85;
 
-    const treesIn = easeOut(range(p, 0.02, 0.2));
+    const treesIn = easeOut(range(p, 0.06, 0.22));
     treeGroup.scale.y = Math.max(0.001, treesIn);
 
     nodes.forEach((node) => {
@@ -1334,10 +1532,11 @@ hub.scale.setScalar(1.15);
     });
 
     // caminhão: aproxima, estaciona na doca e depois parte
-    const enter = easeInOut(range(p, 0.02, 0.24));
+    const enter = easeInOut(range(p, 0.05, 0.24));
     const depart = easeInOut(range(p, 0.6, 0.94));
-    truck.position.z = lerp(12, -6, enter) - depart * 56;
+    truck.position.z = lerp(46, -6, enter) - depart * 56;
     truck.position.x = Math.sin(time * 0.9) * 0.05;
+    truck.visible = p > 0.03;
     const wheelSpin = time * (2.4 + enter * 6 + depart * 8);
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpin;
@@ -1400,7 +1599,7 @@ hub.scale.setScalar(1.15);
 
     // pessoas
     people.forEach((person, index) => {
-      const t = easeOut(range(p, 0.06 + person.delay, 0.16 + person.delay));
+      const t = easeOut(range(p, 0.1 + person.delay, 0.2 + person.delay));
       person.group.scale.setScalar(Math.max(0.001, t * 1.12));
       const speed = person.walkAxis ? 1.4 : 0.7;
       const swing = Math.sin(time * speed + person.phase) * (person.walkAxis ? 0.55 : 0.12);
@@ -1419,7 +1618,7 @@ hub.scale.setScalar(1.15);
 
     // carros
     cars.forEach((car) => {
-      const t = easeOut(range(p, car.delay, car.delay + 0.08));
+      const t = easeOut(range(p, 0.08 + car.delay, 0.16 + car.delay));
       car.group.scale.setScalar(Math.max(0.001, t));
       const span = 180;
       const progress = (time * car.speed + car.offset + p * 0.15) % 1;
@@ -1432,7 +1631,7 @@ hub.scale.setScalar(1.15);
     });
 
     // drone
-    const droneIn = easeOut(range(p, 0.16, 0.26));
+    const droneIn = easeOut(range(p, 0.18, 0.28));
     drone.scale.setScalar(Math.max(0.001, droneIn));
     const orbit = time * 0.35;
     drone.position.set(10 + Math.cos(orbit) * 9, 13 + Math.sin(time * 1.4) * 0.6, -4 + Math.sin(orbit) * 9);
@@ -1451,6 +1650,33 @@ hub.scale.setScalar(1.15);
       ring.scale.setScalar(Math.max(0.001, t));
       ring.rotation.z = time * (0.12 + index * 0.05);
       (ring.material as THREE.MeshBasicMaterial).opacity = t * (0.2 - index * 0.04) * (0.7 + Math.sin(time * 2 + index) * 0.3);
+    });
+
+    // CD do cliente, caminhões na doca e escritório
+    const dcIn = easeOut(range(p, 0.68, 0.8));
+    clientDc.scale.y = Math.max(0.001, dcIn);
+    dcDoorMaterials.forEach((material) => {
+      material.opacity = Math.min(1, dcIn * 1.2) * (0.75 + Math.sin(time * 1.6) * 0.15);
+    });
+    dcLight.intensity = 35 * dcIn;
+    dcTrucks.forEach((clone, index) => {
+      const t = easeOut(range(p, 0.74 + index * 0.04, 0.84 + index * 0.04));
+      clone.scale.setScalar(Math.max(0.001, t * 0.92));
+      clone.position.z = lerp(26, 16, t);
+    });
+    monitorMats.forEach((material, index) => {
+      const t = easeOut(range(p, 0.88 + (index % 5) * 0.012, 0.95 + (index % 5) * 0.012));
+      material.opacity = t * (0.6 + Math.sin(time * 3 + index) * 0.25);
+      material.color.setHex(index % 3 === 0 ? 0xbfffd6 : index % 3 === 1 ? 0x9fe0ff : 0xdfffc0);
+    });
+    dataFlows.forEach((flow, index) => {
+      const t = easeOut(range(p, 0.86 + index * 0.02, 0.94 + index * 0.02));
+      (flow.tube.material as THREE.MeshBasicMaterial).opacity = t * 0.55;
+      const dot = flowDots[index];
+      (dot.material as THREE.MeshBasicMaterial).opacity = t;
+      dot.visible = t > 0.01;
+      const travel = (time * flow.speed * 0.35 + index * 0.25) % 1;
+      flow.curve.getPointAt(travel, dot.position);
     });
 
     // rota
@@ -1487,11 +1713,11 @@ hub.scale.setScalar(1.15);
   function render() {
     if (disposed) return;
     const now = performance.now();
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    const dt = Math.min(0.2, (now - lastTime) / 1000);
     lastTime = now;
     elapsed += dt;
 
-    current += (target - current) * Math.min(1, dt * 4.2);
+    current += (target - current) * Math.min(1, dt * 5);
     smoothX += (pointerX - smoothX) * Math.min(1, dt * 3);
     smoothY += (pointerY - smoothY) * Math.min(1, dt * 3);
 
