@@ -1729,7 +1729,7 @@ hub.scale.setScalar(1.15);
 
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
-  yardGroup.position.set(54, 0, 2);
+  yardGroup.position.set(58, 0, -26);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
@@ -1784,8 +1784,8 @@ hub.scale.setScalar(1.15);
     wheel.position.set(x, 0.6, z);
     yardLift.add(wheel);
   });
-  yardLift.position.set(42, 0, 22);
-  yardLift.rotation.y = 0;
+  yardLift.position.set(-2, 0, -44.6);
+  yardLift.rotation.y = Math.PI * 0.5;
   clientDc.add(yardLift);
 
   // torre de controle / escritório de análise
@@ -2174,9 +2174,12 @@ hub.scale.setScalar(1.15);
     const forkCycle = (time * 0.16) % 2;
     const forkPhase = forkCycle < 1 ? forkCycle : 2 - forkCycle;
     const forkEase = forkPhase * forkPhase * (3 - 2 * forkPhase);
-    yardLift.position.x = lerp(42, 64, forkEase);
-    yardLift.position.z = 22;
-    yardLift.rotation.y = forkCycle < 1 ? 0 : Math.PI;
+    // descarga: da doca do caminhão até a porta do CD e volta
+    yardLift.position.x = lerp(-2, 30, forkEase);
+    yardLift.position.z = -44.6;
+    yardLift.rotation.y = forkCycle < 1 ? Math.PI * 0.5 : -Math.PI * 0.5;
+    yardLiftLoad.visible = forkCycle < 1;
+    yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.25;
     yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.35;
     yardLift.visible = true;
 
