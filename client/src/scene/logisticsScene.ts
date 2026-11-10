@@ -405,11 +405,11 @@ export function createLogisticsScene(
   });
 
   const dashMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0, transparent: true, opacity: 0 });
-  const dashCount = 44;
+  const dashCount = 88;
   const dashes = new THREE.InstancedMesh(round(0.2, 0.05, 3, 0.06, 1), dashMat, dashCount);
   const dashDummy = new THREE.Object3D();
   for (let i = 0; i < dashCount; i += 1) {
-    dashDummy.position.set(0, 0.27, 88 - i * 5.8);
+    dashDummy.position.set(i % 2 === 0 ? -2 : 2, 0.27, 88 - Math.floor(i / 2) * 5.8);
     dashDummy.updateMatrix();
     dashes.setMatrixAt(i, dashDummy.matrix);
   }
@@ -824,9 +824,9 @@ hub.scale.setScalar(1.15);
 
   const truckPath = new THREE.CatmullRomCurve3(
     [
-      new THREE.Vector3(-2.6, 0, -6),
-      new THREE.Vector3(-2.6, 0, -60),
-      new THREE.Vector3(-2.6, 0, -92),
+      new THREE.Vector3(-3.6, 0, -6),
+      new THREE.Vector3(-3.6, 0, -60),
+      new THREE.Vector3(-3.6, 0, -92),
       new THREE.Vector3(12, 0, -99),
       new THREE.Vector3(40, 0, -99),
       new THREE.Vector3(58, 0, -99),
@@ -834,8 +834,8 @@ hub.scale.setScalar(1.15);
       new THREE.Vector3(60, 0, -99),
       new THREE.Vector3(40, 0, -99),
       new THREE.Vector3(14, 0, -99),
-      new THREE.Vector3(-2.6, 0, -92),
-      new THREE.Vector3(-2.6, 0, -50)
+      new THREE.Vector3(-3.6, 0, -92),
+      new THREE.Vector3(-3.6, 0, -50)
     ],
     true,
     "catmullrom",
@@ -1615,10 +1615,10 @@ hub.scale.setScalar(1.15);
     const dir = index % 2 === 0 ? -1 : 1;
     vehicle.rotation.y = Math.PI;
     vehicle.scale.setScalar(0.94);
-    vehicle.position.set(2.8, 0, 0);
+    vehicle.position.set(3.6, 0, 0);
     vehicle.add(makeStatusTag(name, fleetStatus[index][0], fleetStatus[index][1]));
     scene.add(vehicle);
-    return { mesh: vehicle, lane: 2.8, speed: 7 + index * 2, offset: index * 46, dir };
+    return { mesh: vehicle, lane: 3.6, speed: 7 + index * 2, offset: index * 46, dir };
   });
 
   // ---------------------------------------------------------------- CD do cliente
