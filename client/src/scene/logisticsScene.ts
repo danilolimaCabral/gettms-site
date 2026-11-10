@@ -1498,7 +1498,7 @@ hub.scale.setScalar(1.15);
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
-    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 17.6, rotY: Math.PI, color });
+    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color });
     return group;
   }
 
@@ -1625,7 +1625,7 @@ hub.scale.setScalar(1.15);
     ["PEDIDO #4824 · COLETANDO", "Joinville"],
   ];
 
-  const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
+  const roadFleet = ["GT-2201", "GT-8834"].map((name, index) => {
     const vehicle = makeSimpleTruck(name);
     const dir = index % 2 === 0 ? -1 : 1;
     vehicle.rotation.y = Math.PI;
@@ -1658,10 +1658,21 @@ hub.scale.setScalar(1.15);
   // faixa de vidro e letreiro
   const dcGlassBand = new THREE.Mesh(
     round(74, 5.2, 0.4, 0.1, 2),
-    new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.15, metalness: 0.85 }),
+    new THREE.MeshStandardMaterial({ color: 0x4a5c50, roughness: 0.28, metalness: 0.45 }),
   );
   dcGlassBand.position.set(0, 9, 11.15);
   clientDc.add(dcGlassBand);
+  const mullionMat = new THREE.MeshStandardMaterial({ color: 0xf2f5ee, roughness: 0.5, metalness: 0.2 });
+  for (let i = 0; i <= 12; i += 1) {
+    const mullion = new THREE.Mesh(round(0.28, 5.3, 0.5, 0.04, 1), mullionMat);
+    mullion.position.set(-37 + i * (74 / 12), 9, 11.28);
+    clientDc.add(mullion);
+  }
+  [-1, 1].forEach((dir) => {
+    const rail = new THREE.Mesh(round(74.4, 0.3, 0.55, 0.06, 1), mullionMat);
+    rail.position.set(0, 9 + dir * 2.72, 11.3);
+    clientDc.add(rail);
+  });
 
   const dcSignCanvas = document.createElement("canvas");
   dcSignCanvas.width = 2048;
@@ -2637,7 +2648,7 @@ hub.scale.setScalar(1.15);
     request.holder.add(wrapper);
   }
 
-  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 17.6, rotY: Math.PI };
+  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 15.4, rotY: 0 };
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
 
