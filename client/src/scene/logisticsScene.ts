@@ -36,9 +36,9 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.5, pos: [20, 24, 22], look: [0, 4, -70] },
   { t: 0.6, pos: [10, 24, 24], look: [0, 3, -50] },
   { t: 0.7, pos: [6, 26, 34], look: [0, 2, -60] },
-  { t: 0.8, pos: [6, 20, 0], look: [30, 6, -50] },
-  { t: 0.9, pos: [0, 22, -6], look: [34, 6, -50] },
-  { t: 1.0, pos: [-8, 30, 2], look: [32, 4, -50] },
+  { t: 0.8, pos: [0, 30, 8], look: [36, 8, -50] },
+  { t: 0.9, pos: [18, 24, -8], look: [38, 9, -54] },
+  { t: 1.0, pos: [38.5, 16.4, -52], look: [44, 15.2, -58.4] },
 ];
 
 const ROUTE_POINTS: [number, number, number][] = [
@@ -63,6 +63,76 @@ function makeShadowTexture() {
   gradient.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeScreenTexture(kind: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 320;
+  canvas.height = 200;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#0b1611";
+  ctx.fillRect(0, 0, 320, 200);
+  ctx.fillStyle = "rgba(143,224,74,0.14)";
+  ctx.fillRect(0, 0, 320, 26);
+  ctx.fillStyle = "#8fe04a";
+  ctx.font = "600 13px Inter, sans-serif";
+  ctx.fillText(["FRETES · DIA", "CONTA FRETE", "TRACKING"][kind], 12, 18);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  for (let i = 1; i < 5; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(12, 40 + i * 32);
+    ctx.lineTo(308, 40 + i * 32);
+    ctx.stroke();
+  }
+
+  if (kind === 0) {
+    const heights = [46, 78, 58, 96, 72, 110, 88];
+    heights.forEach((h, i) => {
+      ctx.fillStyle = i % 3 === 0 ? "#b6f472" : "#5aa82f";
+      ctx.fillRect(26 + i * 40, 170 - h, 22, h);
+    });
+  } else if (kind === 1) {
+    ctx.strokeStyle = "#8fe04a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    [130, 96, 112, 70, 84, 44, 60].forEach((y, i) => {
+      const x = 24 + i * 44;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = "rgba(143,224,74,0.16)";
+    ctx.lineTo(288, 180);
+    ctx.lineTo(24, 180);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = "rgba(143,224,74,0.5)";
+    ctx.lineWidth = 2;
+    [[60, 120], [150, 70], [240, 110], [110, 160], [200, 150]].forEach(([x, y]) => {
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#b6f472";
+      ctx.fill();
+      ctx.stroke();
+    });
+    ctx.beginPath();
+    ctx.moveTo(60, 120);
+    ctx.lineTo(150, 70);
+    ctx.lineTo(240, 110);
+    ctx.lineTo(200, 150);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(60, 120);
+    ctx.lineTo(110, 160);
+    ctx.lineTo(200, 150);
+    ctx.stroke();
+  }
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -1204,135 +1274,344 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
+  function makeSimpleTruck(name: string) {
+    const group = new THREE.Group();
+    const trailer = new THREE.Mesh(round(2.95, 3.4, 12, 0.24, 3), whiteMat);
+    trailer.position.set(0, 3.05, -2.6);
+    const skirt = new THREE.Mesh(round(3, 0.55, 12, 0.14, 1), darkMat);
+    skirt.position.set(0, 1.18, -2.6);
+    const stripe = new THREE.Mesh(round(3.02, 0.2, 12.02, 0.08, 1), greenMat);
+    stripe.position.set(0, 1.55, -2.6);
+    group.add(trailer, skirt, stripe);
+
+    const texture = track(makeTruckSideTexture(name));
+    [-1.51, 1.51].forEach((x) => {
+      const plate = new THREE.Mesh(
+        new THREE.PlaneGeometry(5.4, 2.02),
+        new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
+      );
+      plate.position.set(x, 3.3, -2.6);
+      plate.rotation.y = x > 0 ? Math.PI / 2 : -Math.PI / 2;
+      group.add(plate);
+    });
+
+    const cab = new THREE.Mesh(round(2.85, 3, 2.3, 0.5, 3), whiteMat);
+    cab.position.set(0, 2.45, 4.4);
+    const windshield = new THREE.Mesh(round(2.55, 1.6, 0.12, 0.1, 1), glassMat);
+    windshield.position.set(0, 3.15, 5.58);
+    const fairing = new THREE.Mesh(round(2.75, 0.8, 1.6, 0.35, 2), whiteMat);
+    fairing.position.set(0, 4.3, 4.3);
+    group.add(cab, windshield, fairing);
+
+    const simpleWheel = new THREE.CylinderGeometry(0.7, 0.7, 0.55, 12);
+    simpleWheel.rotateZ(Math.PI / 2);
+    [5.35, 1.55, -5.6, -7.4].forEach((z) => {
+      [-1.34, 1.34].forEach((x) => {
+        const wheel = new THREE.Mesh(simpleWheel, tireMat);
+        wheel.position.set(x, 0.7, z);
+        group.add(wheel);
+      });
+    });
+
+    const shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(11, 27),
+      new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity: 0.5, depthWrite: false }),
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.2;
+    group.add(shadow);
+    return group;
+  }
+
+  const parkedCars: THREE.Group[] = [];
+
   // ---------------------------------------------------------------- CD do cliente
   const clientDc = new THREE.Group();
-  clientDc.position.set(38, 0, -62);
+  clientDc.position.set(38, 0, -64);
   scene.add(clientDc);
 
-  const dcBody = new THREE.Mesh(round(34, 11, 20, 0.6, 3), wallMat);
-  dcBody.position.y = 5.5;
+  const dcDoorX = [-25, -15, -5, 5, 15, 25];
+
+  const dcBody = new THREE.Mesh(round(62, 12, 22, 0.6, 3), wallMat);
+  dcBody.position.y = 6;
   clientDc.add(dcBody);
 
-  const dcRoof = new THREE.Mesh(round(35.6, 0.6, 21.6, 0.3, 2), roofMat);
-  dcRoof.position.y = 11.2;
+  const dcRoof = new THREE.Mesh(round(63.6, 0.6, 23.6, 0.3, 2), roofMat);
+  dcRoof.position.y = 12.2;
   clientDc.add(dcRoof);
 
-  const dcPlinth = new THREE.Mesh(round(34.6, 0.7, 20.6, 0.2, 2), trimMat);
-  dcPlinth.position.y = 0.35;
+  const dcPlinth = new THREE.Mesh(round(62.6, 0.8, 22.6, 0.2, 2), trimMat);
+  dcPlinth.position.y = 0.4;
   clientDc.add(dcPlinth);
 
-  const dcAccent = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 20.2), stripMat);
-  dcAccent.position.set(-17.05, 10.1, 0);
-  clientDc.add(dcAccent);
+  // faixa de vidro e letreiro
+  const dcGlassBand = new THREE.Mesh(
+    round(60, 5.2, 0.4, 0.1, 2),
+    new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.15, metalness: 0.85 }),
+  );
+  dcGlassBand.position.set(0, 9, 11.15);
+  clientDc.add(dcGlassBand);
 
-  // nome da empresa cliente na fachada
   const dcSignCanvas = document.createElement("canvas");
-  dcSignCanvas.width = 1024;
-  dcSignCanvas.height = 256;
+  dcSignCanvas.width = 2048;
+  dcSignCanvas.height = 384;
   const dcSignCtx = dcSignCanvas.getContext("2d")!;
-  dcSignCtx.clearRect(0, 0, 1024, 256);
-  dcSignCtx.fillStyle = "#0d150f";
-  dcSignCtx.font = "700 120px Sora, Inter, sans-serif";
+  dcSignCtx.clearRect(0, 0, 2048, 384);
+  dcSignCtx.fillStyle = "#f6faf2";
+  dcSignCtx.font = "700 150px Sora, Inter, sans-serif";
   dcSignCtx.textBaseline = "middle";
   dcSignCtx.textAlign = "center";
-  dcSignCtx.fillText("MATSUYAMA", 512, 120);
-  dcSignCtx.fillStyle = "#63b32e";
-  dcSignCtx.font = "600 44px Inter, sans-serif";
-  dcSignCtx.fillText("CENTRO DE DISTRIBUIÇÃO · getTMS", 512, 206);
+  dcSignCtx.fillText("MATSUYAMA", 1024, 140);
+  dcSignCtx.fillStyle = "#8fe04a";
+  dcSignCtx.font = "600 52px Inter, sans-serif";
+  dcSignCtx.fillText("CENTRO DE DISTRIBUIÇÃO · getTMS", 1024, 270);
   const dcSignTexture = track(new THREE.CanvasTexture(dcSignCanvas));
   dcSignTexture.colorSpace = THREE.SRGBColorSpace;
   const dcSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 5),
+    new THREE.PlaneGeometry(40, 7.5),
     new THREE.MeshBasicMaterial({ map: dcSignTexture, transparent: true }),
   );
-  dcSign.position.set(0, 9.1, 10.12);
-  dcSign.scale.set(1, 0.72, 1);
+  dcSign.position.set(0, 9, 11.4);
   clientDc.add(dcSign);
 
-  // docas voltadas para a estrada (-x)
-  const dcDoorMaterials: THREE.MeshBasicMaterial[] = [];
-  const dcDoorX = [-14, 0, 14];
-  for (let i = 0; i < 3; i += 1) {
-    const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0 });
-    dcDoorMaterials.push(doorMat);
-    const door = new THREE.Mesh(round(4.4, 5, 0.2, 0.08, 2), doorMat);
-    door.position.set(dcDoorX[i], 2.7, 10.06);
-    clientDc.add(door);
-    const lintel = new THREE.Mesh(round(4.8, 0.45, 0.9, 0.12, 2), trimMat);
-    lintel.position.set(dcDoorX[i], 5.5, 10.15);
-    clientDc.add(lintel);
-    const canopy = new THREE.Mesh(round(5.2, 0.28, 3.6, 0.1, 2), trimMat);
-    canopy.position.set(dcDoorX[i], 6.2, 11.4);
-    clientDc.add(canopy);
+  // cobertura contínua das docas
+  const dcCanopy = new THREE.Mesh(round(58, 0.25, 4.4, 0.1, 2), concreteMat);
+  dcCanopy.position.set(0, 6.9, 13.4);
+  clientDc.add(dcCanopy);
+  const dcCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(58, 0.12, 0.16), stripMat);
+  dcCanopyEdge.position.set(0, 6.8, 15.6);
+  clientDc.add(dcCanopyEdge);
+  for (let i = 0; i < 8; i += 1) {
+    const column = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 6.6, 8), poleMat);
+    column.position.set(-28 + i * 8, 3.3, 16);
+    clientDc.add(column);
   }
 
-  const dcLight = new THREE.PointLight(0xffd9a0, 35, 40, 2);
-  dcLight.position.set(0, 5, 14);
+  // 6 portas de doca
+  const dcDoorMaterials: THREE.MeshBasicMaterial[] = [];
+  dcDoorX.forEach((x) => {
+    const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0 });
+    dcDoorMaterials.push(doorMat);
+    const door = new THREE.Mesh(round(5.2, 5.2, 0.22, 0.08, 2), doorMat);
+    door.position.set(x, 2.8, 11.1);
+    clientDc.add(door);
+    const lintel = new THREE.Mesh(round(5.8, 0.5, 1, 0.12, 2), trimMat);
+    lintel.position.set(x, 5.7, 11.25);
+    clientDc.add(lintel);
+    const bumper = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 1, 10), trimMat);
+    bumper.rotation.x = Math.PI / 2;
+    bumper.position.set(x - 1.6, 1, 11.4);
+    clientDc.add(bumper);
+    const bumper2 = bumper.clone();
+    bumper2.position.x = x + 1.6;
+    clientDc.add(bumper2);
+  });
+
+  // unidades no telhado
+  [-20, -8, 8, 20].forEach((x) => {
+    const unit = new THREE.Mesh(round(3.2, 1.1, 2.6, 0.2, 2), unitMat);
+    unit.position.set(x, 13, -4);
+    clientDc.add(unit);
+  });
+
+  const dcLight = new THREE.PointLight(0xffd9a0, 45, 60, 2);
+  dcLight.position.set(0, 6, 18);
   clientDc.add(dcLight);
 
-  // escritório de análise, anexo à frente do CD
+  // pátio de estacionamento em frente
+  const lotBase = new THREE.Mesh(
+    round(74, 0.2, 22, 0.3, 2),
+    new THREE.MeshStandardMaterial({ color: 0xe6ecdf, roughness: 0.9 }),
+  );
+  lotBase.position.set(0, 0.04, 27);
+  clientDc.add(lotBase);
+
+  const lot = new THREE.Mesh(
+    round(70, 0.1, 18.5, 0.2, 2),
+    new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.92, metalness: 0.05 }),
+  );
+  lot.position.set(0, 0.12, 27);
+  clientDc.add(lot);
+
+  const bayMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.6 });
+  for (let i = 0; i < 9; i += 1) {
+    const bay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 5.6), bayMat);
+    bay.position.set(-32 + i * 8, 0.19, 30.5);
+    clientDc.add(bay);
+  }
+  const bayBar = new THREE.Mesh(new THREE.BoxGeometry(64, 0.02, 0.16), bayMat);
+  bayBar.position.set(0, 0.19, 33.3);
+  clientDc.add(bayBar);
+
+  // canteiro central
+  const island = new THREE.Mesh(
+    round(30, 0.5, 3, 0.2, 2),
+    new THREE.MeshStandardMaterial({ color: 0xdfe8d4, roughness: 0.9 }),
+  );
+  island.position.set(0, 0.25, 22.5);
+  clientDc.add(island);
+  for (let i = 0; i < 5; i += 1) {
+    const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7, 1), leafMat);
+    bush.position.set(-12 + i * 6, 0.9, 22.5);
+    bush.scale.set(1, 0.8, 1);
+    clientDc.add(bush);
+  }
+
+  // postes do pátio
+  [-30, -10, 10, 30].forEach((x) => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 7, 8), poleMat);
+    pole.position.set(x, 3.5, 37);
+    clientDc.add(pole);
+    const head = new THREE.Mesh(round(1.4, 0.16, 0.5, 0.06, 1), new THREE.MeshBasicMaterial({ color: 0xf4ffe0 }));
+    head.position.set(x, 7, 36.4);
+    clientDc.add(head);
+  });
+
+  // carros estacionados
+  const parkedColors = [0xffffff, 0x2f3a34, 0x63b32e, 0xd9e2d2];
+  parkedColors.forEach((color, index) => {
+    const car = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.65 });
+    const body = new THREE.Mesh(round(1.95, 0.72, 4.3, 0.3, 3), bodyMat);
+    body.position.y = 0.66;
+    const cabin = new THREE.Mesh(round(1.72, 0.62, 2.2, 0.28, 3), glassMat);
+    cabin.position.set(0, 1.2, -0.1);
+    car.add(body, cabin);
+    const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.26, 10);
+    wg.rotateZ(Math.PI / 2);
+    [
+      [0.95, 1.35],
+      [-0.95, 1.35],
+      [0.95, -1.35],
+      [-0.95, -1.35],
+    ].forEach(([x, z]) => {
+      const wheel = new THREE.Mesh(wg, tireMat);
+      wheel.position.set(x, 0.36, z);
+      car.add(wheel);
+    });
+    car.position.set(-24 + index * 8, 0.18, 30.5);
+    car.rotation.y = index % 2 === 0 ? 0 : Math.PI;
+    car.scale.setScalar(0.001);
+    car.userData.delay = 0.02 * index;
+    clientDc.add(car);
+    parkedCars.push(car);
+  });
+
+  // torre de controle / escritório de análise
   const office = new THREE.Group();
-  office.position.set(6, 11.4, 0);
+  office.position.set(0, 12.4, -2);
   clientDc.add(office);
 
-  const officeShell = new THREE.Mesh(round(18, 9, 10, 0.4, 3), wallMat);
-  officeShell.position.y = 4.5;
+  const officeShell = new THREE.Mesh(round(28, 8.5, 8, 0.4, 3), wallMat);
+  officeShell.position.set(0, 4.25, -2);
   office.add(officeShell);
 
-  const officeRoof = new THREE.Mesh(round(19, 0.5, 11, 0.25, 2), roofMat);
-  officeRoof.position.y = 9.2;
+  const officeRoof = new THREE.Mesh(round(29.4, 0.5, 13.4, 0.25, 2), roofMat);
+  officeRoof.position.set(0, 8.6, -0.6);
   office.add(officeRoof);
 
-  const officeGlassMat = new THREE.MeshStandardMaterial({
-    color: 0xd2e9ef,
-    roughness: 0.08,
-    metalness: 0.9,
-    transparent: true,
-    opacity: 0.16,
-  });
-  const officeGlass = new THREE.Mesh(round(17.2, 7.6, 0.2, 0.1, 2), officeGlassMat);
-  officeGlass.position.set(0, 4.4, 5.75);
-  office.add(officeGlass);
-
-  const officeInterior = new THREE.Mesh(round(17, 7.4, 0.12, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x2a3830, roughness: 0.85 }));
-  officeInterior.position.set(0, 4.2, 4.95);
+  const officeInterior = new THREE.Mesh(
+    round(27, 7.2, 0.14, 0.05, 1),
+    new THREE.MeshStandardMaterial({ color: 0x1f2a24, roughness: 0.85 }),
+  );
+  officeInterior.position.set(0, 4.1, 2.1);
   office.add(officeInterior);
 
+  const officeGlassMat = new THREE.MeshStandardMaterial({
+    color: 0xcfe6ee,
+    roughness: 0.06,
+    metalness: 0.9,
+    transparent: true,
+    opacity: 0.14,
+  });
+  const officeGlass = new THREE.Mesh(round(27.2, 7.4, 0.2, 0.1, 2), officeGlassMat);
+  officeGlass.position.set(0, 4.2, 7.4);
+  office.add(officeGlass);
+
+  const officeFloor = new THREE.Mesh(round(27, 0.2, 11.6, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0xb9c4b4, roughness: 0.75 }));
+  officeFloor.position.set(0, 0.6, 3.2);
+  office.add(officeFloor);
+
   const monitorMats: THREE.MeshBasicMaterial[] = [];
+  const screenTextures = [0, 1, 2].map((kind) => track(makeScreenTexture(kind)));
+  const deskMat = new THREE.MeshStandardMaterial({ color: 0xeef2e8, roughness: 0.5, metalness: 0.1 });
+  const chairMat = new THREE.MeshStandardMaterial({ color: 0x2f3c33, roughness: 0.7 });
+  const shirtMats = [
+    new THREE.MeshStandardMaterial({ color: 0x5b6f60, roughness: 0.75 }),
+    new THREE.MeshStandardMaterial({ color: 0x40564a, roughness: 0.75 }),
+    new THREE.MeshStandardMaterial({ color: 0x7d8f80, roughness: 0.75 }),
+  ];
+
   for (let row = 0; row < 2; row += 1) {
-    for (let col = 0; col < 5; col += 1) {
-      const monitorMat = new THREE.MeshBasicMaterial({ color: 0x9ff0c0, transparent: true, opacity: 0 });
-      monitorMats.push(monitorMat);
-      const monitor = new THREE.Mesh(round(1.8, 1.1, 0.12, 0.06, 2), monitorMat);
-      monitor.position.set(-6.4 + col * 3.2, 3.15 + row * 3.4, 5.15);
+    for (let col = 0; col < 7; col += 1) {
+      const x = -9 + col * 3;
+      const y = 2.5 + row * 3.3;
+
+      const screenMat = new THREE.MeshBasicMaterial({
+        map: screenTextures[(row * 7 + col) % 3],
+        transparent: true,
+        opacity: 0,
+      });
+      monitorMats.push(screenMat);
+      const monitor = new THREE.Mesh(round(2, 1.25, 0.12, 0.05, 2), screenMat);
+      monitor.position.set(x, y + 0.7, 6.55);
       office.add(monitor);
 
-      const desk = new THREE.Mesh(round(2.4, 0.14, 1.2, 0.06, 2), unitMat);
-      desk.position.set(-6.4 + col * 3.2, 2.4 + row * 3.4, 5.35);
-      office.add(desk);
+      const bezel = new THREE.Mesh(round(2.14, 1.38, 0.06, 0.04, 2), new THREE.MeshStandardMaterial({ color: 0x1a211c, roughness: 0.5 }));
+      bezel.position.set(x, y + 0.7, 6.5);
+      office.add(bezel);
 
-      const analyst = new THREE.Mesh(round(0.62, 0.9, 0.5, 0.24, 2), new THREE.MeshStandardMaterial({ color: 0x3b4a3f, roughness: 0.8 }));
-      analyst.position.set(-6.4 + col * 3.2, 2.95 + row * 3.4, 5.6);
+      const deskTop = new THREE.Mesh(round(2.7, 0.1, 1.5, 0.05, 2), deskMat);
+      deskTop.position.set(x, y - 0.15, 6.1);
+      office.add(deskTop);
+
+      const keyboard = new THREE.Mesh(round(1.1, 0.05, 0.36, 0.02, 1), new THREE.MeshStandardMaterial({ color: 0x2a332c, roughness: 0.6 }));
+      keyboard.position.set(x, y - 0.08, 6.55);
+      office.add(keyboard);
+
+      const chairBack = new THREE.Mesh(round(0.95, 1.15, 0.16, 0.1, 2), chairMat);
+      chairBack.position.set(x, y + 0.35, 4.55);
+      office.add(chairBack);
+
+      const chairSeat = new THREE.Mesh(round(0.95, 0.16, 0.9, 0.06, 2), chairMat);
+      chairSeat.position.set(x, y - 0.2, 4.95);
+      office.add(chairSeat);
+
+      const analyst = new THREE.Mesh(round(0.66, 0.95, 0.5, 0.24, 2), shirtMats[(row + col) % 3]);
+      analyst.position.set(x, y + 0.15, 5.05);
       office.add(analyst);
 
-      const analystHead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), skinMats[(row * 5 + col) % skinMats.length]);
-      analystHead.position.set(-6.4 + col * 3.2, 3.5 + row * 3.4, 5.6);
+      const analystHead = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 10), skinMats[(row * 7 + col) % skinMats.length]);
+      analystHead.position.set(x, y + 0.82, 5.05);
       office.add(analystHead);
     }
   }
 
+  // video wall no fundo
+  for (let i = 0; i < 3; i += 1) {
+    const wallMatScreen = new THREE.MeshBasicMaterial({ map: screenTextures[i], transparent: true, opacity: 0 });
+    monitorMats.push(wallMatScreen);
+    const wallScreen = new THREE.Mesh(round(7.4, 3.4, 0.1, 0.06, 2), wallMatScreen);
+    wallScreen.position.set(-9 + i * 9, 5.6, 2.22);
+    office.add(wallScreen);
+  }
+
+  const officeLight = new THREE.PointLight(0xfff3dd, 30, 36, 2);
+  officeLight.position.set(0, 7.4, 4.4);
+  office.add(officeLight);
+
   // fluxo de dados das docas para o escritório
   const dataFlows: { curve: THREE.CatmullRomCurve3; tube: THREE.Mesh; speed: number }[] = [];
-  [-6, 0, 6].forEach((z, index) => {
+  [-20, 0, 20].forEach((x, index) => {
     const flowCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-19, 6.4, z),
-      new THREE.Vector3(-16, 10.5, z),
-      new THREE.Vector3(-10, 14, 2),
-      new THREE.Vector3(-2, 15.6, 3.5),
-      new THREE.Vector3(4, 14.6, 4),
+      new THREE.Vector3(x, 6.6, 16),
+      new THREE.Vector3(x * 0.8, 10.5, 14),
+      new THREE.Vector3(x * 0.5, 14.5, 8),
+      new THREE.Vector3(x * 0.2, 17, 5),
+      new THREE.Vector3(0, 18.2, 4.2),
     ]);
     const tube = new THREE.Mesh(
-      new THREE.TubeGeometry(flowCurve, 90, 0.07, 6, false),
+      new THREE.TubeGeometry(flowCurve, 90, 0.055, 6, false),
       new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0 }),
     );
     clientDc.add(tube);
@@ -1341,7 +1620,7 @@ hub.scale.setScalar(1.15);
 
   const flowDots = [0, 1, 2].map(() => {
     const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 12, 12),
+      new THREE.SphereGeometry(0.24, 12, 12),
       new THREE.MeshBasicMaterial({ color: 0xeaffd2, transparent: true, opacity: 0 }),
     );
     clientDc.add(dot);
@@ -1350,29 +1629,17 @@ hub.scale.setScalar(1.15);
 
   clientDc.scale.y = 0.001;
 
-  // caminhões parados nas docas do CD, com nome no baú
+  // frota getTMS estacionada nas 6 docas
   const dcTrucks: THREE.Group[] = [];
+  const fleetNames = ["GT-4821", "GT-1937", "GT-7712", "GT-3048", "GT-6620", "GT-9155"];
   dcDoorX.forEach((doorX, index) => {
-    const clone = truck.clone(true);
-    clone.traverse((child) => {
-      const light = child as THREE.PointLight;
-      if (light.isPointLight) light.intensity = 0;
-    });
-    const sideTexture = track(makeTruckSideTexture(truckNames[index]));
-    clone.traverse((child) => {
-      const mesh = child as THREE.Mesh;
-      if (mesh.isMesh && mesh.material) {
-        const material = mesh.material as THREE.MeshBasicMaterial;
-        if (material.map && material.map.image && (material.map.image as HTMLCanvasElement).height === 384) {
-          mesh.material = new THREE.MeshBasicMaterial({ map: sideTexture, transparent: true });
-        }
-      }
-    });
-    clone.position.set(doorX, 0, 16);
-    clone.rotation.y = Math.PI / 2;
-    clone.scale.setScalar(0.001);
-    clientDc.add(clone);
-    dcTrucks.push(clone);
+    const parked = makeSimpleTruck(fleetNames[index]);
+    parked.position.set(doorX + (index % 2 === 0 ? 1.2 : -1.2), 0, 20);
+    parked.rotation.y = Math.PI * 0.82 + (index % 2 === 0 ? 0.08 : -0.08);
+    parked.scale.setScalar(0.001);
+    parked.userData.delay = index * 0.015;
+    clientDc.add(parked);
+    dcTrucks.push(parked);
   });
 
   // ---------------------------------------------------------------- nós da rota
@@ -1660,18 +1927,23 @@ hub.scale.setScalar(1.15);
     });
     dcLight.intensity = 35 * dcIn;
     dcTrucks.forEach((clone, index) => {
-      const t = easeOut(range(p, 0.74 + index * 0.04, 0.84 + index * 0.04));
-      clone.scale.setScalar(Math.max(0.001, t * 0.92));
-      clone.position.z = lerp(26, 16, t);
+      const delay = (clone.userData.delay as number) || 0;
+      const t = easeOut(range(p, 0.72 + delay, 0.82 + delay));
+      clone.scale.setScalar(Math.max(0.001, t * 0.94));
+      clone.position.z = lerp(30, 20, t);
+    });
+    parkedCars.forEach((car) => {
+      const delay = (car.userData.delay as number) || 0;
+      const t = easeOut(range(p, 0.76 + delay, 0.84 + delay));
+      car.scale.setScalar(Math.max(0.001, t));
     });
     monitorMats.forEach((material, index) => {
       const t = easeOut(range(p, 0.88 + (index % 5) * 0.012, 0.95 + (index % 5) * 0.012));
-      material.opacity = t * (0.6 + Math.sin(time * 3 + index) * 0.25);
-      material.color.setHex(index % 3 === 0 ? 0xbfffd6 : index % 3 === 1 ? 0x9fe0ff : 0xdfffc0);
+      material.opacity = t * (0.88 + Math.sin(time * 2.4 + index) * 0.1);
     });
     dataFlows.forEach((flow, index) => {
       const t = easeOut(range(p, 0.86 + index * 0.02, 0.94 + index * 0.02));
-      (flow.tube.material as THREE.MeshBasicMaterial).opacity = t * 0.55;
+      (flow.tube.material as THREE.MeshBasicMaterial).opacity = t * 0.35;
       const dot = flowDots[index];
       (dot.material as THREE.MeshBasicMaterial).opacity = t;
       dot.visible = t > 0.01;
