@@ -160,7 +160,7 @@ export default function PlatformScenes() {
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.92)_0%,rgba(11,16,12,0.7)_34%,rgba(11,16,12,0.18)_62%,rgba(11,16,12,0)_100%)]" />
         <div className="container-wide relative grid w-full items-center gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
-          <div key={scene} className="order-2 max-w-lg animate-in fade-in-0 slide-in-from-bottom-3 rounded-2xl bg-[#0b100c]/55 p-6 backdrop-blur-sm duration-500 lg:order-1">
+          <div key={scene} className="order-2 max-w-lg animate-in lg:col-start-2 lg:row-start-1 fade-in-0 slide-in-from-bottom-3 rounded-2xl bg-[#0b100c]/55 p-6 backdrop-blur-sm duration-500 lg:order-1">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">
               {feature.number} · Plataforma
             </p>

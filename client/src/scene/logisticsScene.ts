@@ -2179,10 +2179,10 @@ hub.scale.setScalar(1.15);
   });
   const heroMat = new THREE.MeshBasicMaterial({ map: heroTextures[0], transparent: true });
   const heroTable = new THREE.Mesh(round(3.2, 2, 0.12, 0.06, 2), heroMat);
-  heroTable.position.set(0, 3.5, 6.75);
+  heroTable.position.set(0, 3.2, 6.75);
   office.add(heroTable);
   const heroBezel = new THREE.Mesh(round(3.4, 2.2, 0.08, 0.05, 2), new THREE.MeshStandardMaterial({ color: 0x1a211c, roughness: 0.5 }));
-  heroBezel.position.set(0, 3.5, 6.68);
+  heroBezel.position.set(0, 3.2, 6.68);
   office.add(heroBezel);
   let heroView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   const monitorMats: THREE.MeshBasicMaterial[] = [];
@@ -2898,8 +2898,8 @@ hub.scale.setScalar(1.15);
         segTarget
           .copy(officePos)
           .addScaledVector(officeFwd, 5.4 * segmentZoom)
-          .addScaledVector(officeRight, -2.2)
-          .add(new THREE.Vector3(0, 0.1, 0));
+          .addScaledVector(officeRight, -3.2)
+          .add(new THREE.Vector3(0, 0.55, 0));
         overrideLook.lerp(officePos, 0.25);
         camera.position.copy(segTarget);
         camera.lookAt(overrideLook);
