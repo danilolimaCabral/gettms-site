@@ -158,7 +158,7 @@ export default function PlatformScenes() {
   return (
     <section id="plataforma" ref={sectionRef} className="relative bg-transparent" style={{ height: `${FEATURES.length * 150}vh` }}>
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.94)_0%,rgba(11,16,12,0.78)_40%,rgba(11,16,12,0.35)_70%,rgba(11,16,12,0.12)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.92)_0%,rgba(11,16,12,0.7)_34%,rgba(11,16,12,0.18)_62%,rgba(11,16,12,0)_100%)]" />
         <div className="container-wide relative grid w-full items-center gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
           <div key={scene} className="order-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-500 lg:order-1">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">

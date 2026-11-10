@@ -2893,7 +2893,7 @@ hub.scale.setScalar(1.15);
         heroTable.getWorldPosition(officePos);
         heroTable.getWorldQuaternion(officeQuat);
         officeFwd.set(0, 0, 1).applyQuaternion(officeQuat).normalize();
-        segTarget.copy(officePos).addScaledVector(officeFwd, 4.6 * segmentZoom).add(new THREE.Vector3(0, 0.35, 0));
+        segTarget.copy(officePos).addScaledVector(officeFwd, 2.9 * segmentZoom).add(new THREE.Vector3(0, 0.15, 0));
         overrideLook.lerp(officePos, 0.06);
       } else {
         segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
