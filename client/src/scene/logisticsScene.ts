@@ -46,9 +46,9 @@ const ROUTE_POINTS: [number, number, number][] = [
   [-1.2, 0.32, -2],
   [1.2, 0.32, -20],
   [-1.2, 0.32, -40],
-  [1.6, 0.32, -52],
-  [7, 0.32, -60],
-  [12, 0.32, -64],
+  [4, 0.32, -48],
+  [20, 0.32, -47],
+  [43, 0.32, -44],
 ];
 
 function makeShadowTexture() {
@@ -80,12 +80,18 @@ function makeScreenTexture(kind: number) {
   ctx.fillStyle = "#8fe04a";
   ctx.font = "600 13px Inter, sans-serif";
   ctx.fillText(["FRETES · DIA", "CONTA FRETE", "TRACKING"][kind], 12, 18);
+  ctx.fillStyle = "#f2ffe2";
+  ctx.font = "700 30px Sora, Inter, sans-serif";
+  ctx.fillText(["412", "R$ 1,24 mi", "98,4%"][kind], 12, 58);
+  ctx.fillStyle = "rgba(143,224,74,0.8)";
+  ctx.font = "600 11px Inter, sans-serif";
+  ctx.fillText(["no prazo", "-7,8% no mês", "no prazo"][kind], 118, 56);
 
   ctx.strokeStyle = "rgba(255,255,255,0.07)";
   for (let i = 1; i < 5; i += 1) {
     ctx.beginPath();
-    ctx.moveTo(12, 40 + i * 32);
-    ctx.lineTo(308, 40 + i * 32);
+    ctx.moveTo(12, 78 + i * 28);
+    ctx.lineTo(308, 78 + i * 28);
     ctx.stroke();
   }
 
@@ -1457,6 +1463,42 @@ hub.scale.setScalar(1.15);
     clientDc.add(bush);
   }
 
+  // portaria e cancela na entrada do pátio
+  const gatehouse = new THREE.Mesh(round(4, 2.8, 3.4, 0.25, 2), wallMat);
+  gatehouse.position.set(-36, 1.4, 19);
+  clientDc.add(gatehouse);
+  const gateRoof = new THREE.Mesh(round(4.8, 0.3, 4.2, 0.1, 2), roofMat);
+  gateRoof.position.set(-36, 2.95, 19);
+  clientDc.add(gateRoof);
+  const gateWindow = new THREE.Mesh(round(2.6, 1, 0.12, 0.06, 2), new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.2, metalness: 0.8 }));
+  gateWindow.position.set(-36, 1.8, 20.72);
+  clientDc.add(gateWindow);
+  const barrierPost = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.3, 8), trimMat);
+  barrierPost.position.set(-33, 0.65, 21);
+  clientDc.add(barrierPost);
+  const barrier = new THREE.Mesh(new THREE.BoxGeometry(6, 0.14, 0.14), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  barrier.position.set(-30, 1.25, 21);
+  clientDc.add(barrier);
+  const barrierStripe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
+  barrierStripe.position.set(-31.5, 1.25, 21);
+  clientDc.add(barrierStripe);
+  const barrierStripe2 = barrierStripe.clone();
+  barrierStripe2.position.x = -28.5;
+  clientDc.add(barrierStripe2);
+
+  // setas e travas de roda nas vagas
+  const arrowMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.5 });
+  for (let i = 0; i < 4; i += 1) {
+    const arrow = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.02, 0.16), arrowMat);
+    arrow.position.set(-20 + i * 13, 0.2, 25.5);
+    clientDc.add(arrow);
+  }
+  for (let i = 0; i < 8; i += 1) {
+    const stop = new THREE.Mesh(round(1.6, 0.18, 0.4, 0.06, 1), concreteMat);
+    stop.position.set(-28 + i * 8, 0.24, 33.6);
+    clientDc.add(stop);
+  }
+
   // postes do pátio
   [-30, -10, 10, 30].forEach((x) => {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 7, 8), poleMat);
@@ -1633,6 +1675,7 @@ hub.scale.setScalar(1.15);
   const dcTrucks: THREE.Group[] = [];
   const fleetNames = ["GT-4821", "GT-1937", "GT-7712", "GT-3048", "GT-6620", "GT-9155"];
   dcDoorX.forEach((doorX, index) => {
+    if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
     parked.position.set(doorX + (index % 2 === 0 ? 1.2 : -1.2), 0, 20);
     parked.rotation.y = Math.PI * 0.82 + (index % 2 === 0 ? 0.08 : -0.08);
@@ -1800,11 +1843,29 @@ hub.scale.setScalar(1.15);
 
     // caminhão: aproxima, estaciona na doca e depois parte
     const enter = easeInOut(range(p, 0.05, 0.24));
-    const depart = easeInOut(range(p, 0.6, 0.94));
-    truck.position.z = lerp(46, -6, enter) - depart * 56;
-    truck.position.x = Math.sin(time * 0.9) * 0.05;
+    const turn = easeInOut(range(p, 0.6, 0.65));
+    const drive = easeInOut(range(p, 0.65, 0.76));
+    const swing = easeInOut(range(p, 0.76, 0.83));
+    const reverse = easeInOut(range(p, 0.83, 0.9));
+
+    let truckX = 0;
+    let truckZ = lerp(46, -6, enter);
+    let truckRot = 0;
+
+    if (p > 0.6) {
+      truckRot = lerp(0, Math.PI, turn);
+      truckZ = lerp(-6, -34, drive);
+      truckX = lerp(0, 43, swing);
+      truckZ = lerp(-34, -40, swing);
+      truckRot = lerp(Math.PI, Math.PI * 1.5, swing);
+      truckZ = lerp(-40, -46.5, reverse);
+      truckRot = lerp(Math.PI * 1.5, Math.PI * 2, reverse);
+    }
+
+    truck.position.set(truckX + Math.sin(time * 0.9) * 0.03, 0, truckZ);
+    truck.rotation.y = truckRot;
     truck.visible = p > 0.03;
-    const wheelSpin = time * (2.4 + enter * 6 + depart * 8);
+    const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpin;
     });

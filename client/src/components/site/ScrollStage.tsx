@@ -9,6 +9,7 @@ type Chapter = {
   label: string;
   title: string;
   body: string;
+  chips: string[];
   start: number;
   end: number;
 };
@@ -18,8 +19,9 @@ const CHAPTERS: Chapter[] = [
     id: "mapa",
     index: "01",
     label: "O mapa",
-    title: "Sua operação inteira entra em cena.",
-    body: "Origens, destinos, transportadoras e volumes conectados em um só lugar — sem planilha paralela, sem telefone tocando para saber onde está a carga.",
+    title: "Toda a operação em uma cena.",
+    body: "Origens, destinos e volumes conectados.",
+    chips: ["Origens", "Destinos", "Volumes"],
     start: 0.08,
     end: 0.18,
   },
@@ -27,8 +29,9 @@ const CHAPTERS: Chapter[] = [
     id: "armazem",
     index: "02",
     label: "O armazém",
-    title: "Do embarque à doca, tudo registrado.",
-    body: "Coletas, agendamentos, janelas e ocorrências acompanhados em tempo real por quem opera — não por quem lembra de ligar depois.",
+    title: "Do embarque à doca.",
+    body: "Coletas e janelas acompanhadas em tempo real.",
+    chips: ["Coletas", "Janelas", "Ocorrências"],
     start: 0.2,
     end: 0.3,
   },
@@ -36,8 +39,9 @@ const CHAPTERS: Chapter[] = [
     id: "patio",
     index: "03",
     label: "O pátio",
-    title: "Carga organizada é custo sob controle.",
-    body: "Contêineres, paletes e empilhadeira na mesma visão da doca. O volume sai certo, na janela combinada, com histórico de cada movimentação.",
+    title: "Carga organizada, custo sob controle.",
+    body: "A mesma plataforma para cada segmento.",
+    chips: ["Alimentos", "Farma", "Construção", "E-commerce"],
     start: 0.32,
     end: 0.42,
   },
@@ -45,8 +49,9 @@ const CHAPTERS: Chapter[] = [
     id: "cidade",
     index: "04",
     label: "A cidade",
-    title: "A operação não termina no pátio.",
-    body: "Rotas urbanas, viadutos, janelas de entrega e restrições de acesso consideradas na simulação — o prazo prometido é o prazo que a cidade permite cumprir.",
+    title: "O prazo que a cidade permite.",
+    body: "Rotas urbanas e restrições na simulação.",
+    chips: ["Rotas urbanas", "Restrições", "Janelas"],
     start: 0.44,
     end: 0.54,
   },
@@ -54,8 +59,9 @@ const CHAPTERS: Chapter[] = [
     id: "rota",
     index: "05",
     label: "A rota",
-    title: "Cada frete é uma decisão de custo.",
-    body: "Simule o frete e compare prazo, valor e modal entre as transportadoras integradas antes de fechar — com a regra comercial da sua operação aplicada.",
+    title: "Simule antes de fechar.",
+    body: "Prazo, valor e modal lado a lado.",
+    chips: ["Prazo", "Valor", "Modal"],
     start: 0.56,
     end: 0.66,
   },
@@ -63,17 +69,19 @@ const CHAPTERS: Chapter[] = [
     id: "transito",
     index: "06",
     label: "Em trânsito",
-    title: "Rastreabilidade sem ponto cego.",
-    body: "Cada evento da carga vira histórico: avaria, atraso, desvio, responsável e prazo. O cliente acompanha por um link próprio, sem sobrecarregar o time.",
+    title: "Rastreio sem ponto cego.",
+    body: "Status e previsão para o seu cliente.",
+    chips: ["Status", "Previsão", "Link do cliente"],
     start: 0.68,
-    end: 0.78,
+    end: 0.73,
   },
   {
     id: "chegada",
     index: "07",
     label: "A chegada",
-    title: "O caminhão chega ao CD do cliente.",
-    body: "Docas, janelas de recebimento e fila de descarga organizadas no mesmo ambiente em que o frete foi simulado — sem retrabalho de planilha na portaria.",
+    title: "Bem-vindo ao CD do cliente.",
+    body: "O caminhão manobra e encosta na doca.",
+    chips: ["Docas", "Agendamento"],
     start: 0.74,
     end: 0.82,
   },
@@ -81,8 +89,9 @@ const CHAPTERS: Chapter[] = [
     id: "doca",
     index: "08",
     label: "A doca",
-    title: "Recebimento conferido na hora.",
-    body: "Cada caminhão é identificado, o volume é conferido e a ocorrência — falta, avaria ou sobra — é registrada no celular do conferente, não no papel.",
+    title: "Conferência na hora.",
+    body: "Cada volume vira registro no sistema.",
+    chips: ["Volume", "Avaria", "Ocorrência"],
     start: 0.835,
     end: 0.9,
   },
@@ -90,8 +99,9 @@ const CHAPTERS: Chapter[] = [
     id: "escritorio",
     index: "09",
     label: "O escritório",
-    title: "A informação sobe para o escritório.",
-    body: "O que aconteceu na doca vira dado no painel em segundos: prazo, custo, transportadora e status da carga na mesma tela da análise.",
+    title: "Dado na tela em segundos.",
+    body: "Da doca ao dashboard, sem retrabalho.",
+    chips: ["Dashboards", "Relatórios"],
     start: 0.915,
     end: 0.96,
   },
@@ -100,7 +110,8 @@ const CHAPTERS: Chapter[] = [
     index: "10",
     label: "A análise",
     title: "Decisão com o dado do dia.",
-    body: "Relatórios de desempenho, aferição de faturas e redução da conta frete comprovada em números — não em sensação.",
+    body: "Conta frete, desempenho e redução de custo.",
+    chips: ["Conta frete", "Desempenho", "Redução"],
     start: 0.97,
     end: 1.2,
   },
@@ -127,6 +138,19 @@ export default function ScrollStage() {
   const [active, setActive] = useState(-1);
   const sceneRef = useRef<LogisticsSceneHandle | null>(null);
   const activeRef = useRef(-1);
+
+  useEffect(() => {
+    const onSeek = (event: Event) => {
+      const detail = (event as CustomEvent<number>).detail;
+      if (typeof detail !== "number") return;
+      const section = sectionRef.current;
+      if (!section) return;
+      const travel = section.offsetHeight - window.innerHeight;
+      window.scrollTo({ top: section.offsetTop + travel * detail, behavior: "smooth" });
+    };
+    window.addEventListener("gettms:seek", onSeek);
+    return () => window.removeEventListener("gettms:seek", onSeek);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -217,7 +241,7 @@ export default function ScrollStage() {
   };
 
   return (
-    <section id="experiencia" ref={sectionRef} className="relative h-[920vh]" aria-label="A jornada da carga no GetTMS">
+    <section id="experiencia" ref={sectionRef} className="relative h-[1400vh]" aria-label="A jornada da carga no GetTMS">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
@@ -303,7 +327,17 @@ export default function ScrollStage() {
                   <span className="text-ink/50">{chapter.label}</span>
                 </div>
                 <h2 className="display-md text-ink">{chapter.title}</h2>
-                <p className="mt-4 text-sm leading-relaxed text-ink/60 md:text-base">{chapter.body}</p>
+                <p className="mt-3 text-sm leading-relaxed text-ink/55 md:text-base">{chapter.body}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {chapter.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-brand/25 bg-brand-soft px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-brand-dark"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

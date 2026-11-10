@@ -1,19 +1,57 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import Logo from "./Logo";
-import { DEMO_URL, NAV_LINKS } from "@/content/site";
+import { DEMO_URL } from "@/content/site";
+
+type NavItem = { label: string; seek?: number; href?: string };
+
+const NAV: NavItem[] = [
+  { label: "Operação", seek: 0.1 },
+  { label: "Segmentos", seek: 0.34 },
+  { label: "Plataforma", seek: 0.58 },
+  { label: "Tracking", seek: 0.69 },
+  { label: "CD do cliente", seek: 0.82 },
+  { label: "Contato", href: "#contato" },
+];
+
+function goTo(item: NavItem) {
+  if (item.seek !== undefined) {
+    window.dispatchEvent(new CustomEvent("gettms:seek", { detail: item.seek }));
+    return;
+  }
+  if (item.href) {
+    const target = document.querySelector(item.href);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
 
 export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeId, setActiveId] = useState<string>("");
+  const [active, setActive] = useState("");
 
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 24);
       const max = document.documentElement.scrollHeight - window.innerHeight;
       setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+
+      const stage = document.getElementById("experiencia");
+      if (!stage) return;
+      const travel = stage.offsetHeight - window.innerHeight;
+      const p = travel > 0 ? (window.scrollY - stage.offsetTop) / travel : 0;
+      if (p >= 0 && p <= 1.02) {
+        let current = "";
+        NAV.forEach((item) => {
+          if (item.seek !== undefined && p + 0.03 >= item.seek) current = item.label;
+        });
+        setActive(current);
+      } else if (p > 1.02) {
+        setActive("Contato");
+      } else {
+        setActive("");
+      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -22,25 +60,6 @@ export default function SiteHeader() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, []);
-
-  useEffect(() => {
-    const sections = NAV_LINKS.map((link) => document.querySelector(link.href)).filter(
-      (element): element is Element => Boolean(element),
-    );
-    if (!sections.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveId(`#${entry.target.id}`);
-        });
-      },
-      { rootMargin: "-45% 0px -50% 0px", threshold: 0 },
-    );
-
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -70,24 +89,25 @@ export default function SiteHeader() {
           </a>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Seções do site">
-            {NAV_LINKS.map((link) => {
-              const isActive = activeId === link.href;
+            {NAV.map((item) => {
+              const isActive = active === item.label;
               return (
-                <a
-                  key={link.href}
-                  href={link.href}
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => goTo(item)}
                   aria-current={isActive ? "true" : undefined}
                   className={`relative rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors ${
                     isActive ? "text-ink" : "text-ink/60 hover:bg-ink/5 hover:text-ink"
                   }`}
                 >
-                  {link.label}
+                  {item.label}
                   <span
                     className={`absolute inset-x-3.5 -bottom-0.5 h-[2px] origin-left rounded-full bg-brand transition-transform duration-300 ${
                       isActive ? "scale-x-100" : "scale-x-0"
                     }`}
                   />
-                </a>
+                </button>
               );
             })}
           </nav>
@@ -135,18 +155,21 @@ export default function SiteHeader() {
             </button>
           </div>
           <nav className="container-wide mt-6 flex flex-1 flex-col gap-2" aria-label="Seções do site">
-            {NAV_LINKS.map((link, index) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="flex items-baseline justify-between border-b border-ink/10 py-4 font-display text-3xl font-semibold tracking-tight text-ink"
+            {NAV.map((item, index) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  goTo(item);
+                }}
+                className="flex items-baseline justify-between border-b border-ink/10 py-4 text-left font-display text-3xl font-semibold tracking-tight text-ink"
               >
-                {link.label}
+                {item.label}
                 <span className="text-[11px] font-normal tracking-[0.2em] text-ink/30">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-              </a>
+              </button>
             ))}
             <a
               href={DEMO_URL}
@@ -158,9 +181,7 @@ export default function SiteHeader() {
               Agendar demonstração
               <ArrowUpRight className="h-4 w-4" />
             </a>
-            <p className="mt-6 text-center text-[11px] text-ink/40">
-              Ou fale com a Mia no canto da tela
-            </p>
+            <p className="mt-6 text-center text-[11px] text-ink/40">Ou fale com a Mia no canto da tela</p>
           </nav>
         </div>
       )}
