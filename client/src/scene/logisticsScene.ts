@@ -217,8 +217,8 @@ export function createLogisticsScene(
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xedf1e8);
-  scene.fog = new THREE.FogExp2(0xeef2e9, 0.0015);
+  scene.background = new THREE.Color(0xdbe9f4);
+  scene.fog = new THREE.FogExp2(0xe2edf5, 0.0014);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
   camera.position.set(38, 17, 42);
@@ -1498,7 +1498,7 @@ hub.scale.setScalar(1.15);
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
-    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color, label: name });
+    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: -Math.PI / 2, color, label: name });
     return group;
   }
 
@@ -1770,11 +1770,13 @@ hub.scale.setScalar(1.15);
 
   // 6 portas de doca
   const dcDoorMaterials: THREE.MeshBasicMaterial[] = [];
+  const dcDoorMeshes: THREE.Mesh[] = [];
   dcDoorX.forEach((x) => {
     const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0 });
     dcDoorMaterials.push(doorMat);
     const door = new THREE.Mesh(round(5.2, 5.2, 0.22, 0.08, 2), doorMat);
     door.position.set(x, 2.8, 11.1);
+    dcDoorMeshes.push(door);
     clientDc.add(door);
     const lintel = new THREE.Mesh(round(5.8, 0.5, 1, 0.12, 2), trimMat);
     lintel.position.set(x, 5.7, 11.25);
@@ -2366,6 +2368,11 @@ hub.scale.setScalar(1.15);
 
     // velocidade com aceleração e frenagem nas docas
     const dockBell = Math.exp(-Math.pow((truckPhase - 0.62) / 0.09, 2));
+    dcDoorMeshes.forEach((door, index) => {
+      const open = dockBell * (index === 2 || index === 3 ? 1 : 0.12);
+      door.scale.y = 1 - open * 0.94;
+      door.position.y = 2.8 + open * 2.45;
+    });
     const speedTarget = 0.017 * (1 - 0.72 * dockBell);
     const accel = (speedTarget - truckSpeed) * Math.min(1, frameDt * 2.2);
     truckSpeed += accel;
@@ -2689,21 +2696,30 @@ hub.scale.setScalar(1.15);
       plateCanvas.width = 1024;
       plateCanvas.height = 256;
       const plateCtx = plateCanvas.getContext("2d")!;
-      plateCtx.fillStyle = "#f6f8f2";
+      plateCtx.fillStyle = "#f7f9f3";
       plateCtx.fillRect(0, 0, 1024, 256);
+      plateCtx.fillStyle = "#63b32e";
+      plateCtx.fillRect(0, 0, 1024, 16);
+      plateCtx.fillRect(0, 240, 1024, 16);
       plateCtx.fillStyle = "#1d2a20";
       plateCtx.font = "700 96px Sora, Inter, sans-serif";
-      plateCtx.textAlign = "center";
       plateCtx.textBaseline = "middle";
-      plateCtx.fillText(request.label, 512, 96);
+      plateCtx.fillText("get", 150, 104);
       plateCtx.fillStyle = "#63b32e";
-      plateCtx.font = "600 44px Inter, sans-serif";
-      plateCtx.fillText("PLATAFORMA TMS · GETTMS", 512, 186);
+      plateCtx.fillText("TMS", 356, 104);
+      plateCtx.fillStyle = "#6b7a6d";
+      plateCtx.font = "600 40px Inter, sans-serif";
+      plateCtx.fillText(request.label, 150, 186);
+      plateCtx.fillStyle = "#1d2a20";
+      plateCtx.font = "700 34px Inter, sans-serif";
+      plateCtx.textAlign = "right";
+      plateCtx.fillText("PLATAFORMA TMS", 960, 186);
+      plateCtx.textAlign = "left";
       const plateTex = track(new THREE.CanvasTexture(plateCanvas));
       plateTex.colorSpace = THREE.SRGBColorSpace;
       const plateMat = new THREE.MeshBasicMaterial({ map: plateTex, transparent: true });
       [-1, 1].forEach((side) => {
-        const plate = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.6), plateMat);
+        const plate = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 1.85), plateMat);
         plate.position.set(side * 1.32, 2.5, -4.2);
         plate.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
         wrapper.add(plate);
@@ -2712,7 +2728,7 @@ hub.scale.setScalar(1.15);
     request.holder.add(wrapper);
   }
 
-  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 15.4, rotY: 0 };
+  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 15.4, rotY: -Math.PI / 2 };
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
 
