@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight, Play } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Play, RotateCw } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
 import { WHATSAPP_URL, DEMO_URL } from "@/content/site";
 
@@ -271,13 +271,6 @@ export default function ScrollStage() {
 
         {/* HUD superior */}
         <div className="pointer-events-none absolute inset-x-0 top-24 flex items-center justify-between px-6 md:px-12">
-          <div className="flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.28em] text-ink/45">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
-            </span>
-            Operação em tempo real
-          </div>
           <div className="hidden text-[10px] uppercase tracking-[0.28em] text-ink/35 md:block">
             Role para montar a cena
           </div>
@@ -286,9 +279,9 @@ export default function ScrollStage() {
         {/* hero */}
         <div
           ref={heroRef}
-          className="absolute inset-0 flex items-end pb-24 md:items-center md:pb-0"
+          className="absolute inset-0 flex items-end pb-24 pt-28 md:items-center md:pb-0 md:pt-24"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/45 md:to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70 md:to-transparent" />
           <div className="container-wide relative">
             <div className="max-w-3xl">
               <p className="eyebrow mb-6 flex items-center gap-3">
@@ -313,6 +306,25 @@ export default function ScrollStage() {
                 <button type="button" onClick={() => jumpTo(0.34)} className="btn btn-ghost">
                   <Play className="h-3.5 w-3.5 fill-current" />
                   Ver a plataforma
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !orbit;
+                    setOrbit(next);
+                    sceneRef.current?.setOrbit(next);
+                  }}
+                  onPointerDown={(event) => {
+                    if (!orbit) return;
+                    const startX = event.clientX;
+                    const move = (e: PointerEvent) => sceneRef.current?.orbitBy((e.clientX - startX) * 0.004);
+                    window.addEventListener("pointermove", move);
+                    window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
+                  }}
+                  className={`btn btn-ghost ${orbit ? "!border-brand !text-brand-dark" : ""}`}
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  {orbit ? "360° · arraste" : "Ver em 360°"}
                 </button>
               </div>
               <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-xs text-ink/45">
@@ -359,32 +371,8 @@ export default function ScrollStage() {
           </div>
         ))}
 
-        {/* modo 360 */}
-        <button
-          type="button"
-          onClick={() => {
-            const next = !orbit;
-            setOrbit(next);
-            sceneRef.current?.setOrbit(next);
-          }}
-          onPointerDown={(event) => {
-            if (!orbit) return;
-            const startX = event.clientX;
-            const move = (e: PointerEvent) => sceneRef.current?.orbitBy((e.clientX - startX) * 0.004);
-            window.addEventListener("pointermove", move);
-            window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
-          }}
-          className={`absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors ${
-            orbit
-              ? "border-brand bg-brand text-white"
-              : "border-ink/15 bg-white/85 text-ink/60 backdrop-blur hover:border-brand/50 hover:text-ink"
-          }`}
-        >
-          {orbit ? "360° ativo · arraste" : "Ver em 360°"}
-        </button>
-
         {/* mapa da operação */}
-        <div className="absolute bottom-24 right-6 hidden w-64 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md sm:block">
+        <div className="absolute right-6 top-24 hidden w-60 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md lg:block">
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-[9px] uppercase tracking-[0.28em] text-ink/40">Mapa da operação</p>
             <span className="text-[9px] font-medium text-brand-dark">

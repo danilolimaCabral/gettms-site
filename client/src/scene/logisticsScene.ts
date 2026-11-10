@@ -1650,7 +1650,17 @@ hub.scale.setScalar(1.15);
     body.position.y = 0.66;
     const cabin = new THREE.Mesh(round(1.72, 0.62, 2.2, 0.28, 3), glassMat);
     cabin.position.set(0, 1.2, -0.1);
-    car.add(body, cabin);
+    const roof = new THREE.Mesh(round(1.5, 0.1, 1.9, 0.2, 2), bodyMat);
+    roof.position.set(0, 1.5, -0.15);
+    const head1 = new THREE.Mesh(round(0.5, 0.16, 0.08, 0.05, 1), new THREE.MeshBasicMaterial({ color: 0xf6ffe8 }));
+    head1.position.set(0.62, 0.72, 2.14);
+    const head2 = head1.clone();
+    head2.position.x = -0.62;
+    const tail1 = new THREE.Mesh(round(0.44, 0.14, 0.08, 0.04, 1), new THREE.MeshBasicMaterial({ color: 0xff4a3a }));
+    tail1.position.set(0.66, 0.78, -2.14);
+    const tail2 = tail1.clone();
+    tail2.position.x = -0.66;
+    car.add(body, cabin, roof, head1, head2, tail1, tail2);
     const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.26, 10);
     wg.rotateZ(Math.PI / 2);
     [
