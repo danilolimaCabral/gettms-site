@@ -36,9 +36,9 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.5, pos: [20, 24, 22], look: [0, 4, -70] },
   { t: 0.6, pos: [10, 24, 24], look: [0, 3, -50] },
   { t: 0.7, pos: [6, 26, 34], look: [0, 2, -60] },
-  { t: 0.8, pos: [0, 30, 8], look: [36, 8, -50] },
-  { t: 0.9, pos: [18, 24, -8], look: [38, 9, -54] },
-  { t: 1.0, pos: [38.5, 16.4, -52], look: [44, 15.2, -58.4] },
+  { t: 0.8, pos: [6, 32, 8], look: [50, 8, -50] },
+  { t: 0.9, pos: [32, 26, -8], look: [52, 9, -54] },
+  { t: 1.0, pos: [52.5, 16.4, -52], look: [58, 15.2, -58.4] },
 ];
 
 const ROUTE_POINTS: [number, number, number][] = [
@@ -47,8 +47,8 @@ const ROUTE_POINTS: [number, number, number][] = [
   [1.2, 0.32, -20],
   [-1.2, 0.32, -40],
   [4, 0.32, -48],
-  [20, 0.32, -47],
-  [43, 0.32, -44],
+  [34, 0.32, -47],
+  [57, 0.32, -44],
 ];
 
 function makeShadowTexture() {
@@ -1334,6 +1334,68 @@ hub.scale.setScalar(1.15);
 
   const parkedCars: THREE.Group[] = [];
 
+  // centros de distribuição espalhados pelo mapa
+  function makeSmallDc(x: number, z: number, rotation: number, name: string, accent: number) {
+    const dc = new THREE.Group();
+    dc.position.set(x, 0, z);
+    dc.rotation.y = rotation;
+
+    const body = new THREE.Mesh(round(30, 9, 16, 0.5, 3), wallMat);
+    body.position.y = 4.5;
+    dc.add(body);
+    const roof = new THREE.Mesh(round(31.2, 0.5, 17.2, 0.25, 2), roofMat);
+    roof.position.y = 9.2;
+    dc.add(roof);
+    const band = new THREE.Mesh(
+      round(29, 3.4, 0.3, 0.1, 2),
+      new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5, metalness: 0.3 }),
+    );
+    band.position.set(0, 7, 8.1);
+    dc.add(band);
+
+    const signCanvas = document.createElement("canvas");
+    signCanvas.width = 1024;
+    signCanvas.height = 256;
+    const ctx = signCanvas.getContext("2d")!;
+    ctx.clearRect(0, 0, 1024, 256);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 110px Sora, Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, 512, 100);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "600 38px Inter, sans-serif";
+    ctx.fillText("CENTRO DE DISTRIBUIÇÃO · getTMS", 512, 190);
+    const signTex = track(new THREE.CanvasTexture(signCanvas));
+    signTex.colorSpace = THREE.SRGBColorSpace;
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(18, 4.5), new THREE.MeshBasicMaterial({ map: signTex, transparent: true }));
+    sign.position.set(0, 7, 8.3);
+    dc.add(sign);
+
+    const canopy = new THREE.Mesh(round(26, 0.25, 4, 0.1, 2), concreteMat);
+    canopy.position.set(0, 5.4, 10.2);
+    dc.add(canopy);
+
+    const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b });
+    [-9, 0, 9].forEach((dx) => {
+      const door = new THREE.Mesh(round(4.4, 4.4, 0.2, 0.08, 2), doorMat);
+      door.position.set(dx, 2.4, 8.1);
+      dc.add(door);
+      const parked = makeSimpleTruck(["GT-1140", "GT-7788", "GT-9021"][(Math.round(dx / 9) + 1) % 3]);
+      parked.position.set(dx, 0, 15);
+      parked.rotation.y = 0;
+      parked.scale.setScalar(0.9);
+      dc.add(parked);
+    });
+
+    scene.add(dc);
+    return dc;
+  }
+
+  makeSmallDc(-62, -22, Math.PI * 0.5, "CD NORTE", 0x2f6f4f);
+  makeSmallDc(96, 6, -Math.PI * 0.5, "CD SUL", 0x39443a);
+  makeSmallDc(-34, -104, Math.PI, "CD LESTE", 0x2f6f4f);
+
   // tráfego contínuo na via
   const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
     const vehicle = makeSimpleTruck(name);
@@ -1347,7 +1409,7 @@ hub.scale.setScalar(1.15);
 
   // ---------------------------------------------------------------- CD do cliente
   const clientDc = new THREE.Group();
-  clientDc.position.set(38, 0, -64);
+  clientDc.position.set(52, 0, -64);
   scene.add(clientDc);
 
   const dcDoorX = [-30, -18, -6, 6, 18, 30];
@@ -1559,81 +1621,6 @@ hub.scale.setScalar(1.15);
     clientDc.add(car);
     parkedCars.push(car);
   });
-
-  // cerca perimetral, portão e guarita
-  const fenceMat = new THREE.MeshStandardMaterial({ color: 0xd5ddcf, roughness: 0.55, metalness: 0.35 });
-  const railMat = new THREE.MeshStandardMaterial({ color: 0x8f9c8d, roughness: 0.5, metalness: 0.6 });
-  const fenceSegment = (width: number, x: number, z: number) => {
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(width, 0.08, 0.12), railMat);
-    panel.position.set(x, 2.3, z);
-    clientDc.add(panel);
-    const panel2 = panel.clone();
-    panel2.position.y = 1.5;
-    clientDc.add(panel2);
-    const panel3 = panel.clone();
-    panel3.position.y = 0.7;
-    clientDc.add(panel3);
-    const count = Math.max(2, Math.round(width / 4));
-    for (let i = 0; i <= count; i += 1) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.5, 8), fenceMat);
-      post.position.set(x - width / 2 + (width / count) * i, 1.25, z);
-      clientDc.add(post);
-    }
-  };
-  fenceSegment(46, -21, 43);
-  fenceSegment(34, 27, 43);
-  fenceSegment(62, -44, 12);
-  fenceSegment(62, 44, 12);
-
-  const gatePostMat = new THREE.MeshStandardMaterial({ color: 0x2f3a33, roughness: 0.5, metalness: 0.5 });
-  [-1, 1].forEach((side) => {
-    const gatePost = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.4, 0.8), gatePostMat);
-    gatePost.position.set(2 + side * 5, 1.7, 43);
-    clientDc.add(gatePost);
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff4d6 }));
-    lamp.position.set(2 + side * 5, 3.5, 43);
-    clientDc.add(lamp);
-  });
-  const gateSignCanvas = document.createElement("canvas");
-  gateSignCanvas.width = 1024;
-  gateSignCanvas.height = 256;
-  const gateCtx = gateSignCanvas.getContext("2d")!;
-  gateCtx.fillStyle = "#101812";
-  gateCtx.fillRect(0, 0, 1024, 256);
-  gateCtx.fillStyle = "#f4f8ef";
-  gateCtx.font = "700 120px Sora, Inter, sans-serif";
-  gateCtx.textAlign = "center";
-  gateCtx.textBaseline = "middle";
-  gateCtx.fillText("MATSUYAMA", 512, 105);
-  gateCtx.fillStyle = "#8fe04a";
-  gateCtx.font = "600 40px Inter, sans-serif";
-  gateCtx.fillText("PORTARIA · getTMS", 512, 196);
-  const gateSignTex = track(new THREE.CanvasTexture(gateSignCanvas));
-  gateSignTex.colorSpace = THREE.SRGBColorSpace;
-  const gateSign = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshBasicMaterial({ map: gateSignTex }));
-  gateSign.position.set(2, 4.4, 43);
-  clientDc.add(gateSign);
-
-  const booth = new THREE.Mesh(round(3.4, 2.8, 2.8, 0.3, 2), wallMat);
-  booth.position.set(13, 1.4, 41.5);
-  clientDc.add(booth);
-  const boothGlass = new THREE.Mesh(round(2.6, 1.1, 0.1, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.2, metalness: 0.8 }));
-  boothGlass.position.set(13, 1.8, 42.95);
-  clientDc.add(boothGlass);
-  const boothRoof = new THREE.Mesh(round(4.2, 0.3, 3.6, 0.1, 2), roofMat);
-  boothRoof.position.set(13, 2.95, 41.5);
-  clientDc.add(boothRoof);
-  const gateArm = new THREE.Mesh(new THREE.BoxGeometry(9, 0.16, 0.16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-  gateArm.position.set(6.5, 1.3, 43);
-  clientDc.add(gateArm);
-  const gateArmStripe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.18, 0.18), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
-  gateArmStripe.position.set(3.6, 1.3, 43);
-  clientDc.add(gateArmStripe);
-
-  // via de acesso do portão até a rua
-  const drive = new THREE.Mesh(round(10, 0.06, 12, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x2a332b, roughness: 0.95 }));
-  drive.position.set(2, 0.07, 50);
-  clientDc.add(drive);
 
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
@@ -2064,7 +2051,7 @@ hub.scale.setScalar(1.15);
 
     if (p > 0.6) {
       truckZ = lerp(-6, -38, drive);
-      truckX = lerp(0, 44, swing);
+      truckX = lerp(0, 58, swing);
       truckZ = lerp(-38, -40, swing);
       truckRot = lerp(0, Math.PI, swing);
       truckZ = lerp(-40, -45.2, reverse);

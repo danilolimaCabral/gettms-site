@@ -130,6 +130,8 @@ function chapterOpacity(p: number, chapter: Chapter) {
 export default function ScrollStage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const vhRef = useRef<number>(typeof window !== "undefined" ? window.innerHeight : 800);
+  const [progress, setProgress] = useState(0);
+  const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const chapterRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -199,6 +201,10 @@ export default function ScrollStage() {
         const travel = rect.height - vhRef.current;
         const p = travel > 0 ? clamp01(-rect.top / travel) : 0;
         scene?.setProgress(p);
+        if (Math.abs(p - progressRef.current) > 0.008) {
+          progressRef.current = p;
+          setProgress(p);
+        }
 
         // hero
         if (heroRef.current) {
@@ -351,6 +357,53 @@ export default function ScrollStage() {
             </div>
           </div>
         ))}
+
+        {/* mapa da operação */}
+        <div className="absolute bottom-6 right-6 hidden w-60 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md lg:block">
+          <div className="mb-1.5 flex items-center justify-between">
+            <p className="text-[9px] uppercase tracking-[0.28em] text-ink/40">Mapa da operação</p>
+            <span className="text-[9px] font-medium text-brand-dark">
+              {CHAPTERS[Math.max(0, active)]?.label ?? "Operação"}
+            </span>
+          </div>
+          <svg viewBox="0 0 210 96" className="w-full" role="img" aria-label="Mapa das etapas da operação">
+            <polyline
+              points="18,72 46,50 74,60 102,36 130,46 158,28 186,38"
+              fill="none"
+              stroke="rgba(10,15,11,0.16)"
+              strokeWidth="1.4"
+              strokeDasharray="3 3"
+            />
+            <polyline
+              points="18,72 46,50 74,60 102,36 130,46 158,28 186,38"
+              fill="none"
+              stroke="#63b32e"
+              strokeWidth="2"
+              strokeLinecap="round"
+              pathLength={1}
+              strokeDasharray="1"
+              strokeDashoffset={1 - Math.min(1, Math.max(0, progress))}
+            />
+            {[
+              [18, 72],
+              [46, 50],
+              [74, 60],
+              [102, 36],
+              [130, 46],
+              [158, 28],
+              [186, 38],
+            ].map(([x, y], index) => {
+              const chapterIndex = Math.min(CHAPTERS.length - 1, Math.round((index / 6) * (CHAPTERS.length - 1)));
+              const isActive = active === chapterIndex;
+              return (
+                <g key={`${x}-${y}`} onClick={() => jumpTo((CHAPTERS[chapterIndex].start + CHAPTERS[chapterIndex].end) / 2)} className="cursor-pointer">
+                  {isActive && <circle cx={x} cy={y} r="7" fill="rgba(99,179,46,0.2)" />}
+                  <circle cx={x} cy={y} r={isActive ? 4 : 2.6} fill={isActive ? "#63b32e" : "#0a0f0b"} opacity={isActive ? 1 : 0.35} />
+                </g>
+              );
+            })}
+          </svg>
+        </div>
 
         {/* trilho de progresso */}
         <div className="absolute right-5 top-1/2 hidden -translate-y-1/2 flex-col items-center gap-4 md:flex">
