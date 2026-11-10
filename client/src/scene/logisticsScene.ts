@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 /**
@@ -41,7 +42,7 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.7, pos: [6, 26, 34], look: [0, 2, -60] },
   { t: 0.8, pos: [6, 32, 8], look: [50, 8, -50] },
   { t: 0.9, pos: [32, 26, -8], look: [52, 9, -54] },
-  { t: 1.0, pos: [52.5, 16.4, -52], look: [58, 15.2, -58.4] },
+  { t: 1.0, pos: [34, 21, -32], look: [58, 13, -58] },
 ];
 
 const ROUTE_POINTS: [number, number, number][] = [
@@ -843,6 +844,7 @@ hub.scale.setScalar(1.15);
   );
 
   const truck = new THREE.Group();
+  const proceduralBodies: { group: THREE.Group; parts: THREE.Object3D[] }[] = [];
 
   const headlightMat = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
   [-0.95, 0.95].forEach((x) => {
@@ -850,6 +852,7 @@ hub.scale.setScalar(1.15);
     lamp.position.set(x, 1.75, 5.62);
     truck.add(lamp);
   });
+  proceduralBodies.push({ group: truck, parts: [...truck.children] });
   const tagCanvas = document.createElement("canvas");
   tagCanvas.width = 640;
   tagCanvas.height = 200;
@@ -1466,6 +1469,7 @@ hub.scale.setScalar(1.15);
     const bumper = new THREE.Mesh(round(2.9, 0.42, 0.3, 0.1, 2), new THREE.MeshStandardMaterial({ color: 0xd8dee2, roughness: 0.2, metalness: 0.9 }));
     bumper.position.set(0, 0.85, 5.66);
     group.add(cab, cabGlass, windshield, cabRoof, fairing, grille, lampL, lampR, bumper);
+    const procedural = [...group.children];
 
     const simpleWheel = new THREE.CylinderGeometry(0.7, 0.7, 0.55, 12);
     simpleWheel.rotateZ(Math.PI / 2);
@@ -1484,6 +1488,7 @@ hub.scale.setScalar(1.15);
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.2;
     group.add(shadow);
+    proceduralBodies.push({ group, parts: procedural });
     return group;
   }
 
@@ -1870,7 +1875,7 @@ hub.scale.setScalar(1.15);
 
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
-  yardGroup.position.set(76, 0, -22);
+  yardGroup.position.set(96, 0, -34);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
@@ -2303,7 +2308,7 @@ hub.scale.setScalar(1.15);
 
     // velocidade com aceleração e frenagem nas docas
     const dockBell = Math.exp(-Math.pow((truckPhase - 0.62) / 0.09, 2));
-    const speedTarget = 0.032 * (1 - 0.72 * dockBell);
+    const speedTarget = 0.017 * (1 - 0.72 * dockBell);
     const accel = (speedTarget - truckSpeed) * Math.min(1, frameDt * 2.2);
     truckSpeed += accel;
     truckPhase = (truckPhase + truckSpeed * frameDt) % 1;
@@ -2321,7 +2326,7 @@ hub.scale.setScalar(1.15);
     });
 
     visitors.forEach((item) => {
-      const cycle = (time * 0.09 + item.phase) % 1;
+      const cycle = (time * 0.05 + item.phase) % 1;
       const inbound = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
       const eased = inbound * inbound * (3 - 2 * inbound);
       item.mesh.position.z = lerp(44, 15, eased);
@@ -2329,9 +2334,10 @@ hub.scale.setScalar(1.15);
     });
 
     roadFleet.forEach((item) => {
-      const span = 150;
+      const span = 112;
       const travelled = (time * item.speed + item.offset) % span;
-      item.mesh.position.z = item.dir < 0 ? 70 - travelled : -80 + travelled;
+      // o tráfego da via sai antes do acesso ao CD (não cruza o cruzamento)
+      item.mesh.position.z = 70 - travelled;
       item.mesh.position.x = item.lane;
     });
 
@@ -2573,6 +2579,43 @@ hub.scale.setScalar(1.15);
 
   resize();
   frame = requestAnimationFrame(render);
+
+  new GLTFLoader().load("/models/semi-truck.glb", (gltf) => {
+    if (disposed) return;
+    const source = gltf.scene;
+    source.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(source);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = 17.6 / Math.max(0.001, size.z);
+    proceduralBodies.forEach(({ group, parts }) => {
+      parts.forEach((part) => {
+        part.visible = false;
+      });
+      const wrapper = new THREE.Group();
+      wrapper.rotation.y = -Math.PI / 2;
+      const clone = source.clone(true);
+      clone.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((material) => {
+          const std = material as THREE.MeshStandardMaterial;
+          if (!std.color) return;
+          std.color.lerp(new THREE.Color(0xf4f7f0), 0.55);
+          if (std.metalness !== undefined) std.metalness = Math.min(std.metalness, 0.35);
+          std.needsUpdate = true;
+        });
+      });
+      clone.scale.setScalar(scale);
+      clone.position.set(
+        -(box.min.x + size.x / 2) * scale,
+        -box.min.y * scale,
+        -(box.min.z + size.z / 2) * scale,
+      );
+      wrapper.add(clone);
+      group.add(wrapper);
+    });
+  });
 
   return {
     setProgress(p: number) {
