@@ -4,7 +4,7 @@ export default function Clients() {
   const items = [...CLIENTS, ...CLIENTS];
 
   return (
-    <section id="clientes" className="relative border-y border-ink/10 bg-surface py-14 md:py-16">
+    <section id="clientes" className="relative border-y border-ink/10 bg-white py-14 md:py-16">
       <div className="container-wide mb-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow mb-3">Nossos clientes</p>

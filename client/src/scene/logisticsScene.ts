@@ -209,12 +209,12 @@ export function createLogisticsScene(
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.2 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.95;
+  renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0e0b);
-  scene.fog = new THREE.FogExp2(0x070c09, 0.0026);
+  scene.background = new THREE.Color(0xedf1e8);
+  scene.fog = new THREE.FogExp2(0xeef2e9, 0.002);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
   camera.position.set(38, 17, 42);
@@ -233,8 +233,8 @@ export function createLogisticsScene(
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        uTop: { value: new THREE.Color(0x03060a) },
-        uBottom: { value: new THREE.Color(0x16241a) },
+        uTop: { value: new THREE.Color(0xdfe8d6) },
+        uBottom: { value: new THREE.Color(0xf4f7ef) },
       },
       vertexShader: /* glsl */ `
         varying vec3 vPos;
@@ -259,8 +259,8 @@ export function createLogisticsScene(
   // ---------------------------------------------------------------- chão
   const groundUniforms = {
     uProgress: { value: 0 },
-    uLine: { value: new THREE.Color(0x2a3a2e) },
-    uBase: { value: new THREE.Color(0x0f140f) },
+    uLine: { value: new THREE.Color(0x93a98a) },
+    uBase: { value: new THREE.Color(0xe4eade) },
   };
 
   const ground = new THREE.Mesh(
@@ -307,14 +307,14 @@ export function createLogisticsScene(
   scene.add(ground);
 
   // ---------------------------------------------------------------- luzes
-  scene.add(new THREE.HemisphereLight(0x35503f, 0x050806, 0.55));
-  scene.add(new THREE.AmbientLight(0x9fb3a6, 0.16));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3c2, 1.1));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.34));
 
-  const key = new THREE.DirectionalLight(0xc9dcf0, 1.7);
+  const key = new THREE.DirectionalLight(0xfff8ec, 2.7);
   key.position.set(30, 50, 30);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0x9df05a, 0.28);
+  const rim = new THREE.DirectionalLight(0xb8e88f, 0.6);
   rim.position.set(-40, 18, -34);
   scene.add(rim);
 
@@ -340,7 +340,7 @@ export function createLogisticsScene(
   const trunkGeo = new THREE.CylinderGeometry(0.14, 0.2, 1.6, 6);
   const leafGeo = new THREE.IcosahedronGeometry(1, 1);
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6f6049, roughness: 0.9 });
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0x3f6032, roughness: 0.85, flatShading: true });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x6f9a4a, roughness: 0.85, flatShading: true });
   const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
   const leaves = new THREE.InstancedMesh(leafGeo, leafMat, treeCount);
   const treeDummy = new THREE.Object3D();
@@ -470,7 +470,7 @@ export function createLogisticsScene(
   warehouse.position.set(-24, 0, -18);
   scene.add(warehouse);
 
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x3d4a40, roughness: 0.65, metalness: 0.25 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf7f9f2, roughness: 0.7, metalness: 0.12 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0xd3dcc8, roughness: 0.75, metalness: 0.25 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x2b352c, roughness: 0.6, metalness: 0.4 });
   const stripMat = new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0.9 });
@@ -1396,6 +1396,9 @@ hub.scale.setScalar(1.15);
   dcCanopy.position.set(0, 6.9, 13.4);
   clientDc.add(dcCanopy);
   const dcCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(58, 0.12, 0.16), stripMat);
+  const dcRoofLed = new THREE.Mesh(new THREE.BoxGeometry(62.4, 0.1, 0.12), new THREE.MeshBasicMaterial({ color: BRAND }));
+  dcRoofLed.position.set(0, 12.5, 11.7);
+  clientDc.add(dcRoofLed);
   dcCanopyEdge.position.set(0, 6.8, 15.6);
   clientDc.add(dcCanopyEdge);
   for (let i = 0; i < 8; i += 1) {
@@ -1431,11 +1434,11 @@ hub.scale.setScalar(1.15);
     clientDc.add(unit);
   });
 
-  const whDockGlow = new THREE.PointLight(0xffc98a, 120, 70, 2);
+  const whDockGlow = new THREE.PointLight(0xffe2b8, 25, 40, 2);
   whDockGlow.position.set(-11, 5, 6);
   scene.add(whDockGlow);
 
-  const dcLight = new THREE.PointLight(0xffd9a0, 140, 90, 2);
+  const dcLight = new THREE.PointLight(0xffd9a0, 45, 60, 2);
   dcLight.position.set(0, 6, 18);
   clientDc.add(dcLight);
 
@@ -1653,6 +1656,58 @@ hub.scale.setScalar(1.15);
     office.add(wallScreen);
   }
 
+  // volume superior recuado, terraço, coroa e detalhes
+  const officeTerrace = new THREE.Mesh(round(28.8, 0.4, 13.4, 0.2, 2), roofMat);
+  officeTerrace.position.set(0, 8.95, -1);
+  office.add(officeTerrace);
+
+  const officeUpper = new THREE.Mesh(round(20, 4.2, 9.4, 0.5, 3), wallMat);
+  officeUpper.position.set(0, 11.2, -2.6);
+  office.add(officeUpper);
+
+  const upperGlass = new THREE.Mesh(
+    round(18, 2.4, 0.2, 0.1, 2),
+    new THREE.MeshStandardMaterial({ color: 0x1b2620, roughness: 0.15, metalness: 0.8, emissive: 0x14251a, emissiveIntensity: 0.6 }),
+  );
+  upperGlass.position.set(0, 11.4, 2.2);
+  office.add(upperGlass);
+
+  const officeCrown = new THREE.Mesh(round(21.4, 0.4, 10.4, 0.25, 2), roofMat);
+  officeCrown.position.set(0, 13.5, -2.6);
+  office.add(officeCrown);
+
+  const ledMat = new THREE.MeshBasicMaterial({ color: BRAND });
+  [
+    [28.9, 0.09, 0.12, 0, 9.18, 5.6],
+    [21.5, 0.09, 0.12, 0, 13.72, 2.5],
+    [0.12, 0.09, 13.5, -14.4, 9.18, -1],
+    [0.12, 0.09, 13.5, 14.4, 9.18, -1],
+    [0.12, 8.4, 0.12, -14, 4.2, 5.9],
+    [0.12, 8.4, 0.12, 14, 4.2, 5.9],
+  ].forEach(([w, h, d, x, y, z]) => {
+    const led = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), ledMat);
+    led.position.set(x, y, z);
+    office.add(led);
+  });
+
+  // brises horizontais na fachada
+  for (let i = 0; i < 3; i += 1) {
+    const band = new THREE.Mesh(round(27.6, 0.16, 0.5, 0.06, 1), trimMat);
+    band.position.set(0, 1.4 + i * 2.6, 6.5);
+    office.add(band);
+  }
+
+  // jardim no terraço
+  for (let i = 0; i < 5; i += 1) {
+    const planter = new THREE.Mesh(round(1.8, 0.5, 1.2, 0.2, 2), concreteMat);
+    planter.position.set(-11 + i * 5.5, 9.3, 5);
+    office.add(planter);
+    const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), leafMat);
+    shrub.position.set(-11 + i * 5.5, 10.1, 5);
+    shrub.scale.set(1.1, 0.75, 1);
+    office.add(shrub);
+  }
+
   const officeLight = new THREE.PointLight(0xfff3dd, 30, 36, 2);
   officeLight.position.set(0, 7.4, 4.4);
   office.add(officeLight);
@@ -1864,18 +1919,18 @@ hub.scale.setScalar(1.15);
     const reverse = easeInOut(range(pb, 0.85, 0.92));
 
     let truckX = 0;
-    let truckZ = lerp(22, -6, enter);
+    let truckZ = -6;
     let truckRot = 0;
 
     if (p > 0.6) {
       truckZ = lerp(-6, -40, drive);
       truckX = lerp(0, 43, swing);
       truckZ = lerp(-40, -41.5, swing);
-      truckZ = lerp(-41.5, -46.5, reverse);
+      truckZ = lerp(-41.5, -47.2, reverse);
     }
 
     truck.position.set(truckX + Math.sin(time * 0.9) * 0.03, 0, truckZ);
-    truck.rotation.y = truckRot;
+    truck.rotation.y = Math.PI + truckRot;
     truck.visible = true;
     const wheelSpin = time * (2.4 + enter * 6 + drive * 8 + swing * 6 + reverse * 5);
     wheels.forEach((wheel) => {

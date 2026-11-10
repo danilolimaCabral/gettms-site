@@ -129,6 +129,7 @@ function chapterOpacity(p: number, chapter: Chapter) {
 
 export default function ScrollStage() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const vhRef = useRef<number>(typeof window !== "undefined" ? window.innerHeight : 800);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const chapterRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -180,13 +181,22 @@ export default function ScrollStage() {
       scene?.setPointer(x, y);
     };
     window.addEventListener("pointermove", onPointer, { passive: true });
+    let vhTimer = 0;
+    const onViewport = () => {
+      window.clearTimeout(vhTimer);
+      vhTimer = window.setTimeout(() => {
+        vhRef.current = window.innerHeight;
+        update();
+      }, 200);
+    };
+    window.addEventListener("resize", onViewport);
 
     let raf = 0;
     const update = () => {
       const section = sectionRef.current;
       if (section) {
         const rect = section.getBoundingClientRect();
-        const travel = rect.height - window.innerHeight;
+        const travel = rect.height - vhRef.current;
         const p = travel > 0 ? clamp01(-rect.top / travel) : 0;
         scene?.setProgress(p);
 
@@ -226,6 +236,7 @@ export default function ScrollStage() {
       cancelled = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", onViewport);
       window.removeEventListener("pointermove", onPointer);
       scene?.dispose();
       sceneRef.current = null;
@@ -241,12 +252,12 @@ export default function ScrollStage() {
   };
 
   return (
-    <section id="experiencia" ref={sectionRef} className="relative h-[1400vh]" aria-label="A jornada da carga no GetTMS">
+    <section id="experiencia" ref={sectionRef} className="relative h-[1400svh]" aria-label="A jornada da carga no GetTMS">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
         {/* atmosfera / vinheta */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(7,10,8,0)_0%,rgba(7,10,8,0.25)_62%,rgba(7,10,8,0.75)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(245,247,242,0)_0%,rgba(245,247,242,0.2)_62%,rgba(245,247,242,0.7)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-paper/80 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-paper/70 to-transparent" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(10,15,11,0.05)_1px,transparent_1px)] [background-size:100%_4px]" />
@@ -284,9 +295,8 @@ export default function ScrollStage() {
                 <br />
                 em cada frete.
               </h1>
-              <p className="lede mt-7 max-w-xl">
-                Simule fretes, integre transportadoras e acompanhe cada etapa da carga — do pedido à entrega —
-                em uma operação conectada e guiada por dados reais.
+              <p className="lede mt-7 max-w-md">
+                Simule fretes, acompanhe cada etapa e reduza a conta frete.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-3">
                 <a href={DEMO_URL} target="_blank" rel="noreferrer" className="btn btn-primary">
@@ -320,14 +330,13 @@ export default function ScrollStage() {
             style={{ willChange: "opacity, transform" }}
           >
             <div className="container-wide">
-              <div className="max-w-md rounded-2xl border border-white/10 bg-[#0b110d]/85 p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.8)] backdrop-blur-sm md:p-6">
+              <div className="max-w-md rounded-2xl border border-white/10 bg-white/90 p-5 shadow-[0_24px_60px_-40px_rgba(10,15,11,0.5)] backdrop-blur-sm md:p-6">
                 <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-brand-dark">
                   <span className="font-display">{chapter.index}</span>
                   <span className="h-px w-8 bg-brand/50" />
                   <span className="text-ink/50">{chapter.label}</span>
                 </div>
                 <h2 className="font-display text-2xl font-semibold leading-tight tracking-tight text-ink md:text-3xl">{chapter.title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-ink/55 md:text-base">{chapter.body}</p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {chapter.chips.map((chip) => (
                     <span
