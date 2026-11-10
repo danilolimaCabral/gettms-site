@@ -131,6 +131,7 @@ export default function ScrollStage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const vhRef = useRef<number>(typeof window !== "undefined" ? window.innerHeight : 800);
   const [progress, setProgress] = useState(0);
+  const [orbit, setOrbit] = useState(false);
   const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -287,7 +288,7 @@ export default function ScrollStage() {
           ref={heroRef}
           className="absolute inset-0 flex items-end pb-24 md:items-center md:pb-0"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/80 md:to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/45 md:to-transparent" />
           <div className="container-wide relative">
             <div className="max-w-3xl">
               <p className="eyebrow mb-6 flex items-center gap-3">
@@ -357,6 +358,30 @@ export default function ScrollStage() {
             </div>
           </div>
         ))}
+
+        {/* modo 360 */}
+        <button
+          type="button"
+          onClick={() => {
+            const next = !orbit;
+            setOrbit(next);
+            sceneRef.current?.setOrbit(next);
+          }}
+          onPointerDown={(event) => {
+            if (!orbit) return;
+            const startX = event.clientX;
+            const move = (e: PointerEvent) => sceneRef.current?.orbitBy((e.clientX - startX) * 0.004);
+            window.addEventListener("pointermove", move);
+            window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
+          }}
+          className={`absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors ${
+            orbit
+              ? "border-brand bg-brand text-white"
+              : "border-ink/15 bg-white/85 text-ink/60 backdrop-blur hover:border-brand/50 hover:text-ink"
+          }`}
+        >
+          {orbit ? "360° ativo · arraste" : "Ver em 360°"}
+        </button>
 
         {/* mapa da operação */}
         <div className="absolute bottom-24 right-6 hidden w-64 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md sm:block">

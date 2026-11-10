@@ -10,6 +10,8 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 export type LogisticsSceneHandle = {
   setProgress: (p: number) => void;
   setPointer: (x: number, y: number) => void;
+  setOrbit: (active: boolean) => void;
+  orbitBy: (delta: number) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -207,14 +209,14 @@ export function createLogisticsScene(
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.2 : 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.25 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.09;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xedf1e8);
-  scene.fog = new THREE.FogExp2(0xeef2e9, 0.002);
+  scene.fog = new THREE.FogExp2(0xeef2e9, 0.0015);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
   camera.position.set(38, 17, 42);
@@ -467,7 +469,7 @@ export function createLogisticsScene(
 
   // ---------------------------------------------------------------- armazém
   const warehouse = new THREE.Group();
-  warehouse.position.set(-24, 0, -18);
+  warehouse.position.set(-40, 0, -26);
   scene.add(warehouse);
 
   const wallMat = new THREE.MeshStandardMaterial({ color: 0xf7f9f2, roughness: 0.7, metalness: 0.12 });
@@ -831,6 +833,31 @@ hub.scale.setScalar(1.15);
   const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f7f2, roughness: 0.38, metalness: 0.12 });
   const shellMat = new THREE.MeshStandardMaterial({ color: 0xe3e9dc, roughness: 0.4, metalness: 0.35 });
   const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a221c, roughness: 0.4, metalness: 0.7 });
+  const truckChrome = new THREE.MeshStandardMaterial({ color: 0xd8dee2, roughness: 0.18, metalness: 0.95 });
+  const truckBumper = new THREE.Mesh(round(2.95, 0.38, 0.3, 0.1, 2), truckChrome);
+  truckBumper.position.set(0, 0.95, 5.72);
+  truck.add(truckBumper);
+  const truckLedBar = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.09, 0.08), new THREE.MeshBasicMaterial({ color: 0xf4ffe4 }));
+  truckLedBar.position.set(0, 3.05, 5.66);
+  truck.add(truckLedBar);
+  [-1.58, 1.58].forEach((x) => {
+    const truckMirror = new THREE.Mesh(round(0.1, 0.5, 0.34, 0.06, 2), darkMat);
+    truckMirror.position.set(x, 3.35, 5.15);
+    truck.add(truckMirror);
+    const truckMirrorArm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.5, 6), truckChrome);
+    truckMirrorArm.rotation.z = Math.PI / 2;
+    truckMirrorArm.position.set(x * 0.9, 3.5, 5.2);
+    truck.add(truckMirrorArm);
+  });
+  const truckSunVisor = new THREE.Mesh(round(2.7, 0.16, 0.7, 0.06, 2), whiteMat);
+  truckSunVisor.position.set(0, 4.05, 5.25);
+  truckSunVisor.rotation.x = -0.18;
+  truck.add(truckSunVisor);
+  const truckTailBar = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 0.08), new THREE.MeshBasicMaterial({ color: 0xff3b2f }));
+  truckTailBar.position.set(0, 1.5, -8.6);
+  truck.add(truckTailBar);
+
+
   const greenMat = new THREE.MeshBasicMaterial({ color: BRAND });
   const chromeMat = new THREE.MeshStandardMaterial({ color: 0xc7d0c4, roughness: 0.22, metalness: 1 });
   const glassMat = new THREE.MeshStandardMaterial({
@@ -1411,9 +1438,12 @@ hub.scale.setScalar(1.15);
     return dc;
   }
 
-  makeSmallDc(-62, -22, Math.PI * 0.5, "CD NORTE", 0x2f6f4f);
-  makeSmallDc(96, 6, -Math.PI * 0.5, "CD SUL", 0x39443a);
-  makeSmallDc(-34, -104, Math.PI, "CD LESTE", 0x2f6f4f);
+  makeSmallDc(-92, -34, Math.PI * 0.5, "CD NORTE", 0x2f6f4f);
+  makeSmallDc(-72, 30, Math.PI, "CD OESTE", 0x39443a);
+  makeSmallDc(-118, 8, Math.PI * 0.5, "CD ALFA", 0x2f6f4f);
+  makeSmallDc(-100, -92, Math.PI * 0.5, "CD BETA", 0x39443a);
+  makeSmallDc(104, 30, -Math.PI * 0.5, "CD SUL", 0x39443a);
+  makeSmallDc(-52, -112, Math.PI, "CD LESTE", 0x2f6f4f);
 
   // tráfego contínuo na via
   const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
@@ -1999,6 +2029,9 @@ hub.scale.setScalar(1.15);
   // ---------------------------------------------------------------- estado
   let target = 0;
   let current = 0;
+  let orbitActive = false;
+  let orbitAngle = 0.6;
+  let orbitDrag = 0;
   let pointerX = 0;
   let pointerY = 0;
   let smoothX = 0;
@@ -2278,7 +2311,18 @@ hub.scale.setScalar(1.15);
     smoothX += (pointerX - smoothX) * Math.min(1, dt * 3);
     smoothY += (pointerY - smoothY) * Math.min(1, dt * 3);
 
-    sampleCamera(current, camPos, lookTarget);
+    if (orbitActive) {
+      orbitAngle += orbitDrag;
+      orbitDrag *= 0.85;
+      const radius = 58;
+      camPos.set(
+        lookTarget.x + Math.sin(orbitAngle) * radius,
+        26,
+        lookTarget.z + Math.cos(orbitAngle) * radius,
+      );
+    } else {
+      sampleCamera(current, camPos, lookTarget);
+    }
     const chapterMids = [0.13, 0.25, 0.37, 0.49, 0.61, 0.705, 0.78, 0.87, 0.94, 1.04];
     let bell = 0;
     chapterMids.forEach((mid) => {
@@ -2310,6 +2354,12 @@ hub.scale.setScalar(1.15);
   return {
     setProgress(p: number) {
       target = clamp01(p);
+    },
+    setOrbit(active: boolean) {
+      orbitActive = active;
+    },
+    orbitBy(delta: number) {
+      orbitDrag += delta;
     },
     setPointer(x: number, y: number) {
       pointerX = x;
