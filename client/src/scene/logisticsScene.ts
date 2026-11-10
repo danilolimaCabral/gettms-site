@@ -1993,8 +1993,8 @@ hub.scale.setScalar(1.15);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
-    round(34, 0.12, 30, 0.3, 2),
-    new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.92 }),
+    round(62, 0.12, 44, 0.3, 2),
+    new THREE.MeshStandardMaterial({ color: 0x2b332c, roughness: 0.95 }),
   );
   yardPad.position.set(0, 0.1, 4);
   yardGroup.add(yardPad);
