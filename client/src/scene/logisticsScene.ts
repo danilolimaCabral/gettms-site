@@ -797,19 +797,45 @@ hub.scale.setScalar(1.15);
   hub.scale.y = 0.001;
 
   // ---------------------------------------------------------------- caminhão
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x39423a, roughness: 0.95 });
+  const laneMat = new THREE.MeshBasicMaterial({ color: 0xe9f2e0 });
+  const accessRoad = new THREE.Mesh(new THREE.PlaneGeometry(9, 104), roadMat);
+  accessRoad.rotation.x = -Math.PI / 2;
+  accessRoad.position.set(-2.6, 0.05, -52);
+  scene.add(accessRoad);
+  for (let i = 0; i < 12; i += 1) {
+    const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.4), laneMat);
+    dash.rotation.x = -Math.PI / 2;
+    dash.position.set(-2.6, 0.06, -4 - i * 8.5);
+    scene.add(dash);
+  }
+  const dockRoad = new THREE.Mesh(new THREE.PlaneGeometry(78, 9), roadMat);
+  dockRoad.rotation.x = -Math.PI / 2;
+  dockRoad.position.set(30, 0.05, -99);
+  scene.add(dockRoad);
+  const sideRoad = new THREE.Mesh(new THREE.PlaneGeometry(64, 9), roadMat);
+  sideRoad.rotation.x = -Math.PI / 2;
+  sideRoad.position.set(-36, 0.05, 18);
+  scene.add(sideRoad);
+  const dockRoadLink = new THREE.Mesh(new THREE.PlaneGeometry(9, 40), roadMat);
+  dockRoadLink.rotation.x = -Math.PI / 2;
+  dockRoadLink.position.set(-2.6, 0.05, -90);
+  scene.add(dockRoadLink);
+
   const truckPath = new THREE.CatmullRomCurve3(
     [
       new THREE.Vector3(-2.6, 0, -6),
-      new THREE.Vector3(-2.6, 0, -22),
-      new THREE.Vector3(4, 0, -34),
-      new THREE.Vector3(28, 0, -36),
-      new THREE.Vector3(50, 0, -36),
-      new THREE.Vector3(58, 0, -40),
-      new THREE.Vector3(58, 0, -46),
-      new THREE.Vector3(58, 0, -38),
-      new THREE.Vector3(46, 0, -26),
-      new THREE.Vector3(20, 0, -16),
-      new THREE.Vector3(-1, 0, -10),
+      new THREE.Vector3(-2.6, 0, -60),
+      new THREE.Vector3(-2.6, 0, -92),
+      new THREE.Vector3(12, 0, -99),
+      new THREE.Vector3(40, 0, -99),
+      new THREE.Vector3(58, 0, -99),
+      new THREE.Vector3(60, 0, -106),
+      new THREE.Vector3(60, 0, -99),
+      new THREE.Vector3(40, 0, -99),
+      new THREE.Vector3(14, 0, -99),
+      new THREE.Vector3(-2.6, 0, -92),
+      new THREE.Vector3(-2.6, 0, -50)
     ],
     true,
     "catmullrom",
@@ -842,7 +868,7 @@ hub.scale.setScalar(1.15);
   tagCtx.fillText("GT-1024", 74, 66);
   tagCtx.fillStyle = "#8fe04a";
   tagCtx.font = "600 26px Inter, sans-serif";
-  tagCtx.fillText("SAIU DO CD · EM ROTA PARA O CLIENTE", 74, 128);
+  tagCtx.fillText("PEDIDO #4821 · INDO PARA SÃO PAULO", 74, 128);
   tagCtx.fillStyle = "rgba(244,248,239,0.55)";
   tagCtx.font = "500 22px Inter, sans-serif";
   tagCtx.fillText("Tracking em tempo real · getTMS", 74, 166);
@@ -1501,12 +1527,50 @@ hub.scale.setScalar(1.15);
   makeSmallDc(-52, -112, Math.PI, "CD LESTE", 0x2f6f4f);
 
   // tráfego contínuo na via
+  function makeStatusTag(name: string, status: string, city: string) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 560;
+    canvas.height = 150;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "rgba(10,16,11,0.9)";
+    ctx.beginPath();
+    ctx.roundRect(6, 6, 548, 138, 24);
+    ctx.fill();
+    ctx.fillStyle = "#8fe04a";
+    ctx.beginPath();
+    ctx.arc(38, 48, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f4f8ef";
+    ctx.font = "700 34px Sora, Inter, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, 58, 48);
+    ctx.fillStyle = "#9fe86a";
+    ctx.font = "600 24px Inter, sans-serif";
+    ctx.fillText(status, 24, 96);
+    ctx.fillStyle = "rgba(244,248,239,0.6)";
+    ctx.font = "500 22px Inter, sans-serif";
+    ctx.fillText(`Destino · ${city}`, 24, 126);
+    const texture = track(new THREE.CanvasTexture(canvas));
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+    sprite.scale.set(9, 2.4, 1);
+    sprite.position.set(0, 7.4, -2);
+    return sprite;
+  }
+
+  const fleetStatus = [
+    ["PEDIDO #4822 · EM ROTA", "Curitiba"],
+    ["PEDIDO #4823 · INDO PARA O CLIENTE", "São Paulo"],
+    ["PEDIDO #4824 · COLETANDO", "Joinville"],
+  ];
+
   const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
     const vehicle = makeSimpleTruck(name);
     const dir = index % 2 === 0 ? -1 : 1;
     vehicle.rotation.y = Math.PI;
     vehicle.scale.setScalar(0.94);
     vehicle.position.set(2.8, 0, 0);
+    vehicle.add(makeStatusTag(name, fleetStatus[index][0], fleetStatus[index][1]));
     scene.add(vehicle);
     return { mesh: vehicle, lane: 2.8, speed: 7 + index * 2, offset: index * 46, dir };
   });
