@@ -11,11 +11,11 @@ export default function Logo({
   tone?: "dark" | "light";
 }) {
   return (
-    <span className={`inline-flex items-center ${className}`}>
+    <span className={`inline-flex items-center leading-none ${className}`}>
       <img
         src={tone === "light" ? "/brand/gettms-logo-light.png" : "/brand/gettms-logo-dark.png"}
         alt="GetTMS"
-        className="h-9 w-auto object-contain"
+        className="h-8 w-auto shrink-0 select-none object-contain md:h-9"
       />
     </span>
   );
