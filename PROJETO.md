@@ -1,22 +1,28 @@
 # GetTMS — estado do projeto
 
-Referência visual pedida pelo cliente: foto noturna de CD com docas iluminadas (qualidade/realismo), mas tema do site **claro**.
+## Publicação
+- Produção (Vercel): https://gettms-site.vercel.app
+- Repositório: https://github.com/danilolimaCabral/gettms-site — push em `main` publica automático
+- Projeto Vercel `gettms-site` (team_swC6dBlNuAtqYl5CA2GElq8I): framework vite, build `pnpm build:static`, saída `dist/public`, node 22.x
+- Checkpoint Manus: repositório canônico do Webdev (`origin main`)
 
-## Estrutura
-- `client/src/components/site/ScrollStage.tsx` — filme de rolagem (1400svh), 10 capítulos com chips, hero, mapa interativo (topo-direita), botão 360 nos CTAs, trilho lateral, dica "Role".
-- `client/src/scene/logisticsScene.ts` — cena Three.js: armazém, via, caminhão principal em loop contínuo (CatmullRom), frota getTMS, CD Matsuyama (6 docas, 76 m), pátio com vagas, pátio de contêineres + empilhadeira, torre de análise (14 estações com dashboards), CD Norte/Sul/Leste/Oeste/Alfa/Beta, tráfego contínuo, modo 360 (`setOrbit`, `orbitBy`).
-- `client/src/pages/Home.tsx` — ScrollStage + Clients + FinalCta + Footer + Mia.
-- `client/src/components/site/SiteHeader.tsx` — navegação por progresso (`gettms:seek`).
+## Estrutura da página (tudo guiado por scroll)
+1. `ScrollStage` — filme 3D (1400svh, 10 capítulos, cena montada pelo scroll, mapa interativo, 360)
+2. `SegmentsScenes` — 4 cenas sticky (alimentos, farma, construção, e-commerce) + `SegmentGraphic` (SVG)
+3. `PlatformScenes` — 4 cenas sticky com notebook que abre no scroll; comparação de transportadoras com check
+4. `SceneShell` + `Maturity` — quiz de maturidade em cena de tela cheia (fundo claro)
+5. `SceneShell` + `Tracking` — tracking em cena de tela cheia
+6. `SceneShell` + `FinalCta` — contato em cena de tela cheia
+7. `Clients`, `SiteFooter`, `Mia`
 
-## Decisões
-- Tema claro (tokens em `client/src/index.css`).
-- Cena montada desde o início (`pb = Math.max(0.86, p)`).
-- Caminhão estaciona de ré; anda em faixa própria.
-- Zoom de ~20% por capítulo.
+## Marca
+- Logo vetorial própria em `Logo.tsx` (tile escuro + marca verde + wordmark get/TMS). O lockup oficial (marca nos dois lados) parece cortado em tamanho pequeno; PNGs oficiais ficam em `client/public/brand/`.
+- OG image: `client/public/brand/og-image.png`; favicon `/favicon.svg` e `/favicon.png`
 
-## Checkpoints
-- 1f5240d — layout corrigido, mapa no topo, botão 360, carros com faróis.
+## 3D
+- Cena em `client/src/scene/logisticsScene.ts` (Three.js, chunk separado)
+- Modelos GLB em `client/public/models/` (fontes em ASSETS.md)
 
-## Pendente
-- Publicar (deploy) e revisar no celular real.
-- Melhorias opcionais: modelos de caminhão/carro mais detalhados, mais cenas distantes.
+## Pendências
+- Ré dos caminhões em algumas docas
+- Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
