@@ -1432,7 +1432,7 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
-  const truckVariants = ["semi-truck"];
+  const truckVariants = ["cab-over"];
   const truckColors = [0xffffff, 0x8fe04a, 0x63b32e, 0x2f6f4f, 0xdbe3d2, 0x2b3a30];
   let truckVariantIndex = 0;
   function makeSimpleTruck(name: string) {
@@ -1498,7 +1498,7 @@ hub.scale.setScalar(1.15);
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
-    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: -Math.PI / 2, color, label: name });
+    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color, label: name });
     return group;
   }
 
@@ -1576,7 +1576,7 @@ hub.scale.setScalar(1.15);
       dc.add(door);
       const parked = makeSimpleTruck(["GT-1140", "GT-7788", "GT-9021"][(Math.round(dx / 9) + 1) % 3]);
       parked.position.set(dx, 0, 15);
-      parked.rotation.y = 0;
+      parked.rotation.y = Math.PI / 2;
       parked.scale.setScalar(0.9);
       dc.add(parked);
     });
@@ -2184,7 +2184,7 @@ hub.scale.setScalar(1.15);
     if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
     parked.position.set(doorX, 0, 19.5);
-    parked.rotation.y = 0;
+    parked.rotation.y = Math.PI / 2;
     parked.scale.setScalar(0.001);
     parked.userData.delay = index * 0.015;
     parked.userData.dockX = doorX;
@@ -2645,6 +2645,123 @@ hub.scale.setScalar(1.15);
   resize();
   frame = requestAnimationFrame(render);
 
+
+  function makeCabOverSource(): THREE.Group {
+    const root = new THREE.Group();
+    const body = new THREE.MeshStandardMaterial({ color: 0xf4f7f0, roughness: 0.35, metalness: 0.25 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1c241e, roughness: 0.5, metalness: 0.4 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe4e6, roughness: 0.18, metalness: 0.9 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x2a3a33, roughness: 0.08, metalness: 0.9 });
+    const lamp = new THREE.MeshBasicMaterial({ color: 0xfff6dc });
+    const rearLamp = new THREE.MeshBasicMaterial({ color: 0xd8352a });
+    // chassis
+    const chassis = new THREE.Mesh(round(2.2, 0.42, 14.6, 0.08, 1), dark);
+    chassis.position.set(0, 0.95, -0.4);
+    root.add(chassis);
+    // cabine toco
+    const cab = new THREE.Mesh(round(2.5, 2.85, 2.35, 0.28, 3), body);
+    cab.position.set(0, 2.5, 5.55);
+    root.add(cab);
+    const roof = new THREE.Mesh(round(2.42, 0.5, 2.3, 0.22, 2), body);
+    roof.position.set(0, 4.1, 5.6);
+    root.add(roof);
+    const deflector = new THREE.Mesh(round(2.4, 0.85, 1.5, 0.4, 2), body);
+    deflector.position.set(0, 4.55, 5.25);
+    root.add(deflector);
+    // para-brisa inclinado
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.45, 0.1), glass);
+    windshield.position.set(0, 3.32, 6.74);
+    windshield.rotation.x = -0.12;
+    root.add(windshield);
+    [-1.26, 1.26].forEach((x) => {
+      const sideWindow = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.95, 1.15), glass);
+      sideWindow.position.set(x, 3.45, 6.0);
+      root.add(sideWindow);
+      const mirror = new THREE.Mesh(round(0.12, 0.62, 0.34, 0.05, 2), dark);
+      mirror.position.set(x * 1.18, 3.55, 6.15);
+      root.add(mirror);
+    });
+    const visor = new THREE.Mesh(round(2.4, 0.18, 0.55, 0.08, 1), body);
+    visor.position.set(0, 4.16, 6.62);
+    root.add(visor);
+    // grade frontal e faróis
+    const grille = new THREE.Mesh(round(2.15, 1.0, 0.12, 0.08, 2), dark);
+    grille.position.set(0, 2.05, 6.78);
+    root.add(grille);
+    for (let i = 0; i < 3; i += 1) {
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.1, 0.1), chrome);
+      slat.position.set(0, 1.75 + i * 0.3, 6.85);
+      root.add(slat);
+    }
+    const bumper = new THREE.Mesh(round(2.5, 0.55, 0.5, 0.14, 2), body);
+    bumper.position.set(0, 1.15, 6.85);
+    root.add(bumper);
+    [-0.86, 0.86].forEach((x) => {
+      const head = new THREE.Mesh(round(0.55, 0.28, 0.12, 0.05, 1), lamp);
+      head.position.set(x, 1.55, 6.92);
+      root.add(head);
+    });
+    for (let i = 0; i < 5; i += 1) {
+      const marker = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.06), lamp);
+      marker.position.set(-0.9 + i * 0.45, 4.34, 6.68);
+      root.add(marker);
+    }
+    // tanques e degraus
+    [-1.16, 1.16].forEach((x) => {
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 1.5, 16), chrome);
+      tank.rotation.x = Math.PI / 2;
+      tank.position.set(x, 1.1, 3.4);
+      root.add(tank);
+      const step = new THREE.Mesh(round(0.16, 0.5, 0.7, 0.05, 1), dark);
+      step.position.set(x * 1.08, 1.1, 5.2);
+      root.add(step);
+    });
+    // quinta roda
+    const fifth = new THREE.Mesh(round(1.6, 0.14, 1.3, 0.05, 1), chrome);
+    fifth.position.set(0, 1.25, 2.0);
+    root.add(fifth);
+    // carreta
+    const trailer = new THREE.Mesh(round(2.56, 2.95, 12.4, 0.12, 2), body);
+    trailer.position.set(0, 3.05, -4.4);
+    root.add(trailer);
+    const skirt = new THREE.Mesh(round(2.6, 0.5, 12.4, 0.08, 1), dark);
+    skirt.position.set(0, 1.2, -4.4);
+    root.add(skirt);
+    const stripe = new THREE.Mesh(round(2.6, 0.16, 12.42, 0.05, 1), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
+    stripe.position.set(0, 1.52, -4.4);
+    root.add(stripe);
+    const rear = new THREE.Mesh(round(2.5, 2.7, 0.14, 0.06, 1), dark);
+    rear.position.set(0, 3.0, -10.62);
+    root.add(rear);
+    [-0.8, 0.8].forEach((x) => {
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.06), rearLamp);
+      tail.position.set(x, 1.35, -10.66);
+      root.add(tail);
+    });
+    // rodas
+    const tire = new THREE.MeshStandardMaterial({ color: 0x20241f, roughness: 0.9 });
+    const rim = new THREE.MeshStandardMaterial({ color: 0xcfd4d6, roughness: 0.3, metalness: 0.8 });
+    const wheelGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.36, 20);
+    wheelGeo.rotateZ(Math.PI / 2);
+    const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.38, 16);
+    rimGeo.rotateZ(Math.PI / 2);
+    [6.3, -1.4, -2.9, -6.6, -8.1].forEach((z) => {
+      [-1.14, 1.14].forEach((x) => {
+        const wheel = new THREE.Mesh(wheelGeo, tire);
+        wheel.position.set(x, 0.52, z);
+        wheel.name = "wheel";
+        root.add(wheel);
+        const hub = new THREE.Mesh(rimGeo, rim);
+        hub.position.set(x, 0.52, z);
+        root.add(hub);
+      });
+    });
+    root.traverse((child) => {
+      child.castShadow = false;
+    });
+    return root;
+  }
+
   function queueGlb(request: GlbRequest) {
     if (glbSources[request.key]) applyGlb(request, glbSources[request.key]);
     else glbRequests.push(request);
@@ -2728,10 +2845,17 @@ hub.scale.setScalar(1.15);
     request.holder.add(wrapper);
   }
 
-  const truckRequest = { key: "semi-truck", holder: truck, parts: [...truck.children], length: 15.4, rotY: -Math.PI / 2 };
+  const truckRequest = { key: "cab-over", holder: truck, parts: [...truck.children], length: 17.0, rotY: 0 };
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
 
+  glbSources["cab-over"] = makeCabOverSource();
+  for (let i = glbRequests.length - 1; i >= 0; i -= 1) {
+    if (glbRequests[i].key === "cab-over") {
+      applyGlb(glbRequests[i], glbSources["cab-over"]);
+      glbRequests.splice(i, 1);
+    }
+  }
   ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "1990s-sedan", "1990s-hatchback", "1990s-suv", "1990s-delivery-van", "forklift"].forEach((key) => {
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
