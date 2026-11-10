@@ -2546,6 +2546,7 @@ hub.scale.setScalar(1.15);
   const officePos = new THREE.Vector3();
   const officeQuat = new THREE.Quaternion();
   const officeFwd = new THREE.Vector3();
+  const officeRight = new THREE.Vector3();
   let segmentZoom = 1;
   const segTarget = new THREE.Vector3();
   const overrideLook = new THREE.Vector3();
@@ -2893,13 +2894,18 @@ hub.scale.setScalar(1.15);
         heroTable.getWorldPosition(officePos);
         heroTable.getWorldQuaternion(officeQuat);
         officeFwd.set(0, 0, 1).applyQuaternion(officeQuat).normalize();
-        segTarget.copy(officePos).addScaledVector(officeFwd, 2.9 * segmentZoom).add(new THREE.Vector3(0, 0.15, 0));
-        overrideLook.lerp(officePos, 0.06);
+        officeRight.set(1, 0, 0).applyQuaternion(officeQuat).normalize();
+        segTarget
+          .copy(officePos)
+          .addScaledVector(officeFwd, 2.9 * segmentZoom)
+          .addScaledVector(officeRight, -1.5)
+          .add(new THREE.Vector3(0, 0.15, 0));
+        overrideLook.lerp(officePos, 0.12);
       } else {
         segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
         overrideLook.lerp(segmentView.look, 0.05);
       }
-      camera.position.lerp(segTarget, 0.05);
+      camera.position.lerp(segTarget, 0.12);
       camera.lookAt(overrideLook);
     }
 
