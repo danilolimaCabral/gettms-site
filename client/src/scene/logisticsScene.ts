@@ -379,8 +379,11 @@ export function createLogisticsScene(
   const treePositions: [number, number, number][] = [];
   for (let i = 0; i < treeCount; i += 1) {
     const side = i % 2 === 0 ? 1 : -1;
-    const z = 44 - i * 4.6 - Math.random() * 3;
-    const x = side * (12 + Math.random() * 16);
+    let z = 44 - i * 4.6 - Math.random() * 3;
+    let x = side * (12 + Math.random() * 16);
+    // não planta árvore no pátio do CD nem na via de acesso
+    if (Math.abs(x) < 9) x = side * 11;
+    if (x > 26 && z < -28) z = -18 + Math.random() * 6;
     const s = 0.8 + Math.random() * 0.6;
     treePositions.push([x, z, s]);
     treeDummy.position.set(x, 0.8 * s, z);
@@ -433,6 +436,27 @@ export function createLogisticsScene(
     road.add(edge);
   });
 
+  // malha viária conectada
+  const gridRoadMat = new THREE.MeshStandardMaterial({
+    color: 0x232b25,
+    roughness: 0.92,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0,
+  });
+  const gridRoads: THREE.Mesh[] = [];
+  const addStreet = (x: number, z: number, length: number, horizontal: boolean) => {
+    const street = new THREE.Mesh(new THREE.PlaneGeometry(horizontal ? length : 9, horizontal ? 9 : length), gridRoadMat);
+    street.rotation.x = -Math.PI / 2;
+    if (!horizontal) street.rotation.z = Math.PI / 2;
+    street.position.set(x, 0.045, z);
+    road.add(street);
+    gridRoads.push(street);
+  };
+  [-150, -96, 30, 84, 138, 192].forEach((z) => addStreet(0, z, 420, true));
+  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addStreet(x, -20, 460, false));
+  addStreet(0, -52, 180, false);
+  addStreet(0, 6, 120, false);
   const dashMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0, transparent: true, opacity: 0 });
   const dashCount = 88;
   const dashes = new THREE.InstancedMesh(round(0.2, 0.05, 3, 0.06, 1), dashMat, dashCount);
@@ -2351,7 +2375,6 @@ hub.scale.setScalar(1.15);
   }
 
   function applyProgress(p: number, time: number) {
-    yardGroup.visible = p > 0.72;
     const frameDt = Math.min(0.05, Math.max(0.001, time - lastFrameTime));
     lastFrameTime = time;
     const pb = Math.max(0.86, p);
@@ -2362,6 +2385,8 @@ hub.scale.setScalar(1.15);
     curbMat.opacity = roadReveal;
     edgeMat.opacity = roadReveal * 0.5;
     dashMat.opacity = roadReveal * 0.85;
+    gridRoadMat.opacity = roadReveal * 0.9;
+    yardGroup.visible = p > 0.8;
 
     const treesIn = easeOut(range(pb, 0.06, 0.22));
     treeGroup.scale.y = Math.max(0.001, treesIn);
