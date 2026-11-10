@@ -122,7 +122,7 @@ export default function PlatformScenes() {
       const loc = Math.min(1, Math.max(0, p * n - idx));
       setScene(idx);
       setLocal(loc);
-      setLid(-90 + Math.min(1, loc / 0.3) * 90);
+      setLid(-90 + Math.min(1, loc / 0.18) * 90);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -183,7 +183,7 @@ export default function PlatformScenes() {
               style={{
                 transform: `rotateX(${lid}deg)`,
                 transformOrigin: "top center",
-                opacity: lid < -4 ? 1 : 0,
+                opacity: Math.min(1, Math.max(0, -lid / 70)),
                 transition: "opacity 120ms linear",
                 boxShadow: "inset 0 -20px 40px rgba(0,0,0,0.5)",
               }}
