@@ -1,25 +1,31 @@
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import ScrollStage from "@/components/site/ScrollStage";
+import SiteHeader from "@/components/site/SiteHeader";
+import Clients from "@/components/site/Clients";
+import Manifesto from "@/components/site/Manifesto";
+import Segments from "@/components/site/Segments";
+import Platform from "@/components/site/Platform";
+import Maturity from "@/components/site/Maturity";
+import Tracking from "@/components/site/Tracking";
+import FinalCta from "@/components/site/FinalCta";
+import SiteFooter from "@/components/site/SiteFooter";
+import Mia from "@/components/site/Mia";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
 export default function Home() {
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div id="top" className="relative min-h-screen bg-paper">
+      <SiteHeader />
       <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
+        <ScrollStage />
+        <Clients />
+        <Manifesto />
+        <Segments />
+        <Platform />
+        <Maturity />
+        <Tracking />
+        <FinalCta />
       </main>
+      <SiteFooter />
+      <Mia />
     </div>
   );
 }
