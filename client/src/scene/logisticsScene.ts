@@ -874,6 +874,23 @@ hub.scale.setScalar(1.15);
   const trailer = new THREE.Mesh(round(2.95, 3.4, 12, 0.26, 4), whiteMat);
   trailer.position.set(0, 3.05, -3.8);
   truck.add(trailer);
+  const ribMat = new THREE.MeshStandardMaterial({ color: 0xe2e8dc, roughness: 0.75, metalness: 0.1 });
+  for (let i = 0; i < 7; i += 1) {
+    [-1.49, 1.49].forEach((x) => {
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.9, 0.12), ribMat);
+      rib.position.set(x, 3.05, -9 + i * 1.55);
+      truck.add(rib);
+    });
+  }
+  const trailerStripe = new THREE.Mesh(
+    new THREE.BoxGeometry(2.97, 0.16, 11.8),
+    new THREE.MeshStandardMaterial({ color: BRAND_DEEP, roughness: 0.5, metalness: 0.2 }),
+  );
+  trailerStripe.position.set(0, 1.55, -3.8);
+  truck.add(trailerStripe);
+  const trailerSkirt = new THREE.Mesh(round(2.8, 0.42, 11.4, 0.08, 1), darkMat);
+  trailerSkirt.position.set(0, 0.85, -3.8);
+  truck.add(trailerSkirt);
 
   // costelas laterais
   for (let i = 0; i < 8; i += 1) {
@@ -1392,6 +1409,14 @@ hub.scale.setScalar(1.15);
     const roof = new THREE.Mesh(round(31.2, 0.5, 17.2, 0.25, 2), roofMat);
     roof.position.y = 9.2;
     dc.add(roof);
+    const roofLed = new THREE.Mesh(new THREE.BoxGeometry(31, 0.08, 0.1), new THREE.MeshBasicMaterial({ color: BRAND }));
+    roofLed.position.set(0, 9.5, 8.6);
+    dc.add(roofLed);
+    [-8, 4].forEach((ux) => {
+      const unit = new THREE.Mesh(round(3.4, 0.8, 2.2, 0.12, 2), new THREE.MeshStandardMaterial({ color: 0xc9d2c6, roughness: 0.6, metalness: 0.4 }));
+      unit.position.set(ux, 9.9, -1);
+      dc.add(unit);
+    });
     const band = new THREE.Mesh(
       round(29, 3.4, 0.3, 0.1, 2),
       new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5, metalness: 0.3 }),
@@ -1510,6 +1535,27 @@ hub.scale.setScalar(1.15);
   dcCanopy.position.set(0, 6.9, 13.4);
   clientDc.add(dcCanopy);
   const dcCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(72, 0.12, 0.16), stripMat);
+  const hvacMat = new THREE.MeshStandardMaterial({ color: 0xc9d2c6, roughness: 0.6, metalness: 0.4 });
+  [-22, -8, 6, 20].forEach((x) => {
+    const unit = new THREE.Mesh(round(4.4, 0.9, 2.6, 0.15, 2), hvacMat);
+    unit.position.set(x, 12.8, -1);
+    clientDc.add(unit);
+    const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.16, 16), new THREE.MeshStandardMaterial({ color: 0x3a463c, roughness: 0.5, metalness: 0.5 }));
+    fan.position.set(x, 13.3, -1);
+    clientDc.add(fan);
+  });
+  for (let i = 0; i < 12; i += 1) {
+    const fin = new THREE.Mesh(round(0.14, 6, 0.5, 0.05, 1), trimMat);
+    fin.position.set(-36 + i * 6.6, 8.2, 11.2);
+    clientDc.add(fin);
+  }
+  const facadeBand = new THREE.Mesh(
+    new THREE.BoxGeometry(76, 0.18, 0.16),
+    new THREE.MeshBasicMaterial({ color: 0xf2ffe0 }),
+  );
+  facadeBand.position.set(0, 6.4, 11.25);
+  clientDc.add(facadeBand);
+
   const dcRoofLed = new THREE.Mesh(new THREE.BoxGeometry(76.4, 0.1, 0.12), new THREE.MeshBasicMaterial({ color: BRAND }));
   dcRoofLed.position.set(0, 12.5, 11.7);
   clientDc.add(dcRoofLed);
