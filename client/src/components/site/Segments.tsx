@@ -1,4 +1,4 @@
-import SegmentVisual from "./SegmentVisual";
+import SegmentGraphic from "./SegmentGraphic";
 import { ArrowUpRight } from "lucide-react";
 import Reveal from "./Reveal";
 import { SEGMENTS, whatsappLink } from "@/content/site";
@@ -31,7 +31,7 @@ export default function Segments() {
             >
               <div className="relative overflow-hidden rounded-2xl">
                 <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-ink/12">
-                  <SegmentVisual kind={segment.id as "alimentos" | "farma" | "construcao" | "ecommerce"} />
+                  <SegmentGraphic kind={segment.id as "alimentos" | "farma" | "construcao" | "ecommerce"} />
                 </div>
                 <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-paper px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-ink/70 backdrop-blur">
                   {String(index + 1).padStart(2, "0")} · {segment.kicker}

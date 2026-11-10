@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowUpRight, CheckCircle2, Radio } from "lucide-react";
 import Reveal from "./Reveal";
 import { DEMO_URL, TRACKING_STEPS } from "@/content/site";
-import SegmentVisual from "./SegmentVisual";
+import SegmentGraphic from "./SegmentGraphic";
 
 
 export default function Tracking() {
@@ -29,7 +29,7 @@ export default function Tracking() {
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <Reveal className="relative overflow-hidden rounded-2xl border border-ink/12">
             <div className="min-h-[360px] w-full">
-              <SegmentVisual kind="tracking" />
+              <SegmentGraphic kind="tracking" />
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-[#060b07] via-[#060b07]/45 to-transparent" />
 
