@@ -122,6 +122,8 @@ export default function PlatformScenes() {
       const loc = Math.min(1, Math.max(0, p * n - idx));
       setScene(idx);
       setLocal(loc);
+      const handle = (window as unknown as { __gettmsScene?: { setSegmentZoom: (z: number) => void } }).__gettmsScene;
+      handle?.setSegmentZoom(1.05 - loc * 0.35);
       setLid(-90 + Math.min(1, loc / 0.18) * 90);
     };
     const onScroll = () => {
@@ -137,12 +139,26 @@ export default function PlatformScenes() {
     };
   }, []);
 
+  useEffect(() => {
+    const handle = (window as unknown as {
+      __gettmsScene?: { setSegmentView: (k: string | null) => void; setFeatureScreen: (i: number) => void };
+    }).__gettmsScene;
+    const keys = ["simulacao", "ocorrencias", "afericao", "relatorios"];
+    handle?.setFeatureScreen(scene);
+    handle?.setSegmentView(keys[scene]);
+  }, [scene]);
+
+  useEffect(() => () => {
+    const handle = (window as unknown as { __gettmsScene?: { setSegmentView: (k: string | null) => void } }).__gettmsScene;
+    handle?.setSegmentView(null);
+  }, []);
+
   const feature = FEATURES[scene];
 
   return (
-    <section id="plataforma" ref={sectionRef} className="relative bg-[#0b100c]" style={{ height: `${FEATURES.length * 150}vh` }}>
+    <section id="plataforma" ref={sectionRef} className="relative bg-transparent" style={{ height: `${FEATURES.length * 150}vh` }}>
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(80%_60%_at_70%_40%,rgba(143,224,74,0.12),transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.94)_0%,rgba(11,16,12,0.78)_40%,rgba(11,16,12,0.35)_70%,rgba(11,16,12,0.12)_100%)]" />
         <div className="container-wide relative grid w-full items-center gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
           <div key={scene} className="order-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-500 lg:order-1">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">
@@ -169,34 +185,7 @@ export default function PlatformScenes() {
             </div>
           </div>
 
-          {/* notebook */}
-          <div className="relative order-1 mx-auto w-full max-w-[560px] [perspective:1400px] lg:order-2 lg:max-w-[640px]">
-            <div className="relative aspect-[16/10] w-full rounded-xl border border-white/10 bg-[#151c17] p-2 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
-              <div className="h-full w-full overflow-hidden rounded-lg">
-                <Screen index={scene} progress={local} />
-              </div>
-              <div className="absolute left-1/2 top-1 h-1 w-1 -translate-x-1/2 rounded-full bg-white/25" />
-            </div>
-            {/* tampa abrindo: o painel gira conforme a rolagem */}
-            <div
-              className="pointer-events-none absolute inset-0 rounded-xl border border-white/20 [transform-style:preserve-3d] [background:linear-gradient(160deg,#2a332c_0%,#1a221c_55%,#121813_100%)]"
-              style={{
-                transform: `rotateX(${lid}deg)`,
-                transformOrigin: "top center",
-                opacity: Math.min(1, Math.max(0, -lid / 70)),
-                transition: "opacity 120ms linear",
-                boxShadow: "inset 0 -20px 40px rgba(0,0,0,0.5)",
-              }}
-            >
-              <div className="absolute inset-x-0 bottom-0 h-6 rounded-b-xl bg-[#0f1511]" />
-              <div className="absolute inset-x-6 top-5 h-2 rounded-full bg-white/[0.06]" />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-2xl font-extrabold tracking-[-0.05em] text-white/25">
-                get<span className="text-[#8fe04a]/40">TMS</span>
-              </span>
-            </div>
-            <div className="mx-auto mt-2 h-2 w-2/3 rounded-b-xl bg-[#1b241d]" />
-            <div className="mt-4 text-center text-[11px] text-white/35">role para abrir a próxima frente</div>
-          </div>
+          <div className="hidden lg:block" />
         </div>
       </div>
     </section>

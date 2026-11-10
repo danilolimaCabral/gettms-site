@@ -13,6 +13,8 @@ export type LogisticsSceneHandle = {
   setPointer: (x: number, y: number) => void;
   setOrbit: (active: boolean) => void;
   setSegmentView: (kind: string | null) => void;
+  setFeatureScreen: (index: number) => void;
+  setSegmentZoom: (z: number) => void;
   orbitBy: (delta: number) => void;
   orbitZoom: (delta: number) => void;
   resize: () => void;
@@ -71,6 +73,89 @@ function makeShadowTexture() {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+function makeFeatureScreen(kind: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 400;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#0b1611";
+  ctx.fillRect(0, 0, 640, 400);
+  ctx.fillStyle = "rgba(143,224,74,0.16)";
+  ctx.fillRect(0, 0, 640, 52);
+  ctx.fillStyle = "#8fe04a";
+  ctx.font = "600 18px Inter, sans-serif";
+  ctx.fillText(
+    ["SIMULAÇÃO DE FRETE · SP → CURITIBA", "OCORRÊNCIAS · PEDIDO #4821", "AFERIÇÃO DA FATURA · OUTUBRO", "DESEMPENHO · ÚLTIMOS 30 DIAS"][kind],
+    20,
+    34,
+  );
+  ctx.fillStyle = "#f2ffe2";
+  ctx.font = "700 34px Sora, Inter, sans-serif";
+  ctx.fillText(
+    ["Comparativo de transportadoras", "Linha do tempo da carga", "Conferência CTe × tabela", "Indicadores da operação"][kind],
+    20,
+    104,
+  );
+  const tables = [
+    [
+      ["Transportadora A", "2 dias", "R$ 1.248,00", ""],
+      ["Transportadora B", "3 dias", "R$ 1.096,50", "✓"],
+      ["Transportadora C", "4 dias", "R$ 1.182,30", ""],
+    ],
+    [
+      ["Coleta realizada", "08:40", "ok", "✓"],
+      ["Em trânsito · BR-116", "12:15", "ok", "✓"],
+      ["Atraso previsto", "40 min", "tratado", "✓"],
+      ["Chegada no CD", "prevista", "", ""],
+    ],
+    [
+      ["CTe 3321", "tabela", "R$ 1.096,50", "✓"],
+      ["CTe 3322", "tabela", "R$ 840,00", "✓"],
+      ["CTe 3323", "divergência", "R$ 1.310,20", ""],
+    ],
+    [
+      ["No prazo", "96,2%", "meta 95%", "✓"],
+      ["Conta frete", "-11,4%", "vs. mês", "✓"],
+      ["Ocorrências", "0,8%", "vs. 1,4%", "✓"],
+    ],
+  ];
+  const rows = tables[kind] ?? tables[0];
+  rows.forEach((row, i) => {
+    const y = 132 + i * 52;
+    const best = row[3] === "✓";
+    ctx.fillStyle = best ? "rgba(143,224,74,0.18)" : "rgba(255,255,255,0.04)";
+    ctx.fillRect(20, y, 600, 44);
+    if (best) {
+      ctx.strokeStyle = "#8fe04a";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, y, 600, 44);
+    }
+    ctx.fillStyle = "#e8f4dc";
+    ctx.font = "500 20px Inter, sans-serif";
+    ctx.fillText(row[0], 36, y + 29);
+    ctx.fillStyle = "rgba(232,244,220,0.6)";
+    ctx.fillText(row[1], 360, y + 29);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 20px Inter, sans-serif";
+    ctx.fillText(row[2], 450, y + 29);
+    if (best) {
+      ctx.fillStyle = "#8fe04a";
+      ctx.beginPath();
+      ctx.arc(596, y + 22, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0b1611";
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.fillText("✓", 590, y + 28);
+    }
+  });
+  ctx.fillStyle = "#8fe04a";
+  ctx.fillRect(20, 340, 600, 44);
+  ctx.fillStyle = "#0b1611";
+  ctx.font = "700 20px Inter, sans-serif";
+  ctx.fillText(["Cotação aprovada · pedido #4821 gerado", "Cliente notificado · ocorrência tratada", "Diferença encontrada: R$ 84,20", "Exportar relatório · PDF / XLSX"][kind], 36, 369);
+  return canvas;
 }
 
 function makeScreenTexture(kind: number) {
@@ -2085,6 +2170,21 @@ hub.scale.setScalar(1.15);
   officeFloor.position.set(0, 0.6, 3.2);
   office.add(officeFloor);
 
+  const heroTextures = [0, 1, 2, 3].map((kind) =>
+    track(new THREE.CanvasTexture(makeFeatureScreen(kind))),
+  );
+  heroTextures.forEach((texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+  });
+  const heroMat = new THREE.MeshBasicMaterial({ map: heroTextures[0], transparent: true });
+  const heroTable = new THREE.Mesh(round(3.2, 2, 0.12, 0.06, 2), heroMat);
+  heroTable.position.set(0, 3.5, 6.75);
+  office.add(heroTable);
+  const heroBezel = new THREE.Mesh(round(3.4, 2.2, 0.08, 0.05, 2), new THREE.MeshStandardMaterial({ color: 0x1a211c, roughness: 0.5 }));
+  heroBezel.position.set(0, 3.5, 6.68);
+  office.add(heroBezel);
+  let heroView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   const monitorMats: THREE.MeshBasicMaterial[] = [];
   const screenTextures = [0, 1, 2].map((kind) => track(makeScreenTexture(kind)));
   const deskMat = new THREE.MeshStandardMaterial({ color: 0xeef2e8, roughness: 0.5, metalness: 0.1 });
@@ -2420,13 +2520,31 @@ hub.scale.setScalar(1.15);
     camera.updateProjectionMatrix();
   }
 
+  heroTable.updateWorldMatrix(true, false);
+  {
+    const worldPos = new THREE.Vector3();
+    heroTable.getWorldPosition(worldPos);
+    const quat = new THREE.Quaternion();
+    heroTable.getWorldQuaternion(quat);
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quat).normalize();
+    heroView = {
+      pos: worldPos.clone().add(forward.multiplyScalar(4.2)).add(new THREE.Vector3(0, 0.35, 0)),
+      look: worldPos.clone(),
+    };
+  }
   const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
     alimentos: { pos: new THREE.Vector3(-64, 22, -6), look: new THREE.Vector3(-92, 7, -34) },
     farma: { pos: new THREE.Vector3(-44, 22, 58), look: new THREE.Vector3(-72, 7, 30) },
     construcao: { pos: new THREE.Vector3(-90, 22, 38), look: new THREE.Vector3(-118, 7, 8) },
-    ecommerce: { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    ecommerce: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    simulacao: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    ocorrencias: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    afericao: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    relatorios: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
   };
   let segmentView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
+  let segmentZoom = 1;
+  const segTarget = new THREE.Vector3();
   const overrideLook = new THREE.Vector3();
 
   function sampleCamera(p: number, outPos: THREE.Vector3, outLook: THREE.Vector3) {
@@ -2768,8 +2886,9 @@ hub.scale.setScalar(1.15);
     camera.position.copy(camPos);
     camera.lookAt(lookTarget);
     if (segmentView) {
+      segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
       overrideLook.lerp(segmentView.look, 0.05);
-      camera.position.lerp(segmentView.pos, 0.05);
+      camera.position.lerp(segTarget, 0.05);
       camera.lookAt(overrideLook);
     }
 
@@ -3017,6 +3136,13 @@ hub.scale.setScalar(1.15);
     },
     orbitZoom(delta: number) {
       orbitRadius = Math.min(140, Math.max(26, orbitRadius + delta));
+    },
+    setSegmentZoom(z: number) {
+      segmentZoom = Math.min(1.4, Math.max(0.55, z));
+    },
+    setFeatureScreen(index: number) {
+      heroMat.map = heroTextures[Math.max(0, Math.min(3, index))];
+      heroMat.needsUpdate = true;
     },
     setSegmentView(kind: string | null) {
       if (!kind) {
