@@ -1126,14 +1126,6 @@ hub.scale.setScalar(1.15);
     });
   }
 
-  addPerson(12.6, -2, -Math.PI / 2, 0xf0b13a, "z", 5, 0.2);
-  addPerson(13.4, 5.6, -Math.PI / 2, 0x8fe04a, "z", 4, 0.22);
-  addPerson(7.6, -3.4, 0.4, 0x8fe04a, null, 0, 0.24);
-  addPerson(-2, 6, 2.2, 0xf0b13a, null, 0, 0.26);
-  addPerson(20.5, 6.5, -1.2, 0x8fe04a, "x", 3, 0.28);
-  addPerson(-14, -102, 0.6, 0xf0b13a, null, 0, 0.86);
-  addPerson(-6, -99, -0.4, 0x8fe04a, "x", 4, 0.88);
-  addPerson(24, -100, 1.8, 0xffffff, null, 0, 0.9);
 
   // ---------------------------------------------------------------- carros
   type Car = { group: THREE.Group; wheels: THREE.Mesh[]; speed: number; offset: number; lane: number; dir: number; delay: number };
@@ -1341,6 +1333,17 @@ hub.scale.setScalar(1.15);
   }
 
   const parkedCars: THREE.Group[] = [];
+
+  // tráfego contínuo na via
+  const roadFleet = ["GT-2201", "GT-8834", "GT-5590"].map((name, index) => {
+    const vehicle = makeSimpleTruck(name);
+    const dir = index % 2 === 0 ? -1 : 1;
+    vehicle.rotation.y = dir < 0 ? Math.PI : 0;
+    vehicle.scale.setScalar(0.94);
+    vehicle.position.set(dir < 0 ? 1.8 : -1.8, 0, 0);
+    scene.add(vehicle);
+    return { mesh: vehicle, lane: dir < 0 ? 1.8 : -1.8, speed: 7 + index * 2, offset: index * 46, dir };
+  });
 
   // ---------------------------------------------------------------- CD do cliente
   const clientDc = new THREE.Group();
@@ -1557,9 +1560,84 @@ hub.scale.setScalar(1.15);
     parkedCars.push(car);
   });
 
+  // cerca perimetral, portão e guarita
+  const fenceMat = new THREE.MeshStandardMaterial({ color: 0xd5ddcf, roughness: 0.55, metalness: 0.35 });
+  const railMat = new THREE.MeshStandardMaterial({ color: 0x8f9c8d, roughness: 0.5, metalness: 0.6 });
+  const fenceSegment = (width: number, x: number, z: number) => {
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(width, 0.08, 0.12), railMat);
+    panel.position.set(x, 2.3, z);
+    clientDc.add(panel);
+    const panel2 = panel.clone();
+    panel2.position.y = 1.5;
+    clientDc.add(panel2);
+    const panel3 = panel.clone();
+    panel3.position.y = 0.7;
+    clientDc.add(panel3);
+    const count = Math.max(2, Math.round(width / 4));
+    for (let i = 0; i <= count; i += 1) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.5, 8), fenceMat);
+      post.position.set(x - width / 2 + (width / count) * i, 1.25, z);
+      clientDc.add(post);
+    }
+  };
+  fenceSegment(46, -21, 43);
+  fenceSegment(34, 27, 43);
+  fenceSegment(62, -44, 12);
+  fenceSegment(62, 44, 12);
+
+  const gatePostMat = new THREE.MeshStandardMaterial({ color: 0x2f3a33, roughness: 0.5, metalness: 0.5 });
+  [-1, 1].forEach((side) => {
+    const gatePost = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.4, 0.8), gatePostMat);
+    gatePost.position.set(2 + side * 5, 1.7, 43);
+    clientDc.add(gatePost);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff4d6 }));
+    lamp.position.set(2 + side * 5, 3.5, 43);
+    clientDc.add(lamp);
+  });
+  const gateSignCanvas = document.createElement("canvas");
+  gateSignCanvas.width = 1024;
+  gateSignCanvas.height = 256;
+  const gateCtx = gateSignCanvas.getContext("2d")!;
+  gateCtx.fillStyle = "#101812";
+  gateCtx.fillRect(0, 0, 1024, 256);
+  gateCtx.fillStyle = "#f4f8ef";
+  gateCtx.font = "700 120px Sora, Inter, sans-serif";
+  gateCtx.textAlign = "center";
+  gateCtx.textBaseline = "middle";
+  gateCtx.fillText("MATSUYAMA", 512, 105);
+  gateCtx.fillStyle = "#8fe04a";
+  gateCtx.font = "600 40px Inter, sans-serif";
+  gateCtx.fillText("PORTARIA · getTMS", 512, 196);
+  const gateSignTex = track(new THREE.CanvasTexture(gateSignCanvas));
+  gateSignTex.colorSpace = THREE.SRGBColorSpace;
+  const gateSign = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshBasicMaterial({ map: gateSignTex }));
+  gateSign.position.set(2, 4.4, 43);
+  clientDc.add(gateSign);
+
+  const booth = new THREE.Mesh(round(3.4, 2.8, 2.8, 0.3, 2), wallMat);
+  booth.position.set(13, 1.4, 41.5);
+  clientDc.add(booth);
+  const boothGlass = new THREE.Mesh(round(2.6, 1.1, 0.1, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.2, metalness: 0.8 }));
+  boothGlass.position.set(13, 1.8, 42.95);
+  clientDc.add(boothGlass);
+  const boothRoof = new THREE.Mesh(round(4.2, 0.3, 3.6, 0.1, 2), roofMat);
+  boothRoof.position.set(13, 2.95, 41.5);
+  clientDc.add(boothRoof);
+  const gateArm = new THREE.Mesh(new THREE.BoxGeometry(9, 0.16, 0.16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  gateArm.position.set(6.5, 1.3, 43);
+  clientDc.add(gateArm);
+  const gateArmStripe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.18, 0.18), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
+  gateArmStripe.position.set(3.6, 1.3, 43);
+  clientDc.add(gateArmStripe);
+
+  // via de acesso do portão até a rua
+  const drive = new THREE.Mesh(round(10, 0.06, 12, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x2a332b, roughness: 0.95 }));
+  drive.position.set(2, 0.07, 50);
+  clientDc.add(drive);
+
   // pátio de contêineres ao lado do CD
   const yardGroup = new THREE.Group();
-  yardGroup.position.set(-44, 0, 22);
+  yardGroup.position.set(54, 0, 2);
   clientDc.add(yardGroup);
 
   const yardPad = new THREE.Mesh(
@@ -1614,8 +1692,8 @@ hub.scale.setScalar(1.15);
     wheel.position.set(x, 0.6, z);
     yardLift.add(wheel);
   });
-  yardLift.position.set(-30, 0, 26);
-  yardLift.rotation.y = Math.PI * 0.5;
+  yardLift.position.set(42, 0, 22);
+  yardLift.rotation.y = 0;
   clientDc.add(yardLift);
 
   // torre de controle / escritório de análise
@@ -2000,14 +2078,21 @@ hub.scale.setScalar(1.15);
       wheel.rotation.x = wheelSpin;
     });
 
+    roadFleet.forEach((item) => {
+      const span = 150;
+      const travelled = (time * item.speed + item.offset) % span;
+      item.mesh.position.z = item.dir < 0 ? 70 - travelled : -80 + travelled;
+      item.mesh.position.x = item.lane;
+    });
+
     const forkCycle = (time * 0.16) % 2;
     const forkPhase = forkCycle < 1 ? forkCycle : 2 - forkCycle;
     const forkEase = forkPhase * forkPhase * (3 - 2 * forkPhase);
-    yardLift.position.x = lerp(-30, 22, forkEase);
-    yardLift.position.z = lerp(26, 24, forkEase);
-    yardLift.rotation.y = Math.PI * 0.5;
+    yardLift.position.x = lerp(42, 64, forkEase);
+    yardLift.position.z = 22;
+    yardLift.rotation.y = forkCycle < 1 ? 0 : Math.PI;
     yardLiftLoad.position.y = 4.4 + Math.sin(forkEase * Math.PI) * 0.35;
-    yardLift.visible = p > 0.3;
+    yardLift.visible = true;
 
     // furgão no sentido oposto, em loop
     const vanTravel = (time * 0.06 + p * 0.4) % 1;
@@ -2197,6 +2282,13 @@ hub.scale.setScalar(1.15);
     smoothY += (pointerY - smoothY) * Math.min(1, dt * 3);
 
     sampleCamera(current, camPos, lookTarget);
+    const chapterMids = [0.13, 0.25, 0.37, 0.49, 0.61, 0.705, 0.78, 0.87, 0.94, 1.04];
+    let bell = 0;
+    chapterMids.forEach((mid) => {
+      bell = Math.max(bell, Math.max(0, 1 - Math.abs(current - mid) / 0.065));
+    });
+    bell = bell * bell * (3 - 2 * bell);
+    camPos.sub(lookTarget).multiplyScalar(1 - 0.2 * bell).add(lookTarget);
 
     const aspect = width / height;
     if (aspect < 1.3) {
