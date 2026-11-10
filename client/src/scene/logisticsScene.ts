@@ -2532,17 +2532,20 @@ hub.scale.setScalar(1.15);
       look: worldPos.clone(),
     };
   }
-  const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
+  const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean }> = {
     alimentos: { pos: new THREE.Vector3(-64, 22, -6), look: new THREE.Vector3(-92, 7, -34) },
     farma: { pos: new THREE.Vector3(-44, 22, 58), look: new THREE.Vector3(-72, 7, 30) },
     construcao: { pos: new THREE.Vector3(-90, 22, 38), look: new THREE.Vector3(-118, 7, 8) },
-    ecommerce: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
-    simulacao: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
-    ocorrencias: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
-    afericao: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
-    relatorios: heroView ?? { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+    ecommerce: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
+    simulacao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
+    ocorrencias: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
+    afericao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
+    relatorios: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
   };
-  let segmentView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
+  let segmentView: { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean } | null = null;
+  const officePos = new THREE.Vector3();
+  const officeQuat = new THREE.Quaternion();
+  const officeFwd = new THREE.Vector3();
   let segmentZoom = 1;
   const segTarget = new THREE.Vector3();
   const overrideLook = new THREE.Vector3();
@@ -2886,8 +2889,16 @@ hub.scale.setScalar(1.15);
     camera.position.copy(camPos);
     camera.lookAt(lookTarget);
     if (segmentView) {
-      segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
-      overrideLook.lerp(segmentView.look, 0.05);
+      if (segmentView.office) {
+        heroTable.getWorldPosition(officePos);
+        heroTable.getWorldQuaternion(officeQuat);
+        officeFwd.set(0, 0, 1).applyQuaternion(officeQuat).normalize();
+        segTarget.copy(officePos).addScaledVector(officeFwd, 4.6 * segmentZoom).add(new THREE.Vector3(0, 0.35, 0));
+        overrideLook.lerp(officePos, 0.06);
+      } else {
+        segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
+        overrideLook.lerp(segmentView.look, 0.05);
+      }
       camera.position.lerp(segTarget, 0.05);
       camera.lookAt(overrideLook);
     }
