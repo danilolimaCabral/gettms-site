@@ -12,6 +12,7 @@ export type LogisticsSceneHandle = {
   setProgress: (p: number) => void;
   setPointer: (x: number, y: number) => void;
   setOrbit: (active: boolean) => void;
+  setSegmentView: (kind: string | null) => void;
   orbitBy: (delta: number) => void;
   orbitZoom: (delta: number) => void;
   resize: () => void;
@@ -1668,14 +1669,14 @@ hub.scale.setScalar(1.15);
     return dc;
   }
 
-  makeSmallDc(-92, -34, Math.PI * 0.5, "CD NORTE", 0x2f6f4f);
-  makeSmallDc(-72, 30, Math.PI, "CD OESTE", 0x39443a);
-  makeSmallDc(-118, 8, Math.PI * 0.5, "CD ALFA", 0x2f6f4f);
+  makeSmallDc(-92, -34, Math.PI * 0.5, "CD ALIMENTOS", 0x63b32e);
+  makeSmallDc(-72, 30, Math.PI, "CD FARMA", 0x2f9e8f);
+  makeSmallDc(-118, 8, Math.PI * 0.5, "CD CONSTRUÇÃO", 0xc08a3e);
   makeSmallDc(-100, -92, Math.PI * 0.5, "CD BETA", 0x39443a);
   makeSmallDc(-150, -20, Math.PI * 0.5, "CD GAMA", 0x2f6f4f);
   makeSmallDc(-138, 52, Math.PI, "CD DELTA", 0x39443a);
   makeSmallDc(-172, -86, Math.PI * 0.5, "CD ÔMEGA", 0x2f6f4f);
-  makeSmallDc(104, 30, -Math.PI * 0.5, "CD SUL", 0x39443a);
+  makeSmallDc(104, 30, -Math.PI * 0.5, "CD E-COMMERCE", 0x4a6fd6);
   makeSmallDc(-52, -112, Math.PI, "CD LESTE", 0x2f6f4f);
 
   // tráfego contínuo na via
@@ -2419,6 +2420,15 @@ hub.scale.setScalar(1.15);
     camera.updateProjectionMatrix();
   }
 
+  const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
+    alimentos: { pos: new THREE.Vector3(-64, 22, -6), look: new THREE.Vector3(-92, 7, -34) },
+    farma: { pos: new THREE.Vector3(-44, 22, 58), look: new THREE.Vector3(-72, 7, 30) },
+    construcao: { pos: new THREE.Vector3(-90, 22, 38), look: new THREE.Vector3(-118, 7, 8) },
+    ecommerce: { pos: new THREE.Vector3(132, 22, 60), look: new THREE.Vector3(104, 7, 30) },
+  };
+  let segmentView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
+  const overrideLook = new THREE.Vector3();
+
   function sampleCamera(p: number, outPos: THREE.Vector3, outLook: THREE.Vector3) {
     let i = 0;
     while (i < CAMERA_KEYS.length - 2 && p > CAMERA_KEYS[i + 1].t) i += 1;
@@ -2757,6 +2767,11 @@ hub.scale.setScalar(1.15);
 
     camera.position.copy(camPos);
     camera.lookAt(lookTarget);
+    if (segmentView) {
+      overrideLook.lerp(segmentView.look, 0.05);
+      camera.position.lerp(segmentView.pos, 0.05);
+      camera.lookAt(overrideLook);
+    }
 
     applyProgress(current, elapsed);
     renderer.render(scene, camera);
@@ -3002,6 +3017,16 @@ hub.scale.setScalar(1.15);
     },
     orbitZoom(delta: number) {
       orbitRadius = Math.min(140, Math.max(26, orbitRadius + delta));
+    },
+    setSegmentView(kind: string | null) {
+      if (!kind) {
+        segmentView = null;
+        return;
+      }
+      const view = SEGMENT_VIEWS[kind];
+      if (!view) return;
+      if (!segmentView) overrideLook.copy(lookTarget);
+      segmentView = view;
     },
     setPointer(x: number, y: number) {
       pointerX = x;

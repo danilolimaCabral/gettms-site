@@ -170,6 +170,7 @@ export default function ScrollStage() {
         if (cancelled) return;
         scene = createLogisticsScene(canvas, { quality: low ? "low" : "high" });
         sceneRef.current = scene;
+        (window as unknown as { __gettmsScene?: LogisticsSceneHandle }).__gettmsScene = scene;
       })
       .catch((error) => {
         console.warn("[scene] WebGL indisponível, mantendo fundo estático.", error);
@@ -261,7 +262,7 @@ export default function ScrollStage() {
   return (
     <section id="experiencia" ref={sectionRef} className="relative h-[1400svh]" aria-label="A jornada da carga no GetTMS">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+        <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0 h-full w-full" />
 
         {/* atmosfera / vinheta */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(245,247,242,0)_0%,rgba(245,247,242,0.05)_62%,rgba(245,247,242,0.35)_100%)]" />

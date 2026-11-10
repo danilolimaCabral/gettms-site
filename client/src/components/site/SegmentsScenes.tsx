@@ -37,6 +37,16 @@ export default function SegmentsScenes() {
     };
   }, []);
 
+  useEffect(() => {
+    const handle = (window as unknown as { __gettmsScene?: { setSegmentView: (k: string | null) => void } }).__gettmsScene;
+    handle?.setSegmentView(KINDS[scene]);
+  }, [scene]);
+
+  useEffect(() => () => {
+    const handle = (window as unknown as { __gettmsScene?: { setSegmentView: (k: string | null) => void } }).__gettmsScene;
+    handle?.setSegmentView(null);
+  }, []);
+
   const segment = SEGMENTS[scene];
   const reveal = Math.min(1, local / 0.22);
 
@@ -44,11 +54,13 @@ export default function SegmentsScenes() {
     <section
       id="segmentos"
       ref={sectionRef}
-      className="relative bg-[#0b100c]"
+      className="relative bg-transparent"
       style={{ height: `${SEGMENTS.length * 150}vh` }}
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(75%_60%_at_25%_35%,rgba(143,224,74,0.10),transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.94)_0%,rgba(11,16,12,0.82)_42%,rgba(11,16,12,0.55)_72%,rgba(11,16,12,0.35)_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0b100c]/85 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0b100c] to-transparent" />
         <div className="container-wide relative grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           <div key={scene} className="order-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-500 lg:order-1">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">
