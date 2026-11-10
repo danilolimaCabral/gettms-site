@@ -845,7 +845,7 @@ hub.scale.setScalar(1.15);
 
   const truck = new THREE.Group();
   const proceduralBodies: { group: THREE.Group; parts: THREE.Object3D[] }[] = [];
-  type GlbRequest = { key: string; holder: THREE.Group; parts?: THREE.Object3D[]; length: number; rotY: number };
+  type GlbRequest = { key: string; holder: THREE.Group; parts?: THREE.Object3D[]; length: number; rotY: number; color?: number };
   const glbRequests: GlbRequest[] = [];
   const glbSources: Record<string, THREE.Object3D> = {};
 
@@ -1432,6 +1432,9 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
+  const truckVariants = ["semi-truck"];
+  const truckColors = [0xffffff, 0x8fe04a, 0x63b32e, 0x2f6f4f, 0xdbe3d2, 0x2b3a30];
+  let truckVariantIndex = 0;
   function makeSimpleTruck(name: string) {
     const group = new THREE.Group();
     const trailer = new THREE.Mesh(round(2.95, 3.4, 12, 0.24, 3), whiteMat);
@@ -1492,7 +1495,10 @@ hub.scale.setScalar(1.15);
     shadow.position.y = 0.2;
     group.add(shadow);
     proceduralBodies.push({ group, parts: procedural });
-    queueGlb({ key: "semi-truck", holder: group, parts: procedural, length: 17.6, rotY: Math.PI });
+    const variant = truckVariants[truckVariantIndex % truckVariants.length];
+    const color = truckColors[truckVariantIndex % truckColors.length];
+    truckVariantIndex += 1;
+    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 17.6, rotY: Math.PI, color });
     return group;
   }
 
@@ -2611,15 +2617,21 @@ hub.scale.setScalar(1.15);
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.castShadow = false;
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mats.forEach((material) => {
-        const std = material as THREE.MeshStandardMaterial;
+      const tint = (material: THREE.Material) => {
+        const std = material.clone() as THREE.MeshStandardMaterial;
         if (std.color) {
-          std.color.lerp(new THREE.Color(0xf6f8f2), 0.35);
+          const lum = 0.2126 * std.color.r + 0.7152 * std.color.g + 0.0722 * std.color.b;
+          if (request.color !== undefined && lum > 0.32) {
+            std.color.lerp(new THREE.Color(request.color), 0.72);
+          } else {
+            std.color.lerp(new THREE.Color(0xf6f8f2), 0.2);
+          }
           if (std.metalness !== undefined) std.metalness = Math.min(std.metalness, 0.4);
           std.needsUpdate = true;
         }
-      });
+        return std;
+      };
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(tint) : tint(mesh.material);
     });
     wrapper.add(clone);
     request.holder.add(wrapper);
@@ -2629,7 +2641,7 @@ hub.scale.setScalar(1.15);
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
 
-  ["semi-truck", "1990s-sedan", "1990s-hatchback", "1990s-suv", "1990s-delivery-van", "forklift"].forEach((key) => {
+  ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "1990s-sedan", "1990s-hatchback", "1990s-suv", "1990s-delivery-van", "forklift"].forEach((key) => {
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
       glbSources[key] = gltf.scene;
