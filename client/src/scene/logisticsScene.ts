@@ -2230,13 +2230,16 @@ hub.scale.setScalar(1.15);
       chairSeat.position.set(x, y - 0.2, 4.95);
       office.add(chairSeat);
 
-      const analyst = new THREE.Mesh(round(0.66, 0.95, 0.5, 0.24, 2), shirtMats[(row + col) % 3]);
-      analyst.position.set(x, y + 0.15, 5.05);
-      office.add(analyst);
+      // mantém a mesa do destaque livre para a câmera do escritório
+      if (!(row === 0 && (col === 2 || col === 4))) {
+        const analyst = new THREE.Mesh(round(0.66, 0.95, 0.5, 0.24, 2), shirtMats[(row + col) % 3]);
+        analyst.position.set(x, y + 0.15, 5.05);
+        office.add(analyst);
 
-      const analystHead = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 10), skinMats[(row * 7 + col) % skinMats.length]);
-      analystHead.position.set(x, y + 0.82, 5.05);
-      office.add(analystHead);
+        const analystHead = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 10), skinMats[(row * 7 + col) % skinMats.length]);
+        analystHead.position.set(x, y + 0.82, 5.05);
+        office.add(analystHead);
+      }
     }
   }
 
