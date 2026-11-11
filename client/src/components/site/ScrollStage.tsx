@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUpRight, Play, RotateCw } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
+import StockPanel from "@/components/site/StockPanel";
 import { WHATSAPP_URL, DEMO_URL } from "@/content/site";
 
 type Chapter = {
@@ -373,6 +374,8 @@ export default function ScrollStage() {
           </div>
         ))}
 
+        {/* estoque interno do CD durante o carregamento */}
+        <StockPanel active={progress >= 0.83 && progress <= 0.905} progress={progress} />
         {/* mapa da operação */}
         <div className="absolute right-6 top-24 hidden w-60 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md lg:block">
           <div className="mb-1.5 flex items-center justify-between">
