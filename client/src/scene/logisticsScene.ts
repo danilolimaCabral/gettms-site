@@ -2587,6 +2587,8 @@ hub.scale.setScalar(1.15);
   const officeRight = new THREE.Vector3();
   let segmentZoom = 1;
   const segTarget = new THREE.Vector3();
+  const followPos = new THREE.Vector3();
+  const followLook = new THREE.Vector3();
   const overrideLook = new THREE.Vector3();
 
   function sampleCamera(p: number, outPos: THREE.Vector3, outLook: THREE.Vector3) {
@@ -2940,6 +2942,28 @@ hub.scale.setScalar(1.15);
 
     camPos.x += smoothX * 2.6;
     camPos.y += smoothY * 1.8;
+    // take cinematografico: camera acompanha o caminhao no inicio da pagina
+    if (!segmentView && current < 0.22) {
+      const followT = Math.min(1, Math.max(0, (current - 0.12) / 0.1));
+      const followW = 1 - followT * followT * (3 - 2 * followT);
+      const heading = truck.rotation.y;
+      const fwdX = Math.sin(heading);
+      const fwdZ = Math.cos(heading);
+      const rightX = Math.cos(heading);
+      const rightZ = -Math.sin(heading);
+      followPos.set(
+        truck.position.x - fwdX * 34 + rightX * 18,
+        15,
+        truck.position.z - fwdZ * 34 + rightZ * 18,
+      );
+      followLook.set(
+        truck.position.x + fwdX * 16,
+        3,
+        truck.position.z + fwdZ * 16,
+      );
+      camPos.lerp(followPos, followW);
+      lookTarget.lerp(followLook, followW);
+    }
 
     if (!segmentView) {
       camera.position.copy(camPos);

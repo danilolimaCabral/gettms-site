@@ -50,7 +50,7 @@ export default function SegmentsScenes() {
         const inView = rect.top < window.innerHeight * 0.9 && rect.bottom > window.innerHeight * 0.1;
         if (inView) {
           handle.setSegmentView(KINDS[scene]);
-          handle.setSegmentZoom(0.17);
+          handle.setSegmentZoom(0.12);
         }
         return;
       }
@@ -70,7 +70,7 @@ export default function SegmentsScenes() {
       if (!handle) return;
       if (inView) {
         handle.setSegmentView(KINDS[scene]);
-        handle.setSegmentZoom(0.17);
+        handle.setSegmentZoom(0.12);
       } else {
         handle.setSegmentView(null);
       }
