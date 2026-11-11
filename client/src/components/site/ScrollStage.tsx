@@ -13,7 +13,18 @@ type Chapter = {
   chips: string[];
   start: number;
   end: number;
+  split?: boolean;
 };
+
+const GIANT_WORDS = [
+  { word: "LOGÍSTICA", at: 0.02 },
+  { word: "CONTROLE", at: 0.24 },
+  { word: "PÁTIO", at: 0.4 },
+  { word: "FRETE", at: 0.55 },
+  { word: "RASTREIO", at: 0.7 },
+  { word: "DOCA", at: 0.84 },
+  { word: "DADOS", at: 0.93 },
+];
 
 const CHAPTERS: Chapter[] = [
   {
@@ -48,6 +59,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "cidade",
+    split: true,
     index: "04",
     label: "A cidade",
     title: "O prazo que a cidade permite.",
@@ -88,6 +100,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "doca",
+    split: true,
     index: "08",
     label: "A doca",
     title: "Conferência na hora.",
@@ -252,6 +265,9 @@ export default function ScrollStage() {
     };
   }, []);
 
+  const currentIndex = active >= 0 ? active : CHAPTERS.findIndex((c) => progress >= c.start && progress <= c.end);
+  const splitChapter = CHAPTERS[currentIndex]?.split ? CHAPTERS[currentIndex] : null;
+
   const jumpTo = (p: number) => {
     const section = sectionRef.current;
     if (!section) return;
@@ -278,6 +294,56 @@ export default function ScrollStage() {
           </div>
         </div>
 
+        {/* letras gigantes ao fundo */}
+        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
+          {GIANT_WORDS.map((item, index) => {
+            const next = GIANT_WORDS[index + 1]?.at ?? 1.05;
+            const span = Math.max(0.08, next - item.at);
+            const local = (progress - item.at) / span;
+            const visible = local > -0.25 && local < 1.25;
+            const opacity = visible ? Math.max(0, 1 - Math.abs(local - 0.45) * 2.1) * 0.5 : 0;
+            return (
+              <span
+                key={item.word}
+                aria-hidden="true"
+                className="absolute left-0 top-1/2 select-none whitespace-nowrap font-display text-[clamp(5rem,19vw,17rem)] font-semibold leading-none tracking-[-0.05em] text-[#0a0f0b]"
+                style={{
+                  opacity: opacity * 0.16,
+                  transform: `translate3d(${-8 + local * -26}vw, -50%, 0)`,
+                  filter: "blur(1.5px)",
+                }}
+              >
+                {item.word}
+              </span>
+            );
+          })}
+        </div>
+        {/* painel split-screen do capítulo ativo */}
+        {splitChapter && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[40%] border-r border-ink/10 bg-paper/95 backdrop-blur-[2px] md:flex md:flex-col md:justify-end md:pb-28 md:pl-12 md:pr-10 lg:w-[36%]">
+            <div className="max-w-md">
+              <div className="mb-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-brand-dark">
+                <span className="font-display">{splitChapter.index}</span>
+                <span className="h-px w-8 bg-brand/50" />
+                <span className="text-ink/50">{splitChapter.label}</span>
+              </div>
+              <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight text-ink lg:text-4xl">
+                {splitChapter.title}
+              </h2>
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink/60">{splitChapter.body}</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {splitChapter.chips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-ink/12 bg-white/70 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-ink/60"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         {/* hero */}
         <div
           ref={heroRef}
@@ -348,7 +414,7 @@ export default function ScrollStage() {
             ref={(node) => {
               chapterRefs.current[i] = node;
             }}
-            className="pointer-events-none absolute inset-x-0 bottom-24 opacity-0 md:bottom-28"
+            className={`pointer-events-none absolute inset-x-0 bottom-24 opacity-0 md:bottom-28 ${chapter.split ? "md:hidden" : ""}`}
             style={{ willChange: "opacity, transform" }}
           >
             <div className="container-wide">
