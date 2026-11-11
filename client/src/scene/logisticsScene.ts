@@ -2339,6 +2339,10 @@ hub.scale.setScalar(1.15);
 
   // frota getTMS estacionada nas 6 docas
   const dcTrucks: THREE.Group[] = [];
+  const DC_CYCLE = 42;
+  const DC_ARRIVE = 0.15;
+  const DC_LEAVE = 0.8;
+  const DC_GONE = 0.95;
   const fleetNames = ["GT-4821", "GT-1937", "GT-7712", "GT-3048", "GT-6620", "GT-9155"];
   // via de serviço conectando as docas à avenida
   const serviceRoad = new THREE.Mesh(new THREE.PlaneGeometry(9, 86), roadMat);
@@ -2768,37 +2772,38 @@ hub.scale.setScalar(1.15);
       const appear = easeOut(range(pb, 0.72 + delay, 0.78 + delay));
       const side = (index % 2 === 0 ? 1 : -1) as number;
       const dockX = clone.userData.dockX as number;
-      // ciclo: entra (4 s) -> carrega 20 s -> sai (5 s) -> aguarda
-      const cycle = ((time + index * 6.4) % 31) / 31;
+      // ciclo: desce devagar -> encosta de ré -> carrega -> sai -> aguarda
+      const cycle = ((time + index * 8) % DC_CYCLE) / DC_CYCLE;
       let approach = 0;
       let docked = 0;
-      if (cycle < 0.13) {
-        approach = cycle / 0.13;
-      } else if (cycle < 0.13 + 0.645) {
+      if (cycle < DC_ARRIVE) {
+        approach = cycle / DC_ARRIVE;
+      } else if (cycle < DC_LEAVE) {
         approach = 1;
         docked = 1;
-      } else if (cycle < 0.94) {
-        approach = 1 - (cycle - 0.775) / 0.165;
+      } else if (cycle < DC_GONE) {
+        approach = 1 - (cycle - DC_LEAVE) / (DC_GONE - DC_LEAVE);
       }
-      const eased = approach * approach * (3 - 2 * approach);
+      // suavização quintica: começa e termina sem trancos
+      const eased = approach * approach * approach * (approach * (approach * 6 - 15) + 10);
       const present = appear > 0.5;
       clone.visible = present;
       clone.scale.setScalar(Math.max(0.001, appear * 0.94));
       // desce pela via de serviço e entra na doca em curva, com a traseira para a porta
-      const turn = THREE.MathUtils.smoothstep(eased, 0.18, 0.62);
+      const turn = THREE.MathUtils.smoothstep(eased, 0.22, 0.8);
       const curveX = (1 - (1 - eased) * (1 - eased)) * dockX;
       clone.position.z = lerp(66, 20.2, eased);
       clone.position.x = curveX + Math.sin(eased * Math.PI) * 0.5 * side;
       clone.rotation.y = lerp(Math.PI, 0, turn);
       const tag = clone.userData.orderTag as THREE.Sprite | undefined;
-      if (tag) tag.visible = docked > 0.5 && cycle < 0.775;
+      if (tag) tag.visible = docked > 0.5 && cycle < DC_LEAVE;
     });
     dcDoorMeshes.forEach((door, index) => {
       const clone = dcTrucks[index === 2 || index === 3 ? (index === 2 ? 2 : 3) : index];
       let open = 0;
       if (clone) {
-        const cycle = ((time + index * 6.4) % 31) / 31;
-        open = cycle >= 0.13 && cycle < 0.775 ? 1 : 0;
+        const cycle = ((time + index * 8) % DC_CYCLE) / DC_CYCLE;
+        open = cycle >= DC_ARRIVE && cycle < DC_LEAVE ? 1 : 0;
       }
       door.scale.y = 1 - open * 0.94;
       door.position.y = 2.8 + open * 2.45;
