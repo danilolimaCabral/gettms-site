@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUpRight, CloudRain, Moon, Play, RotateCw, Sparkles, Sun } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
 import StockPanel from "@/components/site/StockPanel";
+import CustomerTrackPanel from "@/components/site/CustomerTrackPanel";
 import { WHATSAPP_URL, DEMO_URL } from "@/content/site";
 
 type Chapter = {
@@ -38,51 +39,51 @@ const GIANT_WORDS = [
 
 const CHAPTERS: Chapter[] = [
   {
-    id: "mapa",
+    id: "pedido",
     index: "01",
-    label: "O mapa",
-    title: "Toda a operação em uma cena.",
-    body: "Origens, destinos e volumes conectados.",
-    chips: ["Origens", "Destinos", "Volumes"],
+    label: "O pedido",
+    title: "O cliente monta o pedido.",
+    body: "Volumes, endereço e janela de entrega direto no portal.",
+    chips: ["Pedido", "Volumes", "Janela"],
     start: 0.08,
     end: 0.18,
   },
   {
-    id: "armazem",
+    id: "simulacao",
     index: "02",
-    label: "O armazém",
-    title: "Do embarque à doca.",
-    body: "Coletas e janelas acompanhadas em tempo real.",
-    chips: ["Coletas", "Janelas", "Ocorrências"],
+    label: "Simulação GetLOG",
+    title: "Frete comparado antes de fechar.",
+    body: "Prazo, valor e modalidade entre as transportadoras integradas.",
+    chips: ["Prazo", "Valor", "Modalidade"],
     start: 0.2,
     end: 0.3,
   },
   {
-    id: "patio",
+    id: "separacao",
     index: "03",
-    label: "O pátio",
-    title: "Carga organizada, custo sob controle.",
-    body: "A mesma plataforma para cada segmento.",
-    chips: ["Alimentos", "Farma", "Construção", "E-commerce"],
+    label: "Separação no CD",
+    title: "Cada volume separado e conferido.",
+    body: "O pedido vira carga: separação, conferência e carregamento.",
+    chips: ["Picking", "Conferência", "Carregamento"],
     start: 0.32,
     end: 0.42,
   },
   {
-    id: "cidade",
+    id: "saida",
     index: "04",
-    label: "A cidade",
-    title: "A avenida inteira, semáforo a semáforo.",
-    body: "O caminhão sai do CD e cruza a cidade no ritmo do trânsito.",
+    label: "Saindo do CD",
+    title: "O caminhão deixa o CD getTMS.",
+    body: "A carga sai da doca e cruza a avenida semáforo a semáforo.",
     chips: ["Avenida", "Semáforos", "Janelas"],
     start: 0.44,
     end: 0.52,
   },
   {
-    id: "saida",
+    id: "estrada",
     index: "05",
-    label: "A saída",
+    label: "Na estrada",
     title: "Da avenida para a estrada.",
-    body: "Trevo, estrada de saída e o trecho rural até a via expressa.",
+    body: "Trevo, saída e trecho rural até a via expressa.",
     chips: ["Trevo", "Estrada", "Trecho rural"],
     start: 0.545,
     end: 0.605,
@@ -90,7 +91,7 @@ const CHAPTERS: Chapter[] = [
   {
     id: "expressa",
     index: "06",
-    label: "A via expressa",
+    label: "Via expressa",
     title: "Estrada longa, rastreio sem ponto cego.",
     body: "Status e previsão atualizados a cada trecho percorrido.",
     chips: ["Via expressa", "Status", "Previsão"],
@@ -98,19 +99,19 @@ const CHAPTERS: Chapter[] = [
     end: 0.685,
   },
   {
-    id: "periferia",
+    id: "acompanhamento",
     index: "07",
-    label: "A periferia",
-    title: "A última milha atravessa a periferia.",
-    body: "Ruas estreitas, comércio local e a portaria do cliente.",
-    chips: ["Última milha", "Restrições", "Portaria"],
+    label: "Cliente acompanhando",
+    title: "O cliente vê onde está o pedido.",
+    body: "Acompanhamento em tempo real, do trânsito até a portaria.",
+    chips: ["Acompanhamento", "Previsão", "Motorista"],
     start: 0.705,
     end: 0.765,
   },
   {
     id: "chegada",
     index: "08",
-    label: "A chegada",
+    label: "Chegando",
     title: "Bem-vindo ao Cliente Horizonte.",
     body: "O caminhão entra no pátio e encosta na doca.",
     chips: ["Portaria", "Docas", "Agendamento"],
@@ -122,8 +123,8 @@ const CHAPTERS: Chapter[] = [
     split: true,
     index: "09",
     label: "A doca",
-    title: "Conferência na hora.",
-    body: "Cada volume vira registro no sistema.",
+    title: "Ré na doca e conferência na hora.",
+    body: "Porta aberta, volumes descarregados e registro no sistema.",
     chips: ["Volume", "Avaria", "Ocorrência"],
     start: 0.865,
     end: 0.915,
@@ -556,8 +557,13 @@ export default function ScrollStage() {
 
         {/* estoque interno do CD durante o carregamento */}
         <StockPanel active={progress >= 0.86 && progress <= 0.918} progress={progress} />
+        <CustomerTrackPanel active={progress >= 0.7 && progress <= 0.785} progress={progress} />
         {/* mapa da operação */}
-        <div className="absolute right-6 top-24 hidden w-[340px] rounded-3xl border border-ink/10 bg-white/88 p-4 shadow-[0_18px_50px_-30px_rgba(10,15,11,0.45)] backdrop-blur-md lg:block xl:w-[400px]">
+        <div
+          className={`absolute right-6 top-24 hidden w-[340px] rounded-3xl border border-ink/10 bg-white/88 p-4 shadow-[0_18px_50px_-30px_rgba(10,15,11,0.45)] backdrop-blur-md transition-opacity duration-500 lg:block xl:w-[400px] ${
+            (progress >= 0.7 && progress <= 0.785) || (progress >= 0.86 && progress <= 0.918) ? "pointer-events-none opacity-0" : "opacity-100"
+          }`}
+        >
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-[9px] uppercase tracking-[0.28em] text-ink/40">Mapa da operação</p>
             <span className="text-[9px] font-medium text-brand-dark">

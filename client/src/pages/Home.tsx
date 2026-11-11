@@ -8,6 +8,7 @@ import PlatformScenes from "@/components/site/PlatformScenes";
 import DesktopScene from "@/components/site/DesktopScene";
 import ControlTower from "@/components/site/ControlTower";
 import Steps from "@/components/site/Steps";
+import JourneyRecap from "@/components/site/JourneyRecap";
 import Clients from "@/components/site/Clients";
 import SiteFooter from "@/components/site/SiteFooter";
 import Mia from "@/components/site/Mia";
@@ -26,6 +27,7 @@ export default function Home() {
         <MaturityScene />
         <Steps />
         <Clients />
+        <JourneyRecap />
         <ContactScene />
       </main>
       <SiteFooter />
