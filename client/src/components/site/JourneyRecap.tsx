@@ -1,7 +1,7 @@
 import { ArrowRight, Building2, CheckCircle2, MapPin, Route, Store, Warehouse } from "lucide-react";
 
 const STAGES = [
-  { label: "CD getTMS", detail: "carregamento conferido", icon: Warehouse },
+  { label: "Centro de distribuição", detail: "carregamento conferido", icon: Warehouse },
   { label: "Avenida", detail: "semáforos e janelas de entrega", icon: Route },
   { label: "Via expressa", detail: "tracking sem ponto cego", icon: MapPin },
   { label: "Periferia", detail: "última milha monitorada", icon: Store },
@@ -17,11 +17,11 @@ export default function JourneyRecap() {
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-[#8fe04a]">A jornada de uma carga</p>
             <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-[-0.03em] text-white md:text-3xl">
-              Sai do CD getTMS e chega no cliente com tudo registrado.
+              Do centro de distribuição até a doca do cliente, com tudo registrado.
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-white/55">
-            A mesma cena que abre o site: uma carga, um CT-e e a operação inteira acompanhando do carregamento à entrega.
+            A mesma cena que abre o site: um pedido, um CT-e e a operação inteira acompanhando do carregamento à entrega.
           </p>
         </div>
 

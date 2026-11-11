@@ -87,7 +87,7 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
               <Warehouse className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Conferência da entrega</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Aferição da entrega</p>
               <p className="font-display text-sm font-semibold text-white">Cliente Horizonte · Doca 06</p>
             </div>
           </div>

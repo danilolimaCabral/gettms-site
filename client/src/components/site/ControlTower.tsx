@@ -20,7 +20,7 @@ const PROCESS = [
   { id: "emitir", label: "Emitir", title: "Contratação e CT-e", body: "A carga é contratada e o CT-e entra na fila de monitoramento.", icon: ClipboardCheck },
   { id: "monitorar", label: "Monitorar", title: "Tracking em tempo real", body: "Eventos, posição e ETA de cada carga acompanhados na torre.", icon: Radar },
   { id: "ocorrencias", label: "Tratar", title: "Gestão de ocorrências", body: "Atraso, avaria ou desvio viram alerta com responsável e prazo.", icon: AlertTriangle },
-  { id: "auditar", label: "Auditar", title: "Auditoria de todos os CT-e", body: "Cada CT-e que chega é conferido contra a tabela e o frete simulado.", icon: ScanSearch },
+  { id: "auditar", label: "Auditar", title: "Aferição de faturas e CT-e", body: "Cada CT-e que chega é conferido contra a tabela e o frete simulado.", icon: ScanSearch },
   { id: "relatorio", label: "Decidir", title: "Relatórios e negociação", body: "Custo, prazo e ocorrência por transportadora viram base de negociação.", icon: FileSpreadsheet },
 ];
 
@@ -29,7 +29,7 @@ const TABS: { id: TabId; label: string; icon: typeof Radar }[] = [
   { id: "monitoramento", label: "Monitoramento", icon: Radar },
   { id: "tracker", label: "Tracker", icon: MapPin },
   { id: "simulacao", label: "Simulação", icon: Calculator },
-  { id: "auditoria", label: "Auditoria de CT-e", icon: ScanSearch },
+  { id: "auditoria", label: "Aferição de faturas", icon: ScanSearch },
 ];
 
 const LIVE = [
@@ -121,11 +121,11 @@ export default function ControlTower() {
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-[#8fe04a]">Torre de controle</p>
               <h2 className="mt-2 max-w-2xl font-display text-xl font-semibold tracking-[-0.03em] text-white md:text-4xl">
-                Monitoramento, tracking, simulação e auditoria no mesmo lugar.
+                Monitoramento, tracking, simulação e aferição no mesmo lugar.
               </h2>
             </div>
             <p className="hidden max-w-sm text-sm leading-relaxed text-white/55 md:block">
-              A operação inteira passa pela torre: cada frete simulado, cada CT-e emitido e cada carga em trânsito com status, prazo e custo conferidos.
+              A operação inteira passa pela torre: cada frete simulado, cada transportadora integrada e cada carga em trânsito com status, prazo e custo conferidos.
             </p>
           </div>
 
@@ -318,7 +318,7 @@ export default function ControlTower() {
                 <div>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-white/40">
                     <span className="inline-flex items-center gap-2">
-                      <ScanSearch className="h-3 w-3 text-[#8fe04a]" /> Auditoria de todos os CT-e recebidos
+                      <ScanSearch className="h-3 w-3 text-[#8fe04a]" /> Aferição de faturas e CT-e recebidos
                     </span>
                     <span className="text-[#a9ec6a]">200 CT-e · {auditDiv.length} {auditDiv.length === 1 ? "divergência" : "divergências"}</span>
                   </div>

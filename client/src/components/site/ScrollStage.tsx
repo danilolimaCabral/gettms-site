@@ -72,7 +72,7 @@ const CHAPTERS: Chapter[] = [
     id: "saida",
     index: "04",
     label: "Saindo do CD",
-    title: "O caminhão deixa o CD getTMS.",
+    title: "O caminhão deixa o centro de distribuição.",
     body: "A carga sai da doca e cruza a avenida semáforo a semáforo.",
     chips: ["Avenida", "Semáforos", "Janelas"],
     start: 0.44,
@@ -479,7 +479,7 @@ export default function ScrollStage() {
                 em cada frete.
               </h1>
               <p className="lede mt-7 max-w-md">
-                Simule fretes, acompanhe cada etapa e reduza a conta frete.
+                Simule fretes, integre transportadoras e reduza custos com uma operação mais inteligente, conectada e baseada em dados reais.
               </p>
               <div className="hero-actions mt-9 grid grid-cols-2 items-center gap-2.5 sm:flex sm:flex-wrap sm:gap-3">
                 <a href={DEMO_URL} target="_blank" rel="noreferrer" className="btn btn-primary col-span-2 justify-center sm:col-auto">
