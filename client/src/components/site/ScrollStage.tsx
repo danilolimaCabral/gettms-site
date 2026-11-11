@@ -172,6 +172,7 @@ export default function ScrollStage() {
   const weatherRef = useRef<WeatherMode>("auto");
   const stageRef = useRef<HTMLElement | null>(null);
   const viewObserverRef = useRef<IntersectionObserver | null>(null);
+  const [canvasVisible, setCanvasVisible] = useState(true);
 
   useEffect(() => {
     autoRef.current = auto;
@@ -210,7 +211,10 @@ export default function ScrollStage() {
         sceneRef.current = scene;
         if (sectionRef.current) {
           const observer = new IntersectionObserver(
-            ([entry]) => sceneRef.current?.setActive(entry.isIntersecting),
+            ([entry]) => {
+              sceneRef.current?.setActive(entry.isIntersecting);
+              setCanvasVisible(entry.isIntersecting);
+            },
             { rootMargin: "150px 0px" },
           );
           observer.observe(sectionRef.current);
@@ -336,7 +340,11 @@ export default function ScrollStage() {
   return (
     <section id="experiencia" ref={sectionRef} className="relative h-[1400svh]" aria-label="A jornada da carga no GetTMS">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0 h-full w-full" />
+        <canvas
+          ref={canvasRef}
+          className="pointer-events-none fixed inset-0 z-0 h-full w-full transition-opacity duration-500"
+          style={{ opacity: canvasVisible ? 1 : 0 }}
+        />
 
         {/* atmosfera / vinheta */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(245,247,242,0)_0%,rgba(245,247,242,0.05)_62%,rgba(245,247,242,0.35)_100%)]" />

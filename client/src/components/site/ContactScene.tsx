@@ -23,7 +23,7 @@ export default function ContactScene() {
   };
 
   return (
-    <section id="contato" className="relative bg-[#0b100c]" style={{ height: "170vh" }}>
+    <section id="contato" className="relative bg-[#0b100c]" style={{ height: "125vh" }}>
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="pointer-events-none absolute inset-0 [background:radial-gradient(65%_55%_at_60%_45%,rgba(143,224,74,0.14),transparent_72%)]" />
         <div className="container-wide relative grid w-full items-center gap-10 lg:grid-cols-[1fr_0.9fr]">

@@ -35,7 +35,7 @@ export default function MaturityScene() {
   };
 
   return (
-    <section id="maturidade" className="relative bg-[#0b100c]" style={{ height: "180vh" }}>
+    <section id="maturidade" className="relative bg-[#0b100c]" style={{ height: "150vh" }}>
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="pointer-events-none absolute inset-0 [background:radial-gradient(60%_50%_at_50%_45%,rgba(143,224,74,0.14),transparent_72%)]" />
         <div className="container-wide relative mx-auto max-w-3xl">
