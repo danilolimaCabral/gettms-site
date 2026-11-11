@@ -87,8 +87,8 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
               <Warehouse className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Estoque interno</p>
-              <p className="font-display text-sm font-semibold text-white">CD GETTMS · Doca 04</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Conferência da entrega</p>
+              <p className="font-display text-sm font-semibold text-white">Cliente Horizonte · Doca 06</p>
             </div>
           </div>
           <span className="flex items-center gap-1.5 rounded-full bg-[#8fe04a]/12 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-[#a9ec6a]">
@@ -98,9 +98,9 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
 
         <div className="hidden grid-cols-3 gap-2 px-4 py-3 md:grid">
           {[
-            { icon: Boxes, label: "Unidades", value: totalUnits.toLocaleString("pt-BR") },
-            { icon: Truck, label: "Carregando", value: loadingUnits.toLocaleString("pt-BR") },
-            { icon: PackageCheck, label: "Ocupação", value: `${occupancy}%` },
+            { icon: Boxes, label: "Pedidos", value: "200" },
+            { icon: Truck, label: "CT-e", value: "200" },
+            { icon: PackageCheck, label: "Conferido", value: `${Math.min(100, Math.round(88 + local * 12))}%` },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-xl border border-white/8 bg-white/[0.03] px-2.5 py-2">
               <Icon className="mb-1 h-3.5 w-3.5 text-white/35" />

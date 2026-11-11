@@ -238,11 +238,15 @@ export default function ScrollStage() {
         const travel = rect.height - vhRef.current;
         const p = travel > 0 ? clamp01(-rect.top / travel) : 0;
 
-        // reprodução automática do filme (≈70s do início ao fim da cena)
-        const inView = rect.top <= 1 && rect.bottom >= vhRef.current - 1;
-        const idle = now - lastUserRef.current > 4500;
-        if (autoRef.current && inView && idle && p < 0.996 && dt > 0) {
-          window.scrollBy(0, travel * (dt / 70000));
+        // reprodução automática: o filme roda em ~70s e depois a página segue sozinha
+        const inStage = rect.top <= 1 && rect.bottom >= vhRef.current - 1;
+        const idle = now - lastUserRef.current > 4000;
+        if (autoRef.current && idle && dt > 0) {
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          if (window.scrollY < maxScroll - 2) {
+            const speed = inStage ? travel / 70000 : (vhRef.current * 0.24) / 1000;
+            window.scrollTo({ top: window.scrollY + Math.max(0.4, speed * dt), behavior: "instant" });
+          }
         }
         scene?.setProgress(p);
         if (Math.abs(p - progressRef.current) > 0.008) {
@@ -343,7 +347,7 @@ export default function ScrollStage() {
                 </svg>
               )}
             </span>
-            <span className="hidden sm:inline">{auto ? "Filme automático" : "Retomar filme"}</span>
+            <span className="hidden sm:inline">{auto ? "Reprodução automática" : "Retomar reprodução"}</span>
           </button>
         </div>
 

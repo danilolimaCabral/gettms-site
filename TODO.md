@@ -46,3 +46,7 @@
 - [x] Modelo PBR no caminhão do hero (GLB semi-truck com pintura getTMS e placa lateral).
 - [x] Orientação do caminhão alinhada ao trajeto (sem andar de lado).
 - [x] Filme automático: caminhão e capítulos avançam sozinhos, com pausa ao interagir e botão para ligar/desligar.
+- [x] Clima dinâmico: ciclo dia/noite + chuva no trecho rural/periferia.
+- [x] Caminhão dá ré e encosta de traseira na doca; porta da doca abre e a empilhadeira carrega (200 pedidos · 200 CT-e).
+- [x] Reprodução automática da página inteira com pausa ao interagir.
+- [x] Otimização mobile: pixel ratio limitado, qualidade adaptativa por FPS, pausa de render com aba oculta.

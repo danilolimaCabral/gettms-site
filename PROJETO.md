@@ -38,6 +38,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Capítulos do scroll: 01 mapa · 02 armazém · 03 pátio · 04 cidade · 05 saída · 06 via expressa · 07 periferia · 08 chegada · 09 doca · 10 análise.
 - Filme automático: a cena avança sozinha (~70s do início ao fim) e troca de capítulo; qualquer gesto (rolar, tocar, tecla) pausa por ~4,5s. Botão "Filme automático" no canto superior esquerdo para pausar/retomar.
 
+## Clima, doca e reprodução automática
+- Ciclo dia/noite guiado pelo scroll: dia na cidade, entardecer na via expressa, noite na periferia e na entrega (luz-chave, hemisphere, céu em shader e neblina interpolados).
+- Chuva dinâmica (partículas que acompanham a câmera) entre a saída da via expressa e a chegada na periferia.
+- Doca do Cliente Horizonte: o caminhão para em frente à porta, dá ré encostando o baú e a porta rolô abre (3,4 s de manobra).
+- Empilhadeira carrega o caminhão em ciclo depois da doca; painel mostra 200 pedidos · 200 CT-e · 100% conferido.
+- Reprodução automática da página inteira: filme em ~70 s, depois as outras seções avançam sozinhas; qualquer gesto pausa 4 s e retoma.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

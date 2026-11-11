@@ -44,9 +44,9 @@ const round = (w: number, h: number, d: number, radius = 0.18, segments = 2) =>
 type CamKey = { t: number; pos: [number, number, number]; look: [number, number, number] };
 
 const CAMERA_KEYS: CamKey[] = [
-  { t: 0.0, pos: [38, 17, 42], look: [-20, 3, 2] },
-  { t: 0.1, pos: [30, 16, 34], look: [-16, 4, -8] },
-  { t: 0.2, pos: [14, 15, 22], look: [-14, 5, -14] },
+  { t: 0.0, pos: [56, 30, 58], look: [-16, 4, 0] },
+  { t: 0.1, pos: [44, 24, 44], look: [-16, 4, -8] },
+  { t: 0.2, pos: [24, 18, 28], look: [-14, 4, -14] },
   { t: 0.3, pos: [42, 20, 24], look: [12, 5, -10] },
   { t: 0.4, pos: [34, 26, -6], look: [0, 2, -120] },
   { t: 0.5, pos: [14, 30, -140], look: [40, 2, -200] },
@@ -54,9 +54,10 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.7, pos: [240, 32, -180], look: [300, 2, -260] },
   { t: 0.8, pos: [318, 24, -300], look: [299, 2, -386] },
   { t: 0.86, pos: [344, 16, -404], look: [392, 4, -358] },
-  { t: 0.9, pos: [376, 20, -406], look: [402, 4, -356] },
-  { t: 0.915, pos: [392, 16, -396], look: [404, 4, -356] },
+  { t: 0.9, pos: [372, 18, -400], look: [390, 3.5, -356] },
+  { t: 0.915, pos: [386, 15, -392], look: [388, 3.5, -356] },
   { t: 0.95, pos: [412, 7.5, -368], look: [438, 5, -368] },
+  { t: 0.975, pos: [352, 13, -384], look: [388, 3.2, -356] },
   { t: 1.0, pos: [432, 40, -436], look: [400, 2, -356] },
 ];
 
@@ -93,11 +94,12 @@ const HERO_ROUTE: [number, number][] = [
   [299, -362],
   [307, -374],
   [318, -379.5],
-  [336, -377],
-  [356, -370],
-  [374, -362],
-  [390, -357.5],
-  [402, -357.5],
+  [334, -380.5],
+  [350, -378],
+  [366, -374],
+  [380, -371],
+  [388, -372],
+  [388, -376],
 ];
 
 /** Marcos do trajeto: [progresso da página, índice do ponto]. */
@@ -117,17 +119,23 @@ const HERO_ROUTE_KEYS: [number, number][] = [
 ];
 
 /** Câmera que acompanha o caminhão na viagem: distância atrás (negativo = na frente), altura, deslocamento lateral e olhar à frente. */
+/** Manobra de ré na doca do Cliente Horizonte. */
+const DOCK_START = 0.958;
+const DOCK_X = 386;
+const DOCK_STAGE_Z = -376;
+const DOCK_FINAL_Z = -360.6;
+
 const CHASE_KEYS: { t: number; ahead: number; height: number; side: number; look: number }[] = [
-  { t: 0.26, ahead: 26, height: 15, side: 2, look: 10 },
-  { t: 0.34, ahead: 30, height: 22, side: 8, look: 12 },
-  { t: 0.42, ahead: 34, height: 32, side: 20, look: 14 },
-  { t: 0.47, ahead: -38, height: 20, side: 26, look: 2 },
-  { t: 0.55, ahead: -34, height: 26, side: 32, look: 2 },
-  { t: 0.61, ahead: 44, height: 46, side: 26, look: 18 },
-  { t: 0.67, ahead: 36, height: 30, side: 14, look: 14 },
-  { t: 0.73, ahead: 30, height: 20, side: 6, look: 12 },
-  { t: 0.79, ahead: 34, height: 24, side: 12, look: 12 },
-  { t: 0.86, ahead: 38, height: 28, side: 20, look: 8 },
+  { t: 0.26, ahead: 26, height: 11, side: 6, look: 12 },
+  { t: 0.34, ahead: 28, height: 13, side: -10, look: 14 },
+  { t: 0.42, ahead: 30, height: 16, side: 14, look: 14 },
+  { t: 0.47, ahead: 30, height: 17, side: 10, look: 12 },
+  { t: 0.55, ahead: 27, height: 14, side: -12, look: 14 },
+  { t: 0.61, ahead: 40, height: 38, side: 20, look: 16 },
+  { t: 0.67, ahead: 34, height: 26, side: 12, look: 14 },
+  { t: 0.73, ahead: 28, height: 16, side: 6, look: 14 },
+  { t: 0.79, ahead: 30, height: 20, side: 10, look: 12 },
+  { t: 0.86, ahead: 32, height: 22, side: 16, look: 10 },
 ];
 
 /** Pontos iluminados da rota exibidos na cena. */
@@ -384,7 +392,7 @@ export function createLogisticsScene(
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.25 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.09;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -512,8 +520,10 @@ export function createLogisticsScene(
   scene.add(clouds);
 
   // ---------------------------------------------------------------- luzes
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d3c2, 1.1));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.34));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xc9d3c2, 1.1);
+  scene.add(hemi);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.34);
+  scene.add(ambient);
 
   const key = new THREE.DirectionalLight(0xfff8ec, 2.7);
   key.position.set(30, 50, 30);
@@ -527,6 +537,83 @@ export function createLogisticsScene(
   cool.position.set(8, 12, -60);
   scene.add(cool);
 
+  // ---------------------------------------------------------------- clima
+  // chuva: partículas que acompanham a câmera
+  const RAIN_COUNT = low ? 900 : 2600;
+  const rainGeo = new THREE.BufferGeometry();
+  const rainPositions = new Float32Array(RAIN_COUNT * 3);
+  const rainSpeeds = new Float32Array(RAIN_COUNT);
+  for (let i = 0; i < RAIN_COUNT; i += 1) {
+    rainPositions[i * 3] = (Math.random() - 0.5) * 140;
+    rainPositions[i * 3 + 1] = Math.random() * 60;
+    rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 140;
+    rainSpeeds[i] = 26 + Math.random() * 16;
+  }
+  rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
+  const rainMat = new THREE.PointsMaterial({
+    color: 0xcfe0ef,
+    size: 0.34,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const rain = new THREE.Points(rainGeo, rainMat);
+  rain.frustumCulled = false;
+  rain.visible = false;
+  scene.add(rain);
+  const dayBase = new THREE.Color(0xfff8ec);
+  const duskBase = new THREE.Color(0xffb067);
+  const nightBase = new THREE.Color(0x8fa6d8);
+  const skyDay = new THREE.Color(0xa9c9e2);
+  const skyDusk = new THREE.Color(0xe7a877);
+  const skyNight = new THREE.Color(0x1d2740);
+  const fogDay = new THREE.Color(0xe2edf5);
+  const fogNight = new THREE.Color(0x2a3550);
+  const tmpColor = new THREE.Color();
+  function applyWeather(p: number, time: number) {
+    // 0 = dia, 1 = noite (anoitece na periferia, chega no cliente à noite)
+    const dusk = range(p, 0.42, 0.6);
+    const night = range(p, 0.6, 0.82);
+    const lightMix = dusk * 0.55 + night * 0.45;
+    tmpColor.copy(dayBase).lerp(duskBase, dusk).lerp(nightBase, night);
+    key.color.copy(tmpColor);
+    key.intensity = 2.7 * (1 - 0.55 * dusk) * (1 - 0.72 * night);
+    rim.intensity = 0.6 * (1 - 0.5 * night);
+    cool.intensity = 0.35 + night * 0.55;
+    hemi.intensity = 1.1 * (1 - 0.68 * night) * (1 - 0.15 * dusk);
+    ambient.intensity = 0.34 + night * 0.2;
+    const skyMat = sky.material as THREE.ShaderMaterial;
+    skyMat.uniforms.uTop.value.set(0x8fb8d8).lerp(tmpColor.set(0x4b5f96), dusk).lerp(tmpColor.set(0x0b1226), night);
+    skyMat.uniforms.uBottom.value.set(0xdcebf5).lerp(tmpColor.set(0xf2b27a), dusk).lerp(tmpColor.set(0x2b3550), night);
+    key.position.set(30 - lightMix * 50, 50 - lightMix * 26, 30 + lightMix * 20);
+    if (scene.background instanceof THREE.Color) {
+      scene.background.copy(skyDay).lerp(skyDusk, dusk).lerp(skyNight, night);
+    }
+    if (scene.fog instanceof THREE.FogExp2) {
+      scene.fog.color.copy(fogDay).lerp(skyDusk, dusk * 0.7).lerp(fogNight, night);
+      scene.fog.density = 0.0014 + night * 0.0006;
+    }
+    // chuva entre a saída e a periferia
+    const rainIn = range(p, 0.58, 0.64) * (1 - range(p, 0.8, 0.86));
+    rainMat.opacity = rainIn * 0.55;
+    rain.visible = rainIn > 0.01;
+    if (rain.visible) {
+      const arr = rainGeo.attributes.position.array as Float32Array;
+      for (let i = 0; i < RAIN_COUNT; i += 1) {
+        const yi = i * 3 + 1;
+        arr[yi] -= rainSpeeds[i] * 0.016;
+        if (arr[yi] < 0) {
+          arr[yi] += 60;
+          arr[i * 3] = (Math.random() - 0.5) * 140;
+          arr[i * 3 + 2] = (Math.random() - 0.5) * 140;
+        }
+      }
+      rainGeo.attributes.position.needsUpdate = true;
+      rain.position.set(camera.position.x, 0, camera.position.z);
+    }
+    void time;
+  }
   // ---------------------------------------------------------------- morros
   const hillMat = new THREE.MeshStandardMaterial({ color: 0xd8e0cc, roughness: 0.95, metalness: 0 });
   const hillGeo = new THREE.SphereGeometry(1, 20, 14);
@@ -2091,7 +2178,16 @@ hub.scale.setScalar(1.15);
     wheel.position.set(x, 0.42, z);
     clientForklift.add(wheel);
   });
-  clientForklift.position.set(392, 0, -364);
+  const loadPallet = new THREE.Group();
+  const palletBase = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.16, 1.1), palletMat);
+  palletBase.position.y = 0.08;
+  const loadBox = new THREE.Mesh(round(1.2, 0.95, 1, 0.04, 1), boxMat);
+  loadBox.position.y = 0.63;
+  loadPallet.add(palletBase, loadBox);
+  loadPallet.position.set(0, 0.25, 2);
+  loadPallet.visible = false;
+  clientForklift.add(loadPallet);
+  clientForklift.position.set(410, 0, -366);
   clientForklift.rotation.y = Math.PI / 2;
   clientSite.add(clientForklift);
 
@@ -2238,7 +2334,7 @@ hub.scale.setScalar(1.15);
   tagCtx.fillText("Tracking em tempo real · getTMS", 74, 166);
   const tagTex = track(new THREE.CanvasTexture(tagCanvas));
   tagTex.colorSpace = THREE.SRGBColorSpace;
-  const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
+  const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false, depthTest: false }));
   tagSprite.scale.set(8.6, 2.7, 1);
   tagSprite.position.set(0, 7.8, -2);
   truck.add(tagSprite);
@@ -2261,13 +2357,13 @@ hub.scale.setScalar(1.15);
   doneCtx.fillText("GT-1024", 74, 66);
   doneCtx.fillStyle = "#8fe04a";
   doneCtx.font = "600 26px Inter, sans-serif";
-  doneCtx.fillText("PEDIDO #4821 · ENTREGUE NO CLIENTE", 74, 128);
+  doneCtx.fillText("200 PEDIDOS · 200 CT-e · ENTREGUE", 74, 128);
   doneCtx.fillStyle = "rgba(244,248,239,0.55)";
   doneCtx.font = "500 22px Inter, sans-serif";
   doneCtx.fillText("Comprovante assinado · 14:38 · getTMS", 74, 166);
   const doneTex = track(new THREE.CanvasTexture(doneCanvas));
   doneTex.colorSpace = THREE.SRGBColorSpace;
-  const doneSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: doneTex, transparent: true, depthWrite: false }));
+  const doneSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: doneTex, transparent: true, depthWrite: false, depthTest: false }));
   doneSprite.scale.set(8.6, 2.7, 1);
   doneSprite.position.set(0, 7.8, -2);
   doneSprite.visible = false;
@@ -3092,8 +3188,8 @@ hub.scale.setScalar(1.15);
 
   // caminhão já carregando na doca 5 do cliente
   const dockedTruck = makeCabOverSource();
-  dockedTruck.position.set(424, 0, -357.5);
-  dockedTruck.rotation.y = Math.PI / 2;
+  dockedTruck.position.set(424, 0, -361);
+  dockedTruck.rotation.y = Math.PI;
   dockedTruck.scale.setScalar(0.94);
   clientSite.add(dockedTruck);
 
@@ -3106,6 +3202,9 @@ hub.scale.setScalar(1.15);
     { name: "GT-5126", lane: -191.4, speed: 12, offset: 420, dir: -1, from: 540, to: -30 },
   ].forEach((item, index) => {
     const vehicle = makeSimpleTruck(item.name);
+    vehicle.traverse((child) => {
+      if ((child as THREE.Sprite).isSprite) child.visible = false;
+    });
     vehicle.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
     vehicle.scale.setScalar(0.92);
     vehicle.position.set(item.from, 0, item.lane);
@@ -3244,6 +3343,18 @@ hub.scale.setScalar(1.15);
     clientDc.add(bumper2);
   });
 
+  // porta da doca onde o GT-1024 encosta: abre quando o caminhão dá ré
+  const heroDoorIndex = dcDoorX.findIndex((x) => Math.abs(392 + x - DOCK_X) < 0.6);
+  const heroDockDoor = heroDoorIndex >= 0 ? dcDoorMeshes[heroDoorIndex] : null;
+  if (heroDoorIndex >= 0) {
+    const doorX = dcDoorX[heroDoorIndex];
+    const opening = new THREE.Mesh(round(5.1, 5.1, 0.08, 0.02, 1), new THREE.MeshBasicMaterial({ color: 0x231d12 }));
+    opening.position.set(doorX, 2.75, 10.94);
+    clientDc.add(opening);
+    const innerGlow = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 0.5), new THREE.MeshBasicMaterial({ color: 0xffdfa4 }));
+    innerGlow.position.set(doorX, 0.55, 10.9);
+    clientDc.add(innerGlow);
+  }
   // unidades no telhado
   [-20, -8, 8, 20].forEach((x) => {
     const unit = new THREE.Mesh(round(3.2, 1.1, 2.6, 0.2, 2), unitMat);
@@ -3929,6 +4040,7 @@ hub.scale.setScalar(1.15);
     };
   }
 
+  let dockAnim = 0;
   function applyProgress(p: number, time: number) {
     const frameDt = Math.min(0.12, Math.max(0.001, time - lastFrameTime));
     lastFrameTime = time;
@@ -3954,6 +4066,23 @@ hub.scale.setScalar(1.15);
       (node.beam.material as THREE.MeshBasicMaterial).opacity = t * 0.14;
     });
 
+    applyWeather(p, time);
+    // porta da doca abre e a empilhadeira carrega o caminhão
+    if (heroDockDoor) {
+      const openT = easeInOut(clamp01((dockAnim - 0.5) / 0.45));
+      heroDockDoor.position.y = 2.8 + openT * 4.4;
+      (heroDockDoor.material as THREE.MeshBasicMaterial).opacity = Math.max(1, (heroDockDoor.material as THREE.MeshBasicMaterial).opacity);
+    }
+    const loadIn = clamp01((dockAnim - 0.72) / 0.2);
+    if (loadIn > 0) {
+      const cycle = (time * 0.5) % 1;
+      const k = easeInOut(cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2);
+      clientForklift.position.set(THREE.MathUtils.lerp(406, DOCK_X + 2.2, k * loadIn), 0, THREE.MathUtils.lerp(-366, -356.5, k * loadIn));
+      clientForklift.rotation.y = Math.PI / 2 + k * loadIn * Math.PI * 0.35;
+      loadPallet.visible = k > 0.15 && k < 0.85;
+    } else {
+      loadPallet.visible = false;
+    }
     // caminhão protagonista: avenida inteira -> trevo -> via expressa -> periferia -> doca do cliente
     const signalCycle = (time * 0.14) % 2;
     const signalGreen = signalCycle < 1.15;
@@ -3972,13 +4101,25 @@ hub.scale.setScalar(1.15);
         }
       }
     }
+    // chegou em frente à doca: segura o caminhão e dá ré com tempo para a manobra
+    if (truckPhase >= DOCK_START - 0.0005 && routeTarget > 0.94) {
+      dockAnim = Math.min(1, dockAnim + frameDt / 3.4);
+    } else if (routeTarget < DOCK_START - 0.02) {
+      dockAnim = Math.max(0, dockAnim - frameDt / 1.4);
+    }
     const previousPhase = truckPhase;
-    truckPhase = clamp01(truckPhase + truckStep * frameDt);
-    truckSpeed = (truckPhase - previousPhase) / Math.max(frameDt, 0.001);
+    truckPhase = clamp01(Math.min(truckPhase + truckStep * frameDt, DOCK_START + 0.0005));
+    truckSpeed = dockAnim > 0 && dockAnim < 1 ? 0.35 * (1 - dockAnim) : (truckPhase - previousPhase) / Math.max(frameDt, 0.001);
     heroRoute.getPointAt(Math.min(0.99999, truckPhase), truckPoint);
     heroRoute.getTangentAt(Math.min(0.99999, truckPhase), truckTangent);
     truck.position.set(truckPoint.x, 0, truckPoint.z);
-    const targetHeading = Math.atan2(truckTangent.x, truckTangent.z);
+    let targetHeading = Math.atan2(truckTangent.x, truckTangent.z);
+    // manobra final: o caminhão encara a doca de frente para o sul e dá ré até encostar
+    if (truckPhase >= DOCK_START - 0.0005 && dockAnim > 0) {
+      const dockT = easeInOut(clamp01(dockAnim));
+      truck.position.set(DOCK_X, 0, THREE.MathUtils.lerp(DOCK_STAGE_Z, DOCK_FINAL_Z, dockT));
+      targetHeading = Math.PI;
+    }
     let turnDelta = targetHeading - truck.rotation.y;
     while (turnDelta > Math.PI) turnDelta -= Math.PI * 2;
     while (turnDelta < -Math.PI) turnDelta += Math.PI * 2;
@@ -4258,7 +4399,7 @@ hub.scale.setScalar(1.15);
     const cfEase = cfPhase * cfPhase * (3 - 2 * cfPhase);
     clientForklift.position.set(lerp(386, 395, cfEase), 0, lerp(-368, -359, cfEase));
     clientForklift.rotation.y = cfSwing < 1 ? 0 : Math.PI;
-    const delivered = truckPhase > 0.985 && p > 0.86;
+    const delivered = dockAnim > 0.97 && p > 0.86;
     doneSprite.visible = delivered;
     tagSprite.visible = !delivered && p < 0.83;
     if (clientScreenMat) clientScreenMat.opacity = easeOut(range(pb, 0.8, 0.9));
@@ -4294,9 +4435,24 @@ hub.scale.setScalar(1.15);
     (particles.material as THREE.PointsMaterial).opacity = 0.25 + 0.35 * range(pb, 0.05, 0.5);
   }
 
+  let perfTime = 0;
+  let perfFrames = 0;
+  let perfAdjusted = low;
   function render() {
     if (disposed) return;
     const now = performance.now();
+    perfFrames += 1;
+    perfTime += Math.min(0.5, (now - lastTime) / 1000);
+    if (perfTime > 2.5) {
+      const fps = perfFrames / perfTime;
+      if (fps < 30 && !perfAdjusted) {
+        perfAdjusted = true;
+        renderer.setPixelRatio(1);
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+      }
+      perfTime = 0;
+      perfFrames = 0;
+    }
     const dt = Math.min(0.2, (now - lastTime) / 1000);
     lastTime = now;
     elapsed += dt;
@@ -4391,7 +4547,7 @@ hub.scale.setScalar(1.15);
     }
 
     applyProgress(current, elapsed);
-    renderer.render(scene, camera);
+    if (!document.hidden) renderer.render(scene, camera);
     frame = requestAnimationFrame(render);
   }
 
@@ -4669,7 +4825,7 @@ hub.scale.setScalar(1.15);
     holder: truck,
     parts: [...truck.children],
     length: 17.0,
-    rotY: Math.PI,
+    rotY: 0,
     wheelScale: 0.82,
     label: "GT-1024",
     livery: true,
@@ -4743,6 +4899,7 @@ hub.scale.setScalar(1.15);
     },
     snapTruck() {
       truckPhase = heroPhaseFor(current);
+      if (truckPhase >= DOCK_START) dockAnim = 1;
     },
     debugCam() {
       return {
