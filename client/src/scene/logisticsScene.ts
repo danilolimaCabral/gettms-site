@@ -3063,9 +3063,9 @@ hub.scale.setScalar(1.15);
         truck.position.z - fwdZ * 30 + rightZ * 15,
       );
       followLook.set(
-        truck.position.x + fwdX * 16,
-        3,
-        truck.position.z + fwdZ * 16,
+        truck.position.x + fwdX * 5,
+        2.6,
+        truck.position.z + fwdZ * 5,
       );
       camPos.lerp(followPos, followW);
       lookTarget.lerp(followLook, followW);
