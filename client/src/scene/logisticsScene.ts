@@ -2570,9 +2570,9 @@ hub.scale.setScalar(1.15);
   }
   const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean }> = {
     cidade: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
-    alimentos: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-112, 3, -72) },
-    farma: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-70, 3, 72) },
-    construcao: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-152, 3, 0) },
+    alimentos: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-118, 3, -66) },
+    farma: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-76, 3, 78) },
+    construcao: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-158, 3, 6) },
     ecommerce: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     simulacao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     ocorrencias: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
@@ -2589,6 +2589,7 @@ hub.scale.setScalar(1.15);
   const segTarget = new THREE.Vector3();
   const followPos = new THREE.Vector3();
   const followLook = new THREE.Vector3();
+  let camHeading = 0;
   const overrideLook = new THREE.Vector3();
 
   function sampleCamera(p: number, outPos: THREE.Vector3, outLook: THREE.Vector3) {
@@ -2943,10 +2944,15 @@ hub.scale.setScalar(1.15);
     camPos.x += smoothX * 2.6;
     camPos.y += smoothY * 1.8;
     // take cinematografico: camera acompanha o caminhao no inicio da pagina
-    if (!segmentView && current < 0.22) {
-      const followT = Math.min(1, Math.max(0, (current - 0.12) / 0.1));
+    if (!segmentView && current < 0.28) {
+      const followT = Math.min(1, Math.max(0, (current - 0.17) / 0.11));
       const followW = 1 - followT * followT * (3 - 2 * followT);
-      const heading = truck.rotation.y;
+      const rawHeading = truck.rotation.y;
+      let deltaHeading = rawHeading - camHeading;
+      while (deltaHeading > Math.PI) deltaHeading -= Math.PI * 2;
+      while (deltaHeading < -Math.PI) deltaHeading += Math.PI * 2;
+      camHeading += deltaHeading * 0.06;
+      const heading = camHeading;
       const fwdX = Math.sin(heading);
       const fwdZ = Math.cos(heading);
       const rightX = Math.cos(heading);

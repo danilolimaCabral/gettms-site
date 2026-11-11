@@ -444,7 +444,7 @@ export default function ScrollStage() {
         {/* estoque interno do CD durante o carregamento */}
         <StockPanel active={progress >= 0.83 && progress <= 0.905} progress={progress} />
         {/* mapa da operação */}
-        <div className="absolute right-6 top-24 hidden w-60 rounded-2xl border border-ink/10 bg-white/85 p-3 backdrop-blur-md lg:block">
+        <div className="absolute right-6 top-24 hidden w-[340px] rounded-3xl border border-ink/10 bg-white/88 p-4 shadow-[0_18px_50px_-30px_rgba(10,15,11,0.45)] backdrop-blur-md lg:block xl:w-[400px]">
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-[9px] uppercase tracking-[0.28em] text-ink/40">Mapa da operação</p>
             <span className="text-[9px] font-medium text-brand-dark">
