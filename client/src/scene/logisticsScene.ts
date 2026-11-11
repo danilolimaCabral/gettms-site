@@ -2358,8 +2358,8 @@ hub.scale.setScalar(1.15);
   dcDoorX.forEach((doorX, index) => {
     if (index === 3) return;
     const parked = makeSimpleTruck(fleetNames[index]);
-    parked.position.set(doorX, 0, 19.5);
-    parked.rotation.y = Math.PI / 2;
+    parked.position.set(doorX, 0, 17.2);
+    parked.rotation.y = 0;
     parked.scale.setScalar(0.001);
     parked.userData.delay = index * 0.015;
     parked.userData.dockX = doorX;
@@ -2787,9 +2787,9 @@ hub.scale.setScalar(1.15);
       // desce pela via de serviço e entra na doca em curva, com a traseira para a porta
       const turn = THREE.MathUtils.smoothstep(eased, 0.34, 1);
       const curveX = eased * eased * dockX;
-      clone.position.z = lerp(66, 19.5, eased);
+      clone.position.z = lerp(66, 17.2, eased);
       clone.position.x = curveX + Math.sin(eased * Math.PI) * 0.5 * side;
-      clone.rotation.y = lerp(Math.PI, Math.PI * 0.5, turn);
+      clone.rotation.y = lerp(Math.PI, 0, turn);
       const tag = clone.userData.orderTag as THREE.Sprite | undefined;
       if (tag) tag.visible = docked > 0.5 && cycle < 0.775;
     });
