@@ -51,6 +51,10 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Abas: painel ao vivo, tracker do CT-e, simulação de frete e auditoria de todos os CT-e recebidos (tabela x cobrado, status e diferença).
 - A cena 3D pausa o render quando sai da tela e com a aba oculta.
 
+## Performance do modelo PBR
+- semi-truck.glb otimizado com gltf-transform: texturas 2048² → 1024² e malha quantizada (KHR_mesh_quantization), de 3,1 MB para 1,6 MB (-48%).
+- Cena pausa render fora da tela, aba oculta e qualidade adaptativa por FPS.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

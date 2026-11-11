@@ -53,3 +53,4 @@
 - [x] Seletor manual de clima (auto, dia, noite, chuva).
 - [x] Torre de controle com processo, monitoramento, tracker, simulação e auditoria de CT-e.
 - [x] Pausa de render fora da tela para eliminar travamentos.
+- [x] Otimização do GLB do caminhão (texturas 1024 + quantização, 3,1 MB → 1,6 MB).
