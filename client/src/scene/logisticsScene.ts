@@ -1756,13 +1756,13 @@ hub.scale.setScalar(1.15);
     return dc;
   }
 
-  makeSmallDc(-92, -34, Math.PI * 0.5, "CD ALIMENTOS", 0x63b32e);
-  makeSmallDc(-72, 30, Math.PI, "CD FARMA", 0x2f9e8f);
-  makeSmallDc(-118, 8, Math.PI * 0.5, "CD CONSTRUÇÃO", 0xc08a3e);
-  makeSmallDc(-100, -92, Math.PI * 0.5, "CD BETA", 0x39443a);
-  makeSmallDc(-150, -20, Math.PI * 0.5, "CD GAMA", 0x2f6f4f);
-  makeSmallDc(-138, 52, Math.PI, "CD DELTA", 0x39443a);
-  makeSmallDc(-172, -86, Math.PI * 0.5, "CD ÔMEGA", 0x2f6f4f);
+  makeSmallDc(-112, -72, Math.PI * 0.5, "CD ALIMENTOS", 0x63b32e);
+  makeSmallDc(-70, 72, Math.PI, "CD FARMA", 0x2f9e8f);
+  makeSmallDc(-152, 0, Math.PI * 0.5, "CD CONSTRUÇÃO", 0xc08a3e);
+  makeSmallDc(-116, -132, Math.PI * 0.5, "CD BETA", 0x39443a);
+  makeSmallDc(-188, -26, Math.PI * 0.5, "CD GAMA", 0x2f6f4f);
+  makeSmallDc(-176, 78, Math.PI, "CD DELTA", 0x39443a);
+  makeSmallDc(-214, -104, Math.PI * 0.5, "CD ÔMEGA", 0x2f6f4f);
   makeSmallDc(104, 30, -Math.PI * 0.5, "CD E-COMMERCE", 0x4a6fd6);
   makeSmallDc(-52, -112, Math.PI, "CD LESTE", 0x2f6f4f);
 
@@ -1862,7 +1862,7 @@ hub.scale.setScalar(1.15);
   dcSignCtx.font = "700 150px Sora, Inter, sans-serif";
   dcSignCtx.textBaseline = "middle";
   dcSignCtx.textAlign = "center";
-  dcSignCtx.fillText("MATSUYAMA", 1024, 140);
+  dcSignCtx.fillText("CD AURORA", 1024, 140);
   dcSignCtx.fillStyle = "#8fe04a";
   dcSignCtx.font = "600 52px Inter, sans-serif";
   dcSignCtx.fillText("CENTRO DE DISTRIBUIÇÃO · getTMS", 1024, 270);
@@ -2542,9 +2542,9 @@ hub.scale.setScalar(1.15);
     };
   }
   const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean }> = {
-    alimentos: { pos: new THREE.Vector3(-64, 24, -18), look: new THREE.Vector3(-92, 6, -34) },
-    farma: { pos: new THREE.Vector3(-72, 24, 6), look: new THREE.Vector3(-72, 6, 30) },
-    construcao: { pos: new THREE.Vector3(-92, 24, 18), look: new THREE.Vector3(-118, 6, 8) },
+    alimentos: { pos: new THREE.Vector3(-40, 40, -98), look: new THREE.Vector3(-112, 4, -72) },
+    farma: { pos: new THREE.Vector3(-96, 36, 0), look: new THREE.Vector3(-70, 4, 72) },
+    construcao: { pos: new THREE.Vector3(-80, 36, -26), look: new THREE.Vector3(-152, 4, 0) },
     ecommerce: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     simulacao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     ocorrencias: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
@@ -2915,8 +2915,10 @@ hub.scale.setScalar(1.15);
     camPos.x += smoothX * 2.6;
     camPos.y += smoothY * 1.8;
 
-    camera.position.copy(camPos);
-    camera.lookAt(lookTarget);
+    if (!segmentView) {
+      camera.position.copy(camPos);
+      camera.lookAt(lookTarget);
+    }
     if (segmentView) {
       if (segmentView.office) {
         heroTable.getWorldPosition(officePos);

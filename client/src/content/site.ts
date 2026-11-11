@@ -118,7 +118,7 @@ export const CLIENTS = [
   "Kala",
   "Liege",
   "Lumber",
-  "Matsuyama",
+  "Alimentos Aurora",
   "Mensur",
   "Negrão",
   "Plastilit",

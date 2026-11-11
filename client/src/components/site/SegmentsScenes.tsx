@@ -37,8 +37,25 @@ export default function SegmentsScenes() {
   }, []);
 
   useEffect(() => {
-    const handle = (window as unknown as { __gettmsScene?: { setSegmentView: (k: string | null) => void } }).__gettmsScene;
-    handle?.setSegmentView(KINDS[scene]);
+    type SceneHandle = { setSegmentView: (k: string | null) => void };
+    let cancelled = false;
+    let tries = 0;
+    const apply = () => {
+      if (cancelled) return;
+      const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
+      if (handle) {
+        handle.setSegmentView(KINDS[scene]);
+        return;
+      }
+      if (tries < 40) {
+        tries += 1;
+        window.setTimeout(apply, 250);
+      }
+    };
+    apply();
+    return () => {
+      cancelled = true;
+    };
   }, [scene]);
 
   useEffect(() => () => {
