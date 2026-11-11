@@ -50,3 +50,6 @@
 - [x] Caminhão dá ré e encosta de traseira na doca; porta da doca abre e a empilhadeira carrega (200 pedidos · 200 CT-e).
 - [x] Reprodução automática da página inteira com pausa ao interagir.
 - [x] Otimização mobile: pixel ratio limitado, qualidade adaptativa por FPS, pausa de render com aba oculta.
+- [x] Seletor manual de clima (auto, dia, noite, chuva).
+- [x] Torre de controle com processo, monitoramento, tracker, simulação e auditoria de CT-e.
+- [x] Pausa de render fora da tela para eliminar travamentos.

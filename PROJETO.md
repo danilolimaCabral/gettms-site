@@ -45,6 +45,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Empilhadeira carrega o caminhão em ciclo depois da doca; painel mostra 200 pedidos · 200 CT-e · 100% conferido.
 - Reprodução automática da página inteira: filme em ~70 s, depois as outras seções avançam sozinhas; qualquer gesto pausa 4 s e retoma.
 
+## Torre de controle e clima manual
+- Seletor de clima na cena (Automático, Dia, Noite, Chuva) com transição suave de luz, céu e partículas.
+- Seção #torre antes do sistema/relatórios: processo de 6 etapas guiado pelo scroll (simular, emitir CT-e, monitorar, tratar ocorrência, auditar todos os CT-e, decidir).
+- Abas: painel ao vivo, tracker do CT-e, simulação de frete e auditoria de todos os CT-e recebidos (tabela x cobrado, status e diferença).
+- A cena 3D pausa o render quando sai da tela e com a aba oculta.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
