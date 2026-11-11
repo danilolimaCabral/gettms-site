@@ -1713,7 +1713,7 @@ hub.scale.setScalar(1.15);
     dc.add(canopy);
 
     const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b });
-    [-9, 0, 9].forEach((dx) => {
+    [-9, 9].forEach((dx) => {
       const door = new THREE.Mesh(round(4.4, 4.4, 0.2, 0.08, 2), doorMat);
       door.position.set(dx, 2.4, 8.1);
       dc.add(door);
@@ -2637,12 +2637,16 @@ hub.scale.setScalar(1.15);
       item.mesh.rotation.y = lerp(Math.PI, 0, THREE.MathUtils.smoothstep(eased, 0.25, 0.8));
     });
     visitors.forEach((item) => {
-      const cycle = (time * 0.05 + item.phase) % 1;
-      const inbound = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
-      const eased = inbound * inbound * (3 - 2 * inbound);
-      item.mesh.position.z = lerp(48, 21, eased);
+      const cycle = (time * 0.028 + item.phase) % 1;
+      const approach = Math.min(1, cycle / 0.5);
+      const depart = Math.max(0, (cycle - 0.78) / 0.22);
+      const easedIn = approach * approach * (3 - 2 * approach);
+      const easedOut = depart * depart * (3 - 2 * depart);
+      const z = cycle < 0.78 ? lerp(54, 16.4, easedIn) : lerp(16.4, 54, easedOut);
+      item.mesh.position.z = z;
       item.mesh.position.x = 0;
-      item.mesh.rotation.y = cycle < 0.5 ? 0 : Math.PI;
+      // recua até a doca (frente para fora) e sai de frente
+      item.mesh.rotation.y = cycle < 0.78 ? 0 : lerp(0, Math.PI, easedOut);
     });
 
     roadFleet.forEach((item) => {
