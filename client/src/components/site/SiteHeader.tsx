@@ -10,6 +10,7 @@ const NAV: NavItem[] = [
   { label: "Operação", seek: 0.1 },
   { label: "Segmentos", seek: 0.34 },
   { label: "Plataforma", seek: 0.58 },
+  { label: "Torre", href: "#torre" },
   { label: "Tracking", seek: 0.69 },
   { label: "CD do cliente", seek: 0.82 },
   { label: "Contato", href: "#contato" },

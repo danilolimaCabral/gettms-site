@@ -6,6 +6,7 @@ import ContactScene from "@/components/site/ContactScene";
 import SegmentsScenes from "@/components/site/SegmentsScenes";
 import PlatformScenes from "@/components/site/PlatformScenes";
 import DesktopScene from "@/components/site/DesktopScene";
+import ControlTower from "@/components/site/ControlTower";
 import Clients from "@/components/site/Clients";
 import SiteFooter from "@/components/site/SiteFooter";
 import Mia from "@/components/site/Mia";
@@ -18,6 +19,7 @@ export default function Home() {
         <ScrollStage />
         <SegmentsScenes />
         <PlatformScenes />
+        <ControlTower />
         <DesktopScene />
         <TrackingScene />
         <MaturityScene />
