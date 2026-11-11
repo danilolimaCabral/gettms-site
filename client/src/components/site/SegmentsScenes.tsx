@@ -44,8 +44,8 @@ export default function SegmentsScenes() {
       if (cancelled) return;
       const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
       if (handle) {
-        handle.setSegmentView("cidade");
-        handle.setSegmentZoom(1.02 - scene * 0.07);
+        handle.setSegmentView(KINDS[scene]);
+        handle.setSegmentZoom(0.34);
         return;
       }
       if (tries < 40) {

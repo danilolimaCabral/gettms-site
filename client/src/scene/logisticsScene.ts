@@ -2543,9 +2543,9 @@ hub.scale.setScalar(1.15);
   }
   const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean }> = {
     cidade: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
-    alimentos: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
-    farma: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
-    construcao: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
+    alimentos: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-112, 3, -72) },
+    farma: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-70, 3, 72) },
+    construcao: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-152, 3, 0) },
     ecommerce: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     simulacao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     ocorrencias: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
@@ -2638,16 +2638,13 @@ hub.scale.setScalar(1.15);
       item.mesh.rotation.y = lerp(Math.PI, 0, THREE.MathUtils.smoothstep(eased, 0.25, 0.8));
     });
     visitors.forEach((item) => {
-      const cycle = (time * 0.028 + item.phase) % 1;
-      const approach = Math.min(1, cycle / 0.5);
-      const depart = Math.max(0, (cycle - 0.78) / 0.22);
-      const easedIn = approach * approach * (3 - 2 * approach);
-      const easedOut = depart * depart * (3 - 2 * depart);
-      const z = cycle < 0.78 ? lerp(54, 16.4, easedIn) : lerp(16.4, 54, easedOut);
-      item.mesh.position.z = z;
+      // caminhão entra reto pela via de acesso e segue até a doca, sem girar
+      const cycle = (time * 0.03 + item.phase) % 1;
+      const t = cycle < 0.86 ? cycle / 0.86 : 1;
+      const eased = t * t * (3 - 2 * t);
+      item.mesh.position.z = lerp(56, 16.4, eased);
       item.mesh.position.x = 0;
-      // recua até a doca (frente para fora) e sai de frente
-      item.mesh.rotation.y = cycle < 0.78 ? 0 : lerp(0, Math.PI, easedOut);
+      item.mesh.rotation.y = 0;
     });
 
     roadFleet.forEach((item) => {
@@ -2936,8 +2933,8 @@ hub.scale.setScalar(1.15);
         camera.lookAt(overrideLook);
       } else {
         segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
-        overrideLook.lerp(segmentView.look, 0.05);
-        camera.position.lerp(segTarget, 0.12);
+        overrideLook.lerp(segmentView.look, 0.14);
+        camera.position.lerp(segTarget, 0.2);
         camera.lookAt(overrideLook);
       }
     }
@@ -3188,7 +3185,7 @@ hub.scale.setScalar(1.15);
       orbitRadius = Math.min(140, Math.max(26, orbitRadius + delta));
     },
     setSegmentZoom(z: number) {
-      segmentZoom = Math.min(1.4, Math.max(0.55, z));
+      segmentZoom = Math.min(1.4, Math.max(0.22, z));
     },
     setFeatureScreen(index: number) {
       heroMat.map = heroTextures[Math.max(0, Math.min(3, index))];
