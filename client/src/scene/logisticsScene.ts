@@ -3058,14 +3058,14 @@ hub.scale.setScalar(1.15);
       const rightX = Math.cos(heading);
       const rightZ = -Math.sin(heading);
       followPos.set(
-        truck.position.x - fwdX * 26 + rightX * 13,
-        13,
-        truck.position.z - fwdZ * 26 + rightZ * 13,
+        truck.position.x - fwdX * 24 + rightX * 1.5,
+        14,
+        truck.position.z - fwdZ * 24 + rightZ * 1.5,
       );
       followLook.set(
-        truck.position.x + fwdX * 5,
+        truck.position.x + fwdX * 10,
         2.6,
-        truck.position.z + fwdZ * 5,
+        truck.position.z + fwdZ * 10,
       );
       camPos.lerp(followPos, followW);
       lookTarget.lerp(followLook, followW);
