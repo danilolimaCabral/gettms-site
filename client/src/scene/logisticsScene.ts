@@ -15,6 +15,7 @@ export type LogisticsSceneHandle = {
   setSegmentView: (kind: string | null) => void;
   setFeatureScreen: (index: number) => void;
   setSegmentZoom: (z: number) => void;
+  debugCam?: () => { pos: number[]; zoom: number; view: string };
   orbitBy: (delta: number) => void;
   orbitZoom: (delta: number) => void;
   resize: () => void;
@@ -2934,8 +2935,8 @@ hub.scale.setScalar(1.15);
         camera.lookAt(overrideLook);
       } else {
         segTarget.copy(segmentView.pos).sub(segmentView.look).multiplyScalar(segmentZoom).add(segmentView.look);
-        overrideLook.lerp(segmentView.look, 0.14);
-        camera.position.lerp(segTarget, 0.2);
+        overrideLook.lerp(segmentView.look, 0.08);
+        camera.position.lerp(segTarget, 0.09);
         camera.lookAt(overrideLook);
       }
     }
@@ -3186,7 +3187,7 @@ hub.scale.setScalar(1.15);
       orbitRadius = Math.min(140, Math.max(26, orbitRadius + delta));
     },
     setSegmentZoom(z: number) {
-      segmentZoom = Math.min(1.4, Math.max(0.22, z));
+      segmentZoom = Math.min(1.4, Math.max(0.1, z));
     },
     setFeatureScreen(index: number) {
       heroMat.map = heroTextures[Math.max(0, Math.min(3, index))];
@@ -3205,6 +3206,13 @@ hub.scale.setScalar(1.15);
     setPointer(x: number, y: number) {
       pointerX = x;
       pointerY = y;
+    },
+    debugCam() {
+      return {
+        pos: [camera.position.x, camera.position.y, camera.position.z],
+        zoom: segmentZoom,
+        view: segmentView ? "set" : "null",
+      };
     },
     resize,
     dispose() {

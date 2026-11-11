@@ -45,7 +45,7 @@ export default function SegmentsScenes() {
       const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
       if (handle) {
         handle.setSegmentView(KINDS[scene]);
-        handle.setSegmentZoom(0.34);
+        handle.setSegmentZoom(0.17);
         return;
       }
       if (tries < 400) {
@@ -64,7 +64,7 @@ export default function SegmentsScenes() {
       if (!handle) return;
       if (inView) {
         handle.setSegmentView(KINDS[scene]);
-        handle.setSegmentZoom(0.34);
+        handle.setSegmentZoom(0.17);
       } else {
         handle.setSegmentView(null);
       }
