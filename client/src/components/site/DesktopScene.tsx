@@ -125,7 +125,7 @@ export default function DesktopScene() {
                     </div>
                   </div>
 
-                  <div className="flex h-[318px] md:h-[396px]">
+                  <div className="flex h-[352px] md:h-[396px]">
                     {/* menu lateral */}
                     <aside className="hidden w-[168px] shrink-0 flex-col gap-1 border-r border-white/8 bg-[#0c120e] p-3 md:flex">
                       <div className="mb-3 flex items-center gap-2">
@@ -232,7 +232,7 @@ export default function DesktopScene() {
                               </div>
                             ))}
                           </div>
-                          <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
+                          <div className="mt-2 hidden grid-cols-3 gap-2 text-[10px] md:grid">
                             {[
                               ["Prazo total", "3 dias"],
                               ["Custo por km", "R$ 4,12"],
