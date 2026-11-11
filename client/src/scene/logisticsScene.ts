@@ -544,6 +544,29 @@ export function createLogisticsScene(
   [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addStreet(x, -20, 460, false));
   addStreet(0, -52, 180, false);
   addStreet(0, 6, 120, false);
+  // calcadas e meio-fio nas ruas transversais
+  const gridWalkMat = new THREE.MeshStandardMaterial({ color: 0xe9ebe3, roughness: 0.95 });
+  const gridCurbMat = new THREE.MeshStandardMaterial({ color: 0xd2d5cb, roughness: 0.9 });
+  const addGridWalks = (x: number, z: number, length: number, horizontal: boolean) => {
+    [-1, 1].forEach((side) => {
+      const walk = new THREE.Mesh(
+        new THREE.BoxGeometry(horizontal ? length : 2.4, 0.2, horizontal ? 2.4 : length),
+        gridWalkMat,
+      );
+      walk.position.set(horizontal ? x : x + side * 5.7, 0.1, horizontal ? z + side * 5.7 : z);
+      const curb = new THREE.Mesh(
+        new THREE.BoxGeometry(horizontal ? length : 0.22, 0.3, horizontal ? 0.22 : length),
+        gridCurbMat,
+      );
+      curb.position.set(horizontal ? x : x + side * 4.55, 0.15, horizontal ? z + side * 4.55 : z);
+      scene.add(walk, curb);
+    });
+  };
+  [-150, -96, 30, 84, 138, 192].forEach((z) => addGridWalks(0, z, 420, true));
+  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addGridWalks(x, -20, 460, false));
+  addGridWalks(0, -52, 180, false);
+  addGridWalks(0, 6, 120, false);
+
   const dashMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0, transparent: true, opacity: 0 });
   const dashCount = 88;
   const dashes = new THREE.InstancedMesh(round(0.2, 0.05, 3, 0.06, 1), dashMat, dashCount);
