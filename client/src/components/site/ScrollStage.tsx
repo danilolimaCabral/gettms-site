@@ -467,7 +467,7 @@ export default function ScrollStage() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70 md:to-transparent" />
           <div className="container-wide relative">
             <div className="max-w-3xl">
-              <p className="eyebrow mb-6 flex items-center gap-3">
+              <p className="eyebrow mb-6 hidden items-center gap-3 md:flex">
                 <span className="h-px w-10 bg-brand/70" />
                 Plataforma TMS · Gestão de transportes
               </p>
