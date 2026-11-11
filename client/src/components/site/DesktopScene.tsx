@@ -94,16 +94,17 @@ export default function DesktopScene() {
         </div>
 
         <div className="relative w-full max-w-[1080px] px-3" style={{ perspective: "1400px" }}>
-          {/* mesa */}
-          <div className="pointer-events-none absolute inset-x-6 -bottom-6 h-16 rounded-[50%] bg-black/50 blur-2xl" />
+          {/* brilho da tela e sombra na mesa */}
+          <div className="pointer-events-none absolute left-1/2 top-[12%] h-[70%] w-[78%] -translate-x-1/2 rounded-[50%] bg-[#8fe04a]/12 blur-[80px]" />
+          <div className="pointer-events-none absolute inset-x-10 -bottom-4 h-10 rounded-[50%] bg-black/60 blur-2xl" />
 
           <div
             className="relative origin-bottom transition-transform duration-200 ease-out will-change-transform"
             style={{ transform: `rotateX(${tilt}deg) scale(${scale})` }}
           >
             {/* moldura do monitor */}
-            <div className="rounded-[26px] border border-white/12 bg-[#151b16] p-2.5 shadow-[0_60px_120px_-50px_rgba(0,0,0,0.95)] md:rounded-[32px] md:p-3.5">
-              <div className="relative overflow-hidden rounded-[18px] bg-[#0a0f0b] md:rounded-[24px]">
+            <div className="rounded-[22px] bg-[linear-gradient(180deg,#2a352b_0%,#171e18_38%,#10150f_100%)] p-[7px] shadow-[0_50px_110px_-45px_rgba(0,0,0,0.95),0_0_0_1px_rgba(255,255,255,0.06)] md:rounded-[28px] md:p-[9px]">
+              <div className="relative overflow-hidden rounded-[16px] bg-[#0a0f0b] ring-1 ring-black/70 md:rounded-[21px]">
                 {/* reflexo do vidro */}
                 <div className="pointer-events-none absolute inset-0 z-20 bg-[linear-gradient(115deg,rgba(255,255,255,0.08)_0%,transparent_38%,transparent_62%,rgba(255,255,255,0.04)_100%)]" />
                 <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-px bg-white/25" />
@@ -124,7 +125,7 @@ export default function DesktopScene() {
                     </div>
                   </div>
 
-                  <div className="flex min-h-[300px] md:min-h-[430px]">
+                  <div className="flex h-[330px] md:h-[452px]">
                     {/* menu lateral */}
                     <aside className="hidden w-[168px] shrink-0 flex-col gap-1 border-r border-white/8 bg-[#0c120e] p-3 md:flex">
                       <div className="mb-3 flex items-center gap-2">
@@ -155,7 +156,7 @@ export default function DesktopScene() {
                     </aside>
 
                     {/* conteúdo */}
-                    <div className="flex-1 p-3 md:p-5">
+                    <div className="flex-1 overflow-hidden p-3 md:p-5">
                       <div className="mb-3 flex items-center justify-between">
                         <div>
                           <p className="text-[9px] uppercase tracking-[0.18em] text-white/35">Operação · SP → PR</p>
@@ -168,7 +169,20 @@ export default function DesktopScene() {
                         </span>
                       </div>
 
-                      <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden">
+                      <div className="mb-2 grid grid-cols-3 gap-1.5">
+                        {[
+                          ["Fretes hoje", "412"],
+                          ["No prazo", "96,2%"],
+                          ["Economia", "-11,4%"],
+                        ].map(([k, v]) => (
+                          <div key={k} className="rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1.5">
+                            <p className="text-[7.5px] uppercase tracking-[0.12em] text-white/35">{k}</p>
+                            <p className="font-display text-[13px] font-semibold leading-tight text-white">{v}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-1.5 overflow-x-auto pb-1 pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden">
                         {TABS.map(({ id, label }) => (
                           <button
                             key={id}
@@ -298,9 +312,12 @@ export default function DesktopScene() {
               </div>
             </div>
 
-            {/* suporte */}
-            <div className="mx-auto h-3 w-24 rounded-b-md bg-[#1b231d] md:h-4 md:w-32" />
-            <div className="mx-auto h-1.5 w-44 rounded-full bg-[#242e26] md:w-56" />
+            {/* suporte e base */}
+            <div
+              className="mx-auto h-7 w-14 bg-[linear-gradient(180deg,#232c25,#141a15)] md:h-9 md:w-16"
+              style={{ clipPath: "polygon(28% 0, 72% 0, 100% 100%, 0 100%)" }}
+            />
+            <div className="mx-auto h-2 w-52 rounded-full bg-[linear-gradient(180deg,#2b352d,#131913)] shadow-[0_10px_24px_-10px_rgba(0,0,0,0.9)] md:w-64" />
           </div>
         </div>
 
