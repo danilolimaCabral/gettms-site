@@ -964,6 +964,31 @@ hub.scale.setScalar(1.15);
     });
   }
   scene.add(sidewalkGroup);
+  // faixas de pedestre e semaforos nos cruzamentos da avenida
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
+  const signalBoxMat = new THREE.MeshStandardMaterial({ color: 0x2a302c, roughness: 0.6 });
+  [42, -42].forEach((crossZ) => {
+    for (let i = 0; i < 7; i += 1) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
+      stripe.position.set(-5.1 + i * 1.7, 0.14, crossZ);
+      scene.add(stripe);
+    }
+    [-1, 1].forEach((side) => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.2, 10), poleMat);
+      pole.position.set(side * 7.9, 2.1, crossZ + 3.4);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), poleMat);
+      arm.position.set(side * (7.9 - 1.1), 4.1, crossZ + 3.4);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.34), signalBoxMat);
+      box.position.set(side * 6.9, 3.6, crossZ + 3.4);
+      const red = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a3c }));
+      red.position.set(side * 6.9, 3.95, crossZ + 3.22);
+      const green = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshBasicMaterial({ color: 0x8fe04a }));
+      green.position.set(side * 6.9, 3.28, crossZ + 3.22);
+      scene.add(pole, arm, box, red, green);
+    });
+  });
+
   const dockRoad = new THREE.Mesh(new THREE.PlaneGeometry(78, 9), roadMat);
   dockRoad.rotation.x = -Math.PI / 2;
   dockRoad.position.set(30, 0.05, -99);
