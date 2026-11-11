@@ -352,6 +352,60 @@ function makeTruckSideTexture(name: string) {
   return texture;
 }
 
+function makeWallTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#f6f8f1";
+  ctx.fillRect(0, 0, 256, 256);
+  // ondulação do metal
+  for (let x = 0; x < 256; x += 8) {
+    ctx.fillStyle = "rgba(120,140,125,0.10)";
+    ctx.fillRect(x, 0, 3, 256);
+  }
+  // faixa de janelas altas
+  ctx.fillStyle = "rgba(46,64,54,0.72)";
+  for (let x = 16; x < 240; x += 44) {
+    ctx.fillRect(x, 34, 30, 30);
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.fillRect(x, 34, 30, 8);
+    ctx.fillStyle = "rgba(46,64,54,0.72)";
+  }
+  // linha de cinta e rodapé
+  ctx.fillStyle = "rgba(90,110,95,0.22)";
+  ctx.fillRect(0, 74, 256, 4);
+  ctx.fillStyle = "rgba(90,110,95,0.18)";
+  ctx.fillRect(0, 232, 256, 24);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+function makeShopSignTexture(label: string, bg: string, fg: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 512, 128);
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.fillRect(0, 0, 512, 10);
+  ctx.fillStyle = fg;
+  ctx.font = "700 62px Inter, Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  let size = 62;
+  while (ctx.measureText(label).width > 460 && size > 30) {
+    size -= 4;
+    ctx.font = `700 ${size}px Inter, Arial, sans-serif`;
+  }
+  ctx.fillText(label, 256, 68);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
 function makeFacadeTexture(wall: string, glass: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
@@ -359,21 +413,28 @@ function makeFacadeTexture(wall: string, glass: string) {
   const ctx = canvas.getContext("2d")!;
   ctx.fillStyle = wall;
   ctx.fillRect(0, 0, 128, 256);
-  const cols = 5;
-  const rows = 12;
-  const padX = 10;
-  const padY = 12;
+  const cols = 4;
+  const rows = 10;
+  const padX = 8;
+  const padY = 10;
   const cellW = (128 - padX * 2) / cols;
   const cellH = (256 - padY * 2) / rows;
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cols; c += 1) {
-      ctx.fillStyle = Math.random() > 0.35 ? glass : "rgba(255,255,255,0.55)";
-      ctx.fillRect(
-        padX + c * cellW + cellW * 0.16,
-        padY + r * cellH + cellH * 0.2,
-        cellW * 0.68,
-        cellH * 0.55,
-      );
+      const x = padX + c * cellW;
+      const y = padY + r * cellH;
+      // moldura clara + vidro escuro, com veneziana em algumas janelas
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillRect(x + cellW * 0.1, y + cellH * 0.12, cellW * 0.8, cellH * 0.66);
+      ctx.fillStyle = glass;
+      ctx.fillRect(x + cellW * 0.16, y + cellH * 0.18, cellW * 0.68, cellH * 0.54);
+      if (Math.random() > 0.72) {
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillRect(x + cellW * 0.16, y + cellH * 0.18, cellW * 0.68, cellH * 0.26);
+      }
+      // peitoril
+      ctx.fillStyle = "rgba(0,0,0,0.07)";
+      ctx.fillRect(x + cellW * 0.08, y + cellH * 0.78, cellW * 0.84, cellH * 0.06);
     }
   }
   const texture = new THREE.CanvasTexture(canvas);
@@ -811,7 +872,7 @@ export function createLogisticsScene(
   warehouse.position.set(-40, 0, -26);
   scene.add(warehouse);
 
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf7f9f2, roughness: 0.7, metalness: 0.12 });
+  const wallMat = new THREE.MeshStandardMaterial({ map: track(makeWallTexture()), color: 0xffffff, roughness: 0.7, metalness: 0.12 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0xd3dcc8, roughness: 0.75, metalness: 0.25 });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x2b352c, roughness: 0.6, metalness: 0.4 });
   const stripMat = new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0.9 });
@@ -1048,6 +1109,26 @@ export function createLogisticsScene(
     track(makeFacadeTexture("#e6ecdf", "rgba(30,44,34,0.6)")),
   ];
 
+  const shopNames = [
+    "Mercado Bom Preço",
+    "Farmácia Saúde",
+    "Padaria Pão Quente",
+    "Lanches do Zé",
+    "Ótica Visão",
+    "Papelaria Central",
+    "Barbearia Lima",
+    "Peças & Cia",
+    "Café Avenida",
+    "Tecidos Silva",
+    "Açougue Ideal",
+    "Loja Verde",
+    "Presentes Amor",
+    "Auto Peças BR",
+    "Casa & Cia",
+    "Bebidas Geladas",
+  ];
+  const shopSignBgs = ["#3f7d34", "#c0563c", "#2f5f8a", "#b8862f", "#4a4f58", "#7a3f6d"];
+  const shopAwnings = [0xd8dfd2, 0xc9d6c0, 0xe2d3b8, 0xc8d2dc, 0xd9c9c2];
   type Tower = { mesh: THREE.Mesh; height: number; delay: number };
   const towers: Tower[] = [];
   const towerLayout = [
@@ -1092,12 +1173,29 @@ export function createLogisticsScene(
     const facade = facadeTextures[i % facadeTextures.length].clone();
     facade.repeat.set(Math.max(1, Math.round(w / 8)), Math.max(2, Math.round(h / 8)));
     facade.needsUpdate = true;
+    const towerPalette = [0xd7e0e8, 0xe9e2d2, 0xf2f4ef, 0xccd6ce, 0xdfd9d2];
     const tower = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, w * 0.9),
-      new THREE.MeshStandardMaterial({ map: facade, color: i % 3 === 0 ? 0xe3e9dd : 0xf2f5ee, roughness: 0.95 }),
+      new THREE.MeshStandardMaterial({ map: facade, color: towerPalette[i % towerPalette.length], roughness: 0.9, metalness: 0.06 }),
     );
     tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 60);
     skyline.add(tower);
+    // detalhes de cobertura: caixa d'água, casa de máquinas ou antena
+    if (i % 3 === 0) {
+      const roofBox = new THREE.Mesh(
+        new THREE.BoxGeometry(w * 0.32, 1.6, w * 0.3),
+        new THREE.MeshStandardMaterial({ color: 0xb9c2bd, roughness: 0.9 }),
+      );
+      roofBox.position.set(tower.position.x + w * 0.15, h - 1.2, tower.position.z);
+      skyline.add(roofBox);
+    } else if (i % 5 === 0) {
+      const antenna = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 4, 6),
+        new THREE.MeshStandardMaterial({ color: 0x8d9a93, roughness: 0.8 }),
+      );
+      antenna.position.set(tower.position.x - w * 0.2, h + 0.2, tower.position.z + w * 0.1);
+      skyline.add(antenna);
+    }
   }
   scene.add(skyline);
   towerLayout.forEach((tower, index) => {
@@ -1115,6 +1213,36 @@ export function createLogisticsScene(
     city.add(cap);
     towers.push({ mesh, height: tower.h, delay: index * 0.03 });
     mesh.userData.cap = cap;
+
+    // térreo comercial: vitrine, toldo e placa com nome da loja
+    if (Math.abs(tower.x) >= 12 && tower.z > -30) {
+      const side = tower.x < 0 ? 1 : -1;
+      const faceX = tower.x + side * (tower.w / 2 + 0.08);
+      const shopW = Math.min(tower.w * 0.8, 7.2);
+      const glassShop = new THREE.Mesh(
+        new THREE.PlaneGeometry(shopW, 2.6),
+        new THREE.MeshStandardMaterial({ color: 0x2c3a33, roughness: 0.25, metalness: 0.55 }),
+      );
+      glassShop.position.set(faceX, 1.45, tower.z);
+      glassShop.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+      city.add(glassShop);
+
+      const awning = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.12, shopW + 0.5),
+        new THREE.MeshStandardMaterial({ color: shopAwnings[index % shopAwnings.length], roughness: 0.85 }),
+      );
+      awning.position.set(faceX + side * 0.45, 3.05, tower.z);
+      awning.rotation.z = side * -0.16;
+      city.add(awning);
+
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(shopW, shopW * 0.25),
+        new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture(shopNames[index % shopNames.length], shopSignBgs[index % shopSignBgs.length], "#ffffff")) }),
+      );
+      sign.position.set(faceX + side * 0.02, 3.75, tower.z);
+      sign.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+      city.add(sign);
+    }
   });
 
   // ---------------------------------------------------------------- hub de entrega
@@ -1206,6 +1334,29 @@ hub.scale.setScalar(1.15);
     (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 }),
   );
   const signMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0 });
+  const avenueShopNames = [
+    "Padaria do Bairro",
+    "Mercado São José",
+    "Farmácia Popular",
+    "Açaí & Cia",
+    "Lanches Avenida",
+    "Ótica Central",
+    "Papelaria Nova",
+    "Barbearia Estilo",
+    "Peças & Serviços",
+    "Café da Esquina",
+    "Tecidos União",
+    "Pet Shop Amigo",
+    "Loja Verde",
+    "Bebidas Frias",
+    "Eletro Lar",
+    "Presentes & Cia",
+    "Auto Center BR",
+    "Hortifruti Bom",
+    "Sorveteria Gelato",
+    "Casa do Pão",
+  ];
+  const avenueSignBgs = ["#3f7d34", "#c0563c", "#2f5f8a", "#b8862f", "#4a4f58", "#7a3f6d"];
   const addShop = (x: number, z: number, w: number, d: number, h: number, face: number, i: number) => {
     const g = new THREE.Group();
     const body = new THREE.Mesh(round(w, h, d, 0.18, 1), shopWallMats[i % shopWallMats.length]);
@@ -1215,11 +1366,15 @@ hub.scale.setScalar(1.15);
     const awning = new THREE.Mesh(round(w * 0.92, 0.12, 1.5, 0.05, 1), awningMats[i % awningMats.length]);
     awning.position.set(0, h * 0.56, (d / 2 + 0.6) * face);
     awning.rotation.x = face > 0 ? -0.14 : 0.14;
-    const sign = new THREE.Mesh(round(w * 0.5, h * 0.13, 0.12, 0.04, 1), signMat);
-    sign.position.set(0, h * 0.8, (d / 2 + 0.07) * face);
-    const signBrand = new THREE.Mesh(round(w * 0.3, h * 0.07, 0.14, 0.03, 1), awningMats[(i + 1) % awningMats.length]);
-    signBrand.position.set(0, h * 0.8, (d / 2 + 0.13) * face);
-    g.add(body, glass, awning, sign, signBrand);
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(w * 0.72, w * 0.72 * 0.25),
+      new THREE.MeshBasicMaterial({
+        map: track(makeShopSignTexture(avenueShopNames[i % avenueShopNames.length], avenueSignBgs[i % avenueSignBgs.length], "#ffffff")),
+      }),
+    );
+    sign.position.set(0, h * 0.78, (d / 2 + 0.09) * face);
+    if (face < 0) sign.rotation.y = Math.PI;
+    g.add(body, glass, awning, sign);
     g.position.set(x, 0, z);
     scene.add(g);
   };
@@ -1636,6 +1791,12 @@ hub.scale.setScalar(1.15);
     [122, -312, 54, 60, 4],
     [180, -312, 54, 60, 0],
     [238, -312, 50, 60, 1],
+    [64, -372, 54, 56, 1],
+    [122, -372, 54, 56, 3],
+    [180, -372, 54, 56, 2],
+    [238, -372, 50, 56, 4],
+    [10, -276, 44, 120, 2],
+    [292, -276, 44, 120, 0],
   ];
   fieldLayout.forEach(([x, z, w, d, tone]) => {
     rural.add(flatRoad(w - 2, d - 2, x, z, fieldMats[tone], 0.03));
@@ -1650,7 +1811,7 @@ hub.scale.setScalar(1.15);
   // base de grama do trecho rural
   const ruralGrass = new THREE.MeshStandardMaterial({ color: 0x9dbb7c, roughness: 1, transparent: true, opacity: 0 });
   revealFades.push({ mat: ruralGrass, from: 0.32, to: 0.46, base: 1 });
-  rural.add(flatRoad(268, 132, 154, -274, ruralGrass, 0.02));
+  rural.add(flatRoad(360, 220, 160, -300, ruralGrass, 0.02));
   // renques de árvores entre os campos
   [[36, -232], [72, -280], [110, -234], [158, -236], [196, -280], [232, -238], [250, -300], [30, -300]].forEach(([x, z]) => {
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 3, 6), trunkMat);
@@ -1681,6 +1842,7 @@ hub.scale.setScalar(1.15);
   // fazenda
   const farm = new THREE.Group();
   farm.position.set(150, 0, -292);
+  farm.scale.setScalar(1.6);
   rural.add(farm);
   const farmWallMat = new THREE.MeshStandardMaterial({ color: 0xf1e6cf, roughness: 0.9 });
   const farmRoofMat = new THREE.MeshStandardMaterial({ color: 0xa8593c, roughness: 0.85 });
@@ -1713,6 +1875,77 @@ hub.scale.setScalar(1.15);
     band.position.set(sx, 9.4, -12);
     farm.add(band);
   });
+  // segundo galpão, moinho, caixa d'água e curral
+  const barn2 = new THREE.Mesh(round(11, 5.2, 9, 0.2, 2), new THREE.MeshStandardMaterial({ color: 0xe8dcc4, roughness: 0.9 }));
+  barn2.position.set(-2, 2.6, -14);
+  farm.add(barn2);
+  const barn2Roof = new THREE.Mesh(round(11.6, 0.4, 9.6, 0.12, 2), farmRoofMat);
+  barn2Roof.position.set(-2, 5.4, -14);
+  farm.add(barn2Roof);
+  const millTower = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.1, 9, 10), farmWallMat);
+  millTower.position.set(-24, 4.5, -12);
+  farm.add(millTower);
+  const millTop = new THREE.Mesh(new THREE.ConeGeometry(2.1, 2.2, 10), farmRoofMat);
+  millTop.position.set(-24, 10.1, -12);
+  farm.add(millTop);
+  const blades = new THREE.Group();
+  for (let b = 0; b < 4; b += 1) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.3, 6.2, 0.12), new THREE.MeshStandardMaterial({ color: 0xf3ead6, roughness: 0.8 }));
+    blade.position.y = 3.1;
+    const holder = new THREE.Group();
+    holder.add(blade);
+    holder.rotation.z = (b / 4) * Math.PI * 2;
+    blades.add(holder);
+  }
+  blades.position.set(-24, 11.6, -10.2);
+  farm.add(blades);
+  farm.userData.blades = blades;
+  const farmTank = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 3.2, 12), new THREE.MeshStandardMaterial({ color: 0xd7dcd2, roughness: 0.6, metalness: 0.35 }));
+  farmTank.position.set(-6, 9.4, -8);
+  farm.add(farmTank);
+  [-1.4, 1.4].forEach((off) => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.22, 7.8, 0.22), trimMat);
+    leg.position.set(-6 + off, 3.9, -8);
+    farm.add(leg);
+  });
+  // curral de madeira
+  const penMat = new THREE.MeshStandardMaterial({ color: 0xb59d78, roughness: 0.95 });
+  for (let i = 0; i < 10; i += 1) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.5, 0.18), penMat);
+    post.position.set(-10 + i * 2.2, 0.75, 14);
+    farm.add(post);
+  }
+  [0.6, 1.2].forEach((y) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(20, 0.12, 0.1), penMat);
+    rail.position.set(-0.1, y, 14);
+    farm.add(rail);
+  });
+  // trator
+  const farmTireMat = new THREE.MeshStandardMaterial({ color: 0x22261f, roughness: 0.9 });
+  const tractor = new THREE.Group();
+  const tBody = new THREE.Mesh(round(3.4, 1.5, 1.9, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x2f6f4f, roughness: 0.6 }));
+  tBody.position.y = 1.5;
+  tractor.add(tBody);
+  const tCab = new THREE.Mesh(round(1.6, 1.4, 1.7, 0.2, 2), new THREE.MeshStandardMaterial({ color: 0x24553d, roughness: 0.6 }));
+  tCab.position.set(-0.8, 2.9, 0);
+  tractor.add(tCab);
+  const bigWheel = new THREE.CylinderGeometry(1.15, 1.15, 0.5, 14);
+  bigWheel.rotateX(Math.PI / 2);
+  const smallWheel = new THREE.CylinderGeometry(0.62, 0.62, 0.4, 12);
+  smallWheel.rotateX(Math.PI / 2);
+  [[-1.05, 1], [-1.05, -1]].forEach(([wx, side]) => {
+    const wheel = new THREE.Mesh(bigWheel, farmTireMat);
+    wheel.position.set(wx, 1.15, side * 1.05);
+    tractor.add(wheel);
+  });
+  [[1.15, 1], [1.15, -1]].forEach(([wx, side]) => {
+    const wheel = new THREE.Mesh(smallWheel, farmTireMat);
+    wheel.position.set(wx, 0.62, side * 1.0);
+    tractor.add(wheel);
+  });
+  tractor.position.set(24, 0, 12);
+  tractor.rotation.y = -0.6;
+  farm.add(tractor);
   // fardos de feno
   const baleGeo = new THREE.CylinderGeometry(1.15, 1.15, 1.7, 16);
   baleGeo.rotateZ(Math.PI / 2);
@@ -1852,6 +2085,7 @@ hub.scale.setScalar(1.15);
     (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }),
   );
   const shopSigns = ["MERCADO", "PADARIA", "OFICINA", "LANCHONETE", "FARMÁCIA", "AUTO PEÇAS", "MATERIAIS", "SALÃO"];
+  const periSignBgs = ["#3f7d34", "#c0563c", "#2f5f8a", "#b8862f", "#4a4f58", "#7a3f6d"];
   const periAwningMats = [0x7d9a63, 0x9a6b4a, 0xb08a4a, 0x5f7f6a, 0x8f6a5a].map(
     (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75 }),
   );
@@ -1903,15 +2137,16 @@ hub.scale.setScalar(1.15);
     awning.position.set(0, h * 0.5, (d / 2 + 0.62) * face);
     awning.rotation.x = face > 0 ? -0.16 : 0.16;
     g.add(awning);
-    if (i % 2 === 0) {
-      const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(w * 0.72, 1.05),
-        makeTextPanel(shopSigns[i % shopSigns.length], "", w * 0.72, 1.05, "#f7f4ea", "#0f1a12"),
-      );
-      sign.position.set(0, h * 0.68, (d / 2 + 0.1) * face);
-      sign.rotation.y = face > 0 ? 0 : Math.PI;
-      g.add(sign);
-    }
+    const signW = w * 0.72;
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(signW, signW * 0.25),
+      new THREE.MeshBasicMaterial({
+        map: track(makeShopSignTexture(shopSigns[i % shopSigns.length], periSignBgs[i % periSignBgs.length], "#ffffff")),
+      }),
+    );
+    sign.position.set(0, h * 0.68, (d / 2 + 0.1) * face);
+    sign.rotation.y = face > 0 ? 0 : Math.PI;
+    g.add(sign);
     // caixa de ar-condicionado
     if (i % 3 === 0) {
       const ac = new THREE.Mesh(round(0.9, 0.55, 0.5, 0.08, 1), unitMat);

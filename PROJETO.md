@@ -56,6 +56,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Malha unificada com gltf-transform join: 33 → 7 draw calls (1,8 MB), materiais idênticos deduplicados.
 - Cena pausa render fora da tela, aba oculta e qualidade adaptativa por FPS.
 
+## Cenário: comércio e fazenda
+- Lojas da avenida e da periferia com placas coloridas e nome (Mercado São José, Farmácia, Lanchonete...).
+- Fachadas dos galpões com ondulação metálica, faixa de janelas altas e rodapé.
+- Skyline com tons variados, caixa d'água e antenas.
+- Fazenda ampliada (1,6x): segundo galpão, moinho com hélices, caixa d'água, curral, trator, silos e campos maiores.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
