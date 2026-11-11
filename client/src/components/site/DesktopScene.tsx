@@ -125,7 +125,7 @@ export default function DesktopScene() {
                     </div>
                   </div>
 
-                  <div className="flex h-[330px] md:h-[452px]">
+                  <div className="flex h-[318px] md:h-[396px]">
                     {/* menu lateral */}
                     <aside className="hidden w-[168px] shrink-0 flex-col gap-1 border-r border-white/8 bg-[#0c120e] p-3 md:flex">
                       <div className="mb-3 flex items-center gap-2">
