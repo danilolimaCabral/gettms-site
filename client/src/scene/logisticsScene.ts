@@ -2979,6 +2979,10 @@ hub.scale.setScalar(1.15);
     new THREE.MeshStandardMaterial({ color: 0x6f4a32, roughness: 0.8 }),
   ];
 
+  const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1b1f1c, roughness: 0.7 });
+  const hairMats = [0x241b14, 0x3f2c1d, 0x141110, 0x5b4130, 0x8a6b4a].map(
+    (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.92 }),
+  );
   function addPerson(
     x: number,
     z: number,
@@ -2987,38 +2991,63 @@ hub.scale.setScalar(1.15);
     walkAxis: "z" | "x" | null = null,
     walkRange = 3,
     delay = 0,
+    worker = false,
   ) {
     const group = new THREE.Group();
-    const vestMat = new THREE.MeshStandardMaterial({ color: vest, roughness: 0.55 });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: vest, roughness: 0.74 });
     const skinMat = skinMats[people.length % skinMats.length];
-
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), skinMat);
-    head.position.y = 1.63;
-    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: vest === 0xf0b13a ? 0xf0b13a : 0xffffff, roughness: 0.5 }));
-    helmet.position.y = 1.66;
-    const torso = new THREE.Mesh(round(0.44, 0.62, 0.27, 0.1, 2), vestMat);
+    // cabeça, cabelo ou capacete
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.165, 16, 14), skinMat);
+    head.position.y = 1.64;
+    const hair = worker
+      ? new THREE.Mesh(
+          new THREE.SphereGeometry(0.19, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshStandardMaterial({ color: 0xf2c14e, roughness: 0.45 }),
+        )
+      : new THREE.Mesh(
+          new THREE.SphereGeometry(0.172, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.52),
+          hairMats[people.length % hairMats.length],
+        );
+    hair.position.y = worker ? 1.655 : 1.645;
+    // tronco e quadril
+    const torso = new THREE.Mesh(round(0.42, 0.6, 0.25, 0.1, 2), shirtMat);
     torso.position.y = 1.16;
-    const hips = new THREE.Mesh(round(0.38, 0.3, 0.25, 0.08, 2), pantMat);
-    hips.position.y = 0.8;
-
-    const legGeo = round(0.15, 0.74, 0.17, 0.06, 1);
-    const legL = new THREE.Mesh(legGeo, pantMat);
-    legL.position.set(-0.1, 0.37, 0);
-    const legR = new THREE.Mesh(legGeo, pantMat);
-    legR.position.set(0.1, 0.37, 0);
-
-    const armGeo = round(0.12, 0.58, 0.13, 0.05, 1);
-    const armL = new THREE.Mesh(armGeo, vestMat);
-    armL.position.set(-0.29, 1.12, 0);
-    const armR = new THREE.Mesh(armGeo, vestMat);
-    armR.position.set(0.29, 1.12, 0);
-
-    group.add(head, helmet, torso, hips, legL, legR, armL, armR);
+    const hips = new THREE.Mesh(round(0.36, 0.26, 0.24, 0.07, 2), pantMat);
+    hips.position.y = 0.82;
+    // pernas com pivô no quadril + sapatos
+    const legGeo = round(0.145, 0.72, 0.16, 0.06, 1);
+    const shoeGeo = round(0.16, 0.11, 0.31, 0.05, 1);
+    const makeLeg = (side: number) => {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * 0.1, 0.82, 0);
+      const leg = new THREE.Mesh(legGeo, pantMat);
+      leg.position.y = -0.36;
+      const shoe = new THREE.Mesh(shoeGeo, shoeMat);
+      shoe.position.set(0, -0.76, 0.06);
+      pivot.add(leg, shoe);
+      return pivot;
+    };
+    const legL = makeLeg(-1);
+    const legR = makeLeg(1);
+    // braços com pivô no ombro
+    const armGeo = round(0.11, 0.56, 0.12, 0.05, 1);
+    const makeArm = (side: number) => {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * 0.28, 1.4, 0);
+      const arm = new THREE.Mesh(armGeo, shirtMat);
+      arm.position.y = -0.28;
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), skinMat);
+      hand.position.y = -0.57;
+      pivot.add(arm, hand);
+      return pivot;
+    };
+    const armL = makeArm(-1);
+    const armR = makeArm(1);
+    group.add(head, hair, torso, hips, legL, legR, armL, armR);
     group.position.set(x, 0, z);
     group.rotation.y = rotation;
     group.scale.setScalar(0.001);
     scene.add(group);
-
     people.push({
       group,
       legL,
@@ -3039,14 +3068,14 @@ hub.scale.setScalar(1.15);
     [-20, -60, 0], [9.5, 44, Math.PI], [-9.5, -80, 0],
   ];
   pedestrianSpots.forEach(([px, pz, pr], i) => {
-    addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4);
+    addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4, i % 2 === 0);
   });
   // pedestres circulando nas calçadas da avenida
   const walkerVests = [0x2f6f4f, 0x8fd14f, 0x3a6ea5, 0xc0563c, 0xd9b23a, 0x4a4f58];
   for (let i = 0; i < 12; i += 1) {
     const side = i % 2 === 0 ? 1 : -1;
     const z = 56 - i * 16.5;
-    addPerson(side * 9.6, z, side > 0 ? Math.PI : 0, walkerVests[i % walkerVests.length], "z", 7 + (i % 4) * 2, 0.2 + i * 0.12);
+    addPerson(side * 9.6, z, side > 0 ? Math.PI : 0, walkerVests[i % walkerVests.length], "z", 7 + (i % 4) * 2, 0.2 + i * 0.12, false);
   }
   // pedestres na periferia e no pátio do cliente
   [[296.8, -252, 0], [307.2, -268, Math.PI], [296.8, -312, 0], [307.2, -330, Math.PI], [316, -352, Math.PI / 2]].forEach(
@@ -5379,9 +5408,6 @@ hub.scale.setScalar(1.15);
       -(box.min.z + size.z / 2) * scale,
     );
     clone.traverse((child) => {
-      if (child.name.toLowerCase().includes("wheel")) {
-        child.scale.multiplyScalar(request.wheelScale ?? 0.62);
-      }
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.castShadow = false;
@@ -5431,6 +5457,67 @@ hub.scale.setScalar(1.15);
       };
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map(tint) : tint(mesh.material);
     });
+    // rodas: substitui as do modelo por pneus na escala certa e assenta no chão
+    clone.updateMatrixWorld(true);
+    const wheelMeshes: THREE.Mesh[] = [];
+    clone.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      const name = child.name.toLowerCase();
+      const parentName = child.parent?.name.toLowerCase() ?? "";
+      if (mesh.isMesh && (name.includes("wheel") || name.includes("tire") || parentName.includes("wheel"))) {
+        wheelMeshes.push(mesh);
+      }
+    });
+    if (wheelMeshes.length) {
+      const wheelR = (request.length / 17) * 0.53;
+      const wheelW = (request.length / 17) * 0.42;
+      const tireMat = new THREE.MeshStandardMaterial({ color: 0x14181a, roughness: 0.88 });
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0x8d968d, roughness: 0.4, metalness: 0.6 });
+      const tireGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22);
+      const rimGeo = new THREE.CylinderGeometry(wheelR * 0.62, wheelR * 0.62, wheelW * 0.55, 18);
+      // bitola fixa: um pneu de cada lado por eixo
+      const cloneBox = new THREE.Box3().setFromObject(clone);
+      const cloneSize = cloneBox.getSize(new THREE.Vector3());
+      const modelLateralIsX = cloneSize.x < cloneSize.z;
+      const track = (request.length / 17) * 1.28;
+      const axles = new Map<number, { x: number; z: number }>();
+      wheelMeshes.forEach((mesh) => {
+        const box = new THREE.Box3().setFromObject(mesh);
+        const center = box.getCenter(new THREE.Vector3());
+        const along = modelLateralIsX ? center.z : center.x;
+        const key = Math.round(along * 2.4) / 2.4;
+        if (!axles.has(key)) {
+          axles.set(key, { x: modelLateralIsX ? center.x : along, z: modelLateralIsX ? along : center.z });
+        }
+        mesh.visible = false;
+      });
+      axles.forEach(({ x, z }) => {
+        [-1, 1].forEach((side) => {
+          const tire = new THREE.Mesh(tireGeo, tireMat);
+          const rim = new THREE.Mesh(rimGeo, rimMat);
+          [tire, rim].forEach((part) => {
+            if (modelLateralIsX) part.rotation.z = Math.PI / 2;
+            else part.rotation.x = Math.PI / 2;
+            part.position.set(modelLateralIsX ? x + side * track : x, wheelR + 0.02, modelLateralIsX ? z : z + side * track);
+            wrapper.add(part);
+          });
+        });
+      });
+      // sobe a carroceria o suficiente para os pneus aparecerem
+      const bodyMeshes: THREE.Object3D[] = [];
+      clone.traverse((child) => {
+        const name = child.name.toLowerCase();
+        if ((child as THREE.Mesh).isMesh && !wheelMeshes.includes(child as THREE.Mesh) && (name.includes("body") || name.includes("trailer"))) {
+          bodyMeshes.push(child);
+        }
+      });
+      const bodyBox = new THREE.Box3();
+      (bodyMeshes.length ? bodyMeshes : [clone]).forEach((object) => bodyBox.union(new THREE.Box3().setFromObject(object)));
+      if (Number.isFinite(bodyBox.min.y)) {
+        const lift = wheelR * 1.15 - bodyBox.min.y;
+        if (lift > 0) clone.position.y += lift;
+      }
+    }
     wrapper.add(clone);
     if (request.label) {
       const plateCanvas = document.createElement("canvas");
@@ -5504,13 +5591,20 @@ hub.scale.setScalar(1.15);
           }
           wrapper.add(plate);
         });
-        const stripeMat = new THREE.MeshStandardMaterial({ color: 0x63b32e, roughness: 0.45, metalness: 0.1 });
-        const stripeGeo = lengthAlongX
-          ? new THREE.BoxGeometry(trailerLength * 0.94, 0.2, tSize.z + 0.06)
-          : new THREE.BoxGeometry(tSize.x + 0.06, 0.2, trailerLength * 0.94);
-        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-        stripe.position.set(tCenter.x, tCenter.y - tSize.y * 0.3, tCenter.z);
-        wrapper.add(stripe);
+        const stripeMat = new THREE.MeshStandardMaterial({ color: 0x63b32e, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });
+        const bandH = Math.max(0.22, Math.min(tSize.y * 0.14, 0.5));
+        const bandY = tCenter.y - tSize.y * 0.18;
+        [-1, 1].forEach((side) => {
+          const band = new THREE.Mesh(new THREE.PlaneGeometry(trailerLength * 0.96, bandH), stripeMat);
+          if (lengthAlongX) {
+            band.position.set(tCenter.x, bandY, tCenter.z + side * (tSize.z / 2 + 0.05));
+            band.rotation.y = side > 0 ? 0 : Math.PI;
+          } else {
+            band.position.set(tCenter.x + side * (tSize.x / 2 + 0.05), bandY, tCenter.z);
+            band.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+          }
+          wrapper.add(band);
+        });
       } else {
         [-1, 1].forEach((side) => {
           const plate = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 1.85), plateMat);
@@ -5529,7 +5623,7 @@ hub.scale.setScalar(1.15);
     parts: [...truck.children],
     length: 17.0,
     rotY: 0,
-    wheelScale: 0.82,
+    wheelScale: 1,
     label: "GT-1024",
     livery: true,
   };
@@ -5561,6 +5655,8 @@ hub.scale.setScalar(1.15);
           glbRequests.splice(i, 1);
         }
       }
+    }, (error) => {
+      console.warn("[scene] modelo não carregou", key, String(error));
     });
   });
 
