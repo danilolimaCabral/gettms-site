@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import SegmentGraphic from "./SegmentGraphic";
 import { SEGMENTS, whatsappLink } from "@/content/site";
 
 const KINDS = ["alimentos", "farma", "construcao", "ecommerce"] as const;
@@ -61,8 +60,8 @@ export default function SegmentsScenes() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.94)_0%,rgba(11,16,12,0.82)_42%,rgba(11,16,12,0.55)_72%,rgba(11,16,12,0.35)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0b100c]/85 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0b100c] to-transparent" />
-        <div className="container-wide relative grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-          <div key={scene} className="order-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-500 lg:order-1">
+        <div className="container-wide relative grid w-full items-center">
+          <div key={scene} className="max-w-xl animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
             <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#8fe04a]">
               {String(scene + 1).padStart(2, "0")} · {segment.kicker}
             </p>
@@ -106,17 +105,6 @@ export default function SegmentsScenes() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2">
-            <div
-              className="mx-auto w-full max-w-[560px] overflow-hidden rounded-2xl border border-white/12 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]"
-              style={{ transform: `scale(${0.96 + reveal * 0.04})`, transition: "transform 200ms ease-out" }}
-            >
-              <div className="aspect-[16/10] w-full">
-                <SegmentGraphic key={scene} kind={KINDS[scene]} />
-              </div>
-            </div>
-            <p className="mt-4 text-center text-[11px] text-white/35">role para ver o próximo segmento</p>
-          </div>
         </div>
       </div>
     </section>

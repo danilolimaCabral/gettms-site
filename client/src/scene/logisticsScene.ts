@@ -2784,9 +2784,12 @@ hub.scale.setScalar(1.15);
       const present = appear > 0.5;
       clone.visible = present;
       clone.scale.setScalar(Math.max(0.001, appear * 0.94));
-      clone.position.z = lerp(62, 19.5, eased);
-      clone.position.x = dockX + (1 - eased) * 3.2 * side;
-      clone.rotation.y = (1 - eased) * 0.22 * side;
+      // desce pela via de serviço e entra na doca em curva, com a traseira para a porta
+      const turn = THREE.MathUtils.smoothstep(eased, 0.34, 1);
+      const curveX = eased * eased * dockX;
+      clone.position.z = lerp(66, 19.5, eased);
+      clone.position.x = curveX + Math.sin(eased * Math.PI) * 0.5 * side;
+      clone.rotation.y = lerp(Math.PI, Math.PI * 0.5, turn);
       const tag = clone.userData.orderTag as THREE.Sprite | undefined;
       if (tag) tag.visible = docked > 0.5 && cycle < 0.775;
     });
