@@ -2764,7 +2764,12 @@ hub.scale.setScalar(1.15);
     const toPt = routePts[(segIndex + 1) % 4];
     const segT = segLens[segIndex] > 0 ? routeDist / segLens[segIndex] : 0;
     const truckX = fromPt.x + (toPt.x - fromPt.x) * segT;
-    const truckZ = fromPt.y + (toPt.y - fromPt.y) * segT;
+    let truckZ = fromPt.y + (toPt.y - fromPt.y) * segT;
+    // caminhao protagonista tambem respeita o sinal: para antes da faixa do cruzamento
+    const heroSignal = ((Date.now() / 1000) * 0.14) % 2;
+    if (segIndex === 0 && heroSignal >= 1.15 && truckZ <= 46 && truckZ >= 40) {
+      truckZ = 46;
+    }
     truck.position.set(truckX, 0, truckZ);
     const targetHeading = Math.atan2(toPt.x - fromPt.x, toPt.y - fromPt.y);
     let turnDelta = targetHeading - truck.rotation.y;
