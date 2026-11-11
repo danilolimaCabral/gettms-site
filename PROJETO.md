@@ -72,6 +72,11 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Três caminhões extras circulando pela avenida, com a mesma lógica de espera.
 - Chão com tom mais suave (menos branco) e neblina reduzida no encerramento.
 
+## Interação e ambiente
+- Clique em qualquer caminhão da cena abre o painel de tracking com placa, pedido, rota, motorista, ETA e etapas; botão "Acompanhar no filme".
+- 12 pedestres novos nas calçadas da avenida, 5 na periferia e 7 carros de passeio a mais.
+- Som ambiente sintetizado (WebAudio): tráfego, chuva, grilos à noite e passagens de avião; botão "Som" no controle de clima.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

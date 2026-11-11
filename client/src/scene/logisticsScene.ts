@@ -8,6 +8,14 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
  * cidade, viaduto, rota e entrega final entram em cena em sequência.
  */
 
+export type TruckInfo = {
+  plate: string;
+  order: string;
+  status: string;
+  route: string;
+  driver: string;
+  eta: string;
+};
 export type LogisticsSceneHandle = {
   setProgress: (p: number) => void;
   setWeather: (mode: "auto" | "day" | "night" | "rain") => void;
@@ -17,6 +25,7 @@ export type LogisticsSceneHandle = {
   setSegmentView: (kind: string | null) => void;
   setFeatureScreen: (index: number) => void;
   setSegmentZoom: (z: number) => void;
+  setOnTruckClick?: (cb: ((info: TruckInfo) => void) | null) => void;
   debugCam?: () => {
     pos: number[];
     zoom: number;
@@ -3032,6 +3041,19 @@ hub.scale.setScalar(1.15);
   pedestrianSpots.forEach(([px, pz, pr], i) => {
     addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4);
   });
+  // pedestres circulando nas calçadas da avenida
+  const walkerVests = [0x2f6f4f, 0x8fd14f, 0x3a6ea5, 0xc0563c, 0xd9b23a, 0x4a4f58];
+  for (let i = 0; i < 12; i += 1) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const z = 56 - i * 16.5;
+    addPerson(side * 9.6, z, side > 0 ? Math.PI : 0, walkerVests[i % walkerVests.length], "z", 7 + (i % 4) * 2, 0.2 + i * 0.12);
+  }
+  // pedestres na periferia e no pátio do cliente
+  [[296.8, -252, 0], [307.2, -268, Math.PI], [296.8, -312, 0], [307.2, -330, Math.PI], [316, -352, Math.PI / 2]].forEach(
+    ([px, pz, pr], i) => {
+      addPerson(px, pz, pr, walkerVests[i % walkerVests.length], "z", 5, 0.4 + i * 0.2);
+    },
+  );
 
 
 
@@ -3090,6 +3112,12 @@ hub.scale.setScalar(1.15);
   addCar(0xffffff, 1.5, 1, 0.055, 0.15, 0.06);
   addCar(0x63b32e, 1.5, 1, 0.042, 0.62, 0.08);
   addCar(0x2f3a34, -1.5, -1, 0.05, 0.35, 0.07);
+  addCar(0xc9d2d6, -1.5, -1, 0.061, 0.78, 0.05);
+  addCar(0x1f3a44, 1.5, 1, 0.047, 0.28, 0.09);
+  addCar(0xb03a2e, -1.5, -1, 0.038, 0.05, 0.1);
+  addCar(0xe8e3d6, 1.5, 1, 0.066, 0.88, 0.06);
+  addCar(0x4a4f58, 1.5, 1, 0.036, 0.45, 0.11);
+  addCar(0x2f6f4f, -1.5, -1, 0.055, 0.6, 0.08);
   addCar(0xe8ede4, -1.5, -1, 0.038, 0.82, 0.09);
 
   // ---------------------------------------------------------------- drone
@@ -4441,7 +4469,104 @@ hub.scale.setScalar(1.15);
   );
   scene.add(particles);
 
-  // ---------------------------------------------------------------- estado
+  // ---------------------------------------------------------------- caminhões clicáveis
+  const clickableTrucks: { root: THREE.Object3D; info: TruckInfo }[] = [];
+  const registerTruck = (root: THREE.Object3D, info: TruckInfo) => {
+    clickableTrucks.push({ root, info });
+  };
+  registerTruck(truck, {
+    plate: "GT-1024",
+    order: "#4821",
+    status: "Saindo do CD getTMS",
+    route: "CD getTMS → Cliente Horizonte",
+    driver: "Carlos M. · Scania R450",
+    eta: "18 min",
+  });
+  avenueTrucks.forEach((item, index) => {
+    const plate = ["GT-5120", "GT-7788", "GT-3390"][index];
+    registerTruck(item.group, {
+      plate,
+      order: `#48${30 + index}`,
+      status: index === 1 ? "Coleta no cliente" : "Em trânsito",
+      route: index === 1 ? "Cliente Aurora → CD getTMS" : "CD getTMS → Cliente Norte",
+      driver: ["Ana P.", "Rafael S.", "João V."][index] + " · Volvo FH",
+      eta: `${9 + index * 6} min`,
+    });
+  });
+  highwayTraffic.forEach((item, index) => {
+    const plate = ["GT-6410", "GT-7721", "GT-3908", "GT-5126"][index];
+    registerTruck(item.mesh, {
+      plate,
+      order: `#48${34 + index}`,
+      status: "Em trânsito na via expressa",
+      route: index % 2 === 0 ? "CD getTMS → Cliente Sul" : "Porto → CD getTMS",
+      driver: ["Marcos L.", "Bruna T.", "Eduardo F.", "Paula R."][index] + " · Mercedes Actros",
+      eta: `${22 + index * 7} min`,
+    });
+  });
+  peripheryTraffic.forEach((item) => {
+    registerTruck(item.mesh, {
+      plate: "GT-8810",
+      order: "#4844",
+      status: "Última milha na periferia",
+      route: "Cliente Horizonte → entregas locais",
+      driver: "Lucas B. · Iveco Daily",
+      eta: "6 min",
+    });
+  });
+  const raycaster = new THREE.Raycaster();
+  const pointerNdc = new THREE.Vector2();
+  const truckClickRef: { cb: ((info: TruckInfo) => void) | null } = { cb: null };
+  let pointerDownAt: { x: number; y: number } | null = null;
+  const pickTruck = (event: PointerEvent) => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointerNdc.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(pointerNdc, camera);
+    let best: { info: TruckInfo; distance: number } | null = null;
+    clickableTrucks.forEach(({ root, info }) => {
+      if (!root.visible) return;
+      const hits = raycaster.intersectObject(root, true);
+      if (hits.length && (!best || hits[0].distance < best.distance)) best = { info, distance: hits[0].distance };
+    });
+    return best ? (best as { info: TruckInfo; distance: number }).info : null;
+  };
+  const onCanvasPointerDown = (event: PointerEvent) => {
+    if (!insideCanvas(event) || overUi(event)) {
+      pointerDownAt = null;
+      return;
+    }
+    pointerDownAt = { x: event.clientX, y: event.clientY };
+  };
+  const onCanvasPointerUp = (event: PointerEvent) => {
+    if (!pointerDownAt) return;
+    const moved = Math.hypot(event.clientX - pointerDownAt.x, event.clientY - pointerDownAt.y);
+    pointerDownAt = null;
+    if (moved > 8 || !truckClickRef.cb) return;
+    const info = pickTruck(event);
+    if (info) truckClickRef.cb(info);
+  };
+  const insideCanvas = (event: PointerEvent) => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+  };
+  const overUi = (event: PointerEvent) => {
+    const target = event.target as HTMLElement | null;
+    return !!target?.closest?.('button, a, input, textarea, select, [data-track-panel], [role="dialog"]');
+  };
+  let hoverFrame = 0;
+  const onCanvasPointerMove = (event: PointerEvent) => {
+    hoverFrame += 1;
+    if (hoverFrame % 8 !== 0) return;
+    if (!insideCanvas(event) || overUi(event)) {
+      document.body.style.cursor = "";
+      return;
+    }
+    document.body.style.cursor = pickTruck(event) ? "pointer" : "";
+  };
+  window.addEventListener("pointerdown", onCanvasPointerDown);
+  window.addEventListener("pointerup", onCanvasPointerUp);
+  window.addEventListener("pointermove", onCanvasPointerMove);
+
   let target = 0;
   let current = 0;
   let orbitActive = false;
@@ -4751,7 +4876,7 @@ hub.scale.setScalar(1.15);
         if (person.walkAxis === "z") person.group.position.z = person.base.z + travel;
         else person.group.position.x = person.base.x + travel;
       }
-      person.group.visible = index < 6 ? p > 0.05 : p > 0.78;
+      person.group.visible = person.base.z > -200 ? p > 0.04 : p > 0.78;
     });
 
     // carros
@@ -5497,6 +5622,9 @@ hub.scale.setScalar(1.15);
       };
     },
     resize,
+    setOnTruckClick(cb) {
+      truckClickRef.cb = cb;
+    },
     dispose() {
       disposed = true;
       cancelAnimationFrame(frame);

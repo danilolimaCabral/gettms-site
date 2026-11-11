@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight, CloudRain, Moon, Play, RotateCw, Sparkles, Sun } from "lucide-react";
+import { ArrowDown, ArrowUpRight, CloudRain, Moon, Play, RotateCw, Sparkles, Sun, Volume2, VolumeX } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
 import StockPanel from "@/components/site/StockPanel";
 import CustomerTrackPanel from "@/components/site/CustomerTrackPanel";
+import TruckTrackPanel from "@/components/site/TruckTrackPanel";
+import type { TruckInfo } from "@/scene/logisticsScene";
+import { Ambience, type AmbienceMode } from "@/audio/ambience";
 import { WHATSAPP_URL, DEMO_URL } from "@/content/site";
 
 type Chapter = {
@@ -170,6 +173,40 @@ export default function ScrollStage() {
   const [auto, setAuto] = useState(true);
   const autoRef = useRef(true);
   const [weather, setWeather] = useState<WeatherMode>("auto");
+  const [truckInfo, setTruckInfo] = useState<TruckInfo | null>(null);
+  const [sound, setSound] = useState(false);
+  const ambienceRef = useRef<Ambience | null>(null);
+  const soundProgressRef = useRef(0);
+
+  // som ambiente acompanha o clima (e, no automático, o trecho do filme)
+  useEffect(() => {
+    soundProgressRef.current = progress;
+    const ambience = ambienceRef.current;
+    if (!ambience || !ambience.running) return;
+    let mode: AmbienceMode;
+    if (weather === "day") mode = "day";
+    else if (weather === "night") mode = "night";
+    else if (weather === "rain") mode = "rain";
+    else mode = progress > 0.8 ? "night" : progress > 0.56 ? "rain" : "day";
+    ambience.setMode(mode);
+  }, [weather, progress]);
+
+  useEffect(() => () => ambienceRef.current?.dispose(), []);
+
+  const toggleSound = () => {
+    if (!ambienceRef.current) ambienceRef.current = new Ambience();
+    const ambience = ambienceRef.current;
+    if (sound) {
+      ambience.disable();
+      setSound(false);
+      return;
+    }
+    void ambience.enable().then(() => {
+      const p = soundProgressRef.current;
+      ambience.setMode(weather === "day" ? "day" : weather === "night" ? "night" : weather === "rain" ? "rain" : p > 0.8 ? "night" : p > 0.56 ? "rain" : "day");
+    });
+    setSound(true);
+  };
   const weatherRef = useRef<WeatherMode>("auto");
   const stageRef = useRef<HTMLElement | null>(null);
   const viewObserverRef = useRef<IntersectionObserver | null>(null);
@@ -209,6 +246,7 @@ export default function ScrollStage() {
         if (cancelled) return;
         scene = createLogisticsScene(canvas, { quality: low ? "low" : "high" });
         scene.setWeather(weatherRef.current);
+        scene.setOnTruckClick?.((info) => setTruckInfo(info));
         sceneRef.current = scene;
         if (sectionRef.current) {
           const observer = new IntersectionObserver(
@@ -406,6 +444,19 @@ export default function ScrollStage() {
                 </button>
               );
             })}
+            <span className="mx-1 h-4 w-px bg-ink/10" />
+            <button
+              type="button"
+              onClick={toggleSound}
+              aria-pressed={sound}
+              aria-label={sound ? "Desligar som ambiente" : "Ligar som ambiente"}
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] transition ${
+                sound ? "bg-brand text-[#0a0f0b]" : "text-ink/55 hover:text-ink"
+              }`}
+            >
+              {sound ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+              <span className="hidden md:inline">Som</span>
+            </button>
           </div>
         </div>
         {/* letras gigantes ao fundo */}
@@ -558,6 +609,7 @@ export default function ScrollStage() {
         {/* estoque interno do CD durante o carregamento */}
         <StockPanel active={progress >= 0.86 && progress <= 0.918} progress={progress} />
         <CustomerTrackPanel active={progress >= 0.7 && progress <= 0.785} progress={progress} />
+        <TruckTrackPanel info={truckInfo} onClose={() => setTruckInfo(null)} />
         {/* mapa da operação */}
         <div
           className={`absolute right-6 top-24 hidden w-[340px] rounded-3xl border border-ink/10 bg-white/88 p-4 shadow-[0_18px_50px_-30px_rgba(10,15,11,0.45)] backdrop-blur-md transition-opacity duration-500 lg:block xl:w-[400px] ${
