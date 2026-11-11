@@ -2553,6 +2553,7 @@ hub.scale.setScalar(1.15);
     relatorios: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
   };
   let segmentView: { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean } | null = null;
+  let clearViewTimer = 0;
   const officePos = new THREE.Vector3();
   const officeQuat = new THREE.Quaternion();
   const officeFwd = new THREE.Vector3();
@@ -3193,9 +3194,14 @@ hub.scale.setScalar(1.15);
     },
     setSegmentView(kind: string | null) {
       if (!kind) {
-        segmentView = null;
+        // outras secoes limpam a vista; so limpa se ninguem reaplicar em 1.2s
+        window.clearTimeout(clearViewTimer);
+        clearViewTimer = window.setTimeout(() => {
+          segmentView = null;
+        }, 1200);
         return;
       }
+      window.clearTimeout(clearViewTimer);
       const view = SEGMENT_VIEWS[kind];
       if (!view) return;
       if (!segmentView) overrideLook.copy(lookTarget);

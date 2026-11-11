@@ -48,14 +48,20 @@ export default function SegmentsScenes() {
         handle.setSegmentZoom(0.34);
         return;
       }
-      if (tries < 40) {
+      if (tries < 400) {
         tries += 1;
         window.setTimeout(apply, 250);
       }
     };
     apply();
+    // reaplica ao rolar: a cena 3D carrega depois do primeiro render
+    const onScroll = () => apply();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
       cancelled = true;
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, [scene]);
 
