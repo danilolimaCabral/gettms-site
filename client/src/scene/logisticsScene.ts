@@ -2778,11 +2778,18 @@ hub.scale.setScalar(1.15);
       item.mesh.rotation.y = 0;
     });
 
-    roadFleet.forEach((item) => {
+    const signalCycle = (time * 0.14) % 2;
+    const signalGreen = signalCycle < 1.15;
+    roadFleet.forEach((item, fleetIndex) => {
       const span = 112;
       const travelled = (time * item.speed + item.offset) % span;
-      // o tráfego da via sai antes do acesso ao CD (não cruza o cruzamento)
-      item.mesh.position.z = 70 - travelled;
+      let z = 70 - travelled;
+      // respeita o semaforo do cruzamento: para antes da faixa e espera o verde
+      const stopZ = 35.2 + fleetIndex * 5.5;
+      if (!signalGreen && z > stopZ && z < stopZ + 8) {
+        z = stopZ;
+      }
+      item.mesh.position.z = z;
       item.mesh.position.x = item.lane;
     });
 
