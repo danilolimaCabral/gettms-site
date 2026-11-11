@@ -61,7 +61,8 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.915, pos: [386, 15, -392], look: [388, 3.5, -356] },
   { t: 0.95, pos: [412, 7.5, -368], look: [438, 5, -368] },
   { t: 0.975, pos: [352, 13, -384], look: [388, 3.2, -356] },
-  { t: 1.0, pos: [432, 40, -436], look: [400, 2, -356] },
+  { t: 0.99, pos: [320, 170, -330], look: [260, 0, -300] },
+  { t: 1.0, pos: [210, 400, -40], look: [205, 0, -215] },
 ];
 
 /**
@@ -3457,7 +3458,7 @@ hub.scale.setScalar(1.15);
   clientSite.add(dockedTruck);
 
   // tráfego contínuo na via expressa e na periferia
-  const highwayTraffic: { mesh: THREE.Group; lane: number; speed: number; offset: number; dir: number; from: number; to: number }[] = [];
+  const highwayTraffic: { mesh: THREE.Group; lane: number; speed: number; offset: number; dir: number; from: number; to: number; x: number }[] = [];
   [
     { name: "GT-6410", lane: -191.6, speed: 16, offset: 60, dir: -1, from: 540, to: -30 },
     { name: "GT-7721", lane: -191.6, speed: 13, offset: 300, dir: -1, from: 540, to: -30 },
@@ -3472,19 +3473,19 @@ hub.scale.setScalar(1.15);
     vehicle.scale.setScalar(0.92);
     vehicle.position.set(item.from, 0, item.lane);
     scene.add(vehicle);
-    highwayTraffic.push({ mesh: vehicle, lane: item.lane, speed: item.speed, offset: item.offset, dir: item.dir, from: item.from, to: item.to });
+    highwayTraffic.push({ mesh: vehicle, lane: item.lane, speed: item.speed, offset: item.offset, dir: item.dir, from: item.from, to: item.to, x: item.from + (item.dir > 0 ? item.offset : -item.offset) });
     if (index === 0) {
       vehicle.add(makeStatusTag(item.name, "PEDIDO #4830 · EM TRÂNSITO", "Cliente Horizonte"));
     }
   });
-  const peripheryTraffic: { mesh: THREE.Group; speed: number; offset: number }[] = [];
+  const peripheryTraffic: { mesh: THREE.Group; speed: number; offset: number; z: number }[] = [];
   ["GT-8810"].forEach((name) => {
     const vehicle = makeSimpleTruck(name);
     vehicle.rotation.y = 0;
     vehicle.scale.setScalar(0.8);
     vehicle.position.set(301.4, 0, -240);
     scene.add(vehicle);
-    peripheryTraffic.push({ mesh: vehicle, speed: 4.2, offset: 0 });
+    peripheryTraffic.push({ mesh: vehicle, speed: 4.2, offset: 0, z: 6 });
   });
 
   // ---------------------------------------------------------------- CD do cliente
@@ -4519,7 +4520,9 @@ hub.scale.setScalar(1.15);
       const span = 180;
       const progress = (time * car.speed + car.offset + p * 0.15) % 1;
       const z = car.dir > 0 ? lerp(-130, 50, progress) : lerp(50, -130, progress);
-      car.group.position.z = z;
+      const sameLane = Math.abs(car.group.position.x - truck.position.x) < 4.4;
+      const gap = (z - truck.position.z) * car.dir;
+      if (!(sameLane && gap > -13 && gap < 15)) car.group.position.z = z;
       car.wheels.forEach((wheel) => {
         wheel.rotation.x += car.speed * 40;
       });
@@ -4630,19 +4633,44 @@ hub.scale.setScalar(1.15);
       lamp.green.color.setHex(signalGreen ? 0x8fe04a : 0x26341f);
     });
 
+    // no encerramento a câmera sobe acima das nuvens: elas somem para não tapar a vista
+    const cloudFade = 1 - clamp01((p - 0.972) / 0.018);
+    cloudMat.opacity = 0.92 * cloudFade;
+    clouds.visible = cloudFade > 0.02;
     // tráfego da via expressa
+    // inteligência de trânsito: freia quando o caminhão do cliente ou outro veículo está à frente
+    const laneBlocked = (nextX: number, lane: number, dir: number, self: unknown) => {
+      if (Math.abs(truck.position.z - lane) < 3.8) {
+        const gap = (truck.position.x - nextX) * dir;
+        if (gap > -9 && gap < 27) return true;
+      }
+      for (const other of highwayTraffic) {
+        if ((other as unknown) === self) continue;
+        if (Math.abs(other.lane - lane) > 1.5) continue;
+        const gap = (other.x - nextX) * dir;
+        if (gap > -9 && gap < 23) return true;
+      }
+      return false;
+    };
     highwayTraffic.forEach((item, index) => {
       const span = Math.abs(item.to - item.from);
-      const travelled = (time * item.speed + item.offset) % span;
-      const x = item.dir > 0 ? item.from + travelled : item.from - travelled;
-      item.mesh.position.set(x, 0, item.lane);
+      const dir = item.dir;
+      const nextX = item.x + dir * item.speed * frameDt;
+      if (!laneBlocked(nextX, item.lane, dir, item)) item.x = nextX;
+      if (dir > 0 && item.x >= item.to) item.x = item.from;
+      if (dir < 0 && item.x <= item.to) item.x = item.from;
+      item.mesh.position.set(item.x, 0, item.lane);
       item.mesh.visible = p > 0.3;
       if (index === 0) item.mesh.visible = p > 0.34;
     });
     peripheryTraffic.forEach((item) => {
       const span = 120;
-      const travelled = (time * item.speed + item.offset) % span;
-      item.mesh.position.set(301.4, 0, -366 + travelled);
+      const nextZ = item.z + item.speed * frameDt;
+      const heroGap = nextZ - truck.position.z;
+      const heroSameStreet = Math.abs(truck.position.x - 301.4) < 6 && Math.abs(heroGap) < 24;
+      if (!heroSameStreet) item.z = nextZ;
+      if (item.z >= span) item.z -= span;
+      item.mesh.position.set(301.4, 0, -366 + item.z);
       item.mesh.visible = p > 0.46;
     });
 

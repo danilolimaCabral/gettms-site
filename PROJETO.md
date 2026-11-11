@@ -62,6 +62,10 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Skyline com tons variados, caixa d'água e antenas.
 - Fazenda ampliada (1,6x): segundo galpão, moinho com hélices, caixa d'água, curral, trator, silos e campos maiores.
 
+## Trânsito e encerramento
+- Veículos ambientes freiam quando o caminhão do cliente ou outro veículo está à frente (via expressa, periferia e avenida).
+- O final sobe em zoom de drone acima da via expressa, com as nuvens desaparecendo, mostrando os caminhões seguindo para cada destino.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
