@@ -43,4 +43,4 @@
 - [x] Periferia com comércio, postes, caixa d'água, ponto de ônibus e sinal.
 - [x] Cliente Horizonte com portaria, pátio, docas, empilhadeira e painel de recebimento.
 - [x] Câmera de perseguição do início ao fim e capítulos do scroll retimados.
-- [ ] Modelo PBR no caminhão do hero.
+- [x] Modelo PBR no caminhão do hero (GLB semi-truck com pintura getTMS e placa lateral).
