@@ -1647,6 +1647,7 @@ hub.scale.setScalar(1.15);
 
 
   const visitors: { mesh: THREE.Group; phase: number }[] = [];
+  const smallDockTrucks: { mesh: THREE.Group; baseX: number; phase: number }[] = [];
   // centros de distribuição espalhados pelo mapa
   function makeSmallDc(x: number, z: number, rotation: number, name: string, accent: number) {
     const dc = new THREE.Group();
@@ -1718,9 +1719,10 @@ hub.scale.setScalar(1.15);
       dc.add(door);
       const parked = makeSimpleTruck(["GT-1140", "GT-7788", "GT-9021"][(Math.round(dx / 9) + 1) % 3]);
       parked.position.set(dx, 0, 15);
-      parked.rotation.y = Math.PI / 2;
+      parked.rotation.y = 0;
       parked.scale.setScalar(0.9);
       dc.add(parked);
+      smallDockTrucks.push({ mesh: parked, baseX: dx, phase: Math.abs(x) * 0.011 + (dx + 9) * 0.06 });
     });
 
     const visitor = makeSimpleTruck(`GT-${3100 + Math.round(Math.abs(x))}`);
@@ -2623,11 +2625,22 @@ hub.scale.setScalar(1.15);
       wheel.rotation.x = wheelSpinAcc;
     });
 
+    smallDockTrucks.forEach((item) => {
+      const cycle = ((time * 0.55 + item.phase) % 36) / 36;
+      let a = 0;
+      if (cycle < 0.16) a = cycle / 0.16;
+      else if (cycle < 0.82) a = 1;
+      else if (cycle < 0.96) a = 1 - (cycle - 0.82) / 0.14;
+      const eased = a * a * a * (a * (a * 6 - 15) + 10);
+      item.mesh.position.z = lerp(30, 15, eased);
+      item.mesh.position.x = item.baseX;
+      item.mesh.rotation.y = lerp(Math.PI, 0, THREE.MathUtils.smoothstep(eased, 0.25, 0.8));
+    });
     visitors.forEach((item) => {
       const cycle = (time * 0.05 + item.phase) % 1;
       const inbound = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2;
       const eased = inbound * inbound * (3 - 2 * inbound);
-      item.mesh.position.z = lerp(48, 14, eased);
+      item.mesh.position.z = lerp(48, 21, eased);
       item.mesh.position.x = 0;
       item.mesh.rotation.y = cycle < 0.5 ? 0 : Math.PI;
     });
