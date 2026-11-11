@@ -61,8 +61,8 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.915, pos: [386, 15, -392], look: [388, 3.5, -356] },
   { t: 0.95, pos: [412, 7.5, -368], look: [438, 5, -368] },
   { t: 0.975, pos: [352, 13, -384], look: [388, 3.2, -356] },
-  { t: 0.99, pos: [320, 170, -330], look: [260, 0, -300] },
-  { t: 1.0, pos: [210, 400, -40], look: [205, 0, -215] },
+  { t: 0.99, pos: [300, 190, -320], look: [220, 0, -260] },
+  { t: 1.0, pos: [10, 400, 190], look: [-175, 0, 25] },
 ];
 
 /**
@@ -509,8 +509,8 @@ export function createLogisticsScene(
   // ---------------------------------------------------------------- chão
   const groundUniforms = {
     uProgress: { value: 0 },
-    uLine: { value: new THREE.Color(0xe3e6dc) },
-    uBase: { value: new THREE.Color(0xf2f4ed) },
+    uLine: { value: new THREE.Color(0xdde2d3) },
+    uBase: { value: new THREE.Color(0xe9ece1) },
   };
 
   const ground = new THREE.Mesh(
@@ -3261,6 +3261,247 @@ hub.scale.setScalar(1.15);
     return group;
   }
 
+  // ---------------------------------------------------------------- aeroporto
+  const airport = new THREE.Group();
+  airport.position.set(0, 0, 0);
+  scene.add(airport);
+  const runwayCanvas = document.createElement("canvas");
+  runwayCanvas.width = 1024;
+  runwayCanvas.height = 256;
+  const rw = runwayCanvas.getContext("2d")!;
+  rw.fillStyle = "#4a5350";
+  rw.fillRect(0, 0, 1024, 256);
+  rw.fillStyle = "rgba(255,255,255,0.85)";
+  for (let x = 40; x < 984; x += 90) rw.fillRect(x, 122, 54, 12);
+  rw.fillRect(18, 30, 10, 196);
+  rw.fillRect(996, 30, 10, 196);
+  for (let y = 40; y < 230; y += 34) {
+    rw.fillRect(40, y, 44, 8);
+    rw.fillRect(940, y, 44, 8);
+  }
+  const runwayTex = track(new THREE.CanvasTexture(runwayCanvas));
+  runwayTex.colorSpace = THREE.SRGBColorSpace;
+  const runway = new THREE.Mesh(new THREE.PlaneGeometry(170, 26), new THREE.MeshStandardMaterial({ map: runwayTex, roughness: 0.95 }));
+  runway.rotation.x = -Math.PI / 2;
+  runway.position.set(-252, 0.06, 34);
+  airport.add(runway);
+  const taxiway = new THREE.Mesh(new THREE.PlaneGeometry(8, 30), new THREE.MeshStandardMaterial({ color: 0x4f5854, roughness: 0.95 }));
+  taxiway.rotation.x = -Math.PI / 2;
+  taxiway.position.set(-252, 0.05, 60);
+  airport.add(taxiway);
+  // terminal
+  const apGlass = new THREE.MeshStandardMaterial({ color: 0x2f4a52, roughness: 0.18, metalness: 0.7 });
+  const apWall = new THREE.MeshStandardMaterial({ color: 0xeef1e7, roughness: 0.8 });
+  const terminal = new THREE.Mesh(round(40, 9, 14, 0.4, 2), apWall);
+  terminal.position.set(-252, 4.5, 78);
+  airport.add(terminal);
+  const terminalGlass = new THREE.Mesh(round(38, 3.4, 0.3, 0.1, 1), apGlass);
+  terminalGlass.position.set(-252, 4.6, 70.9);
+  airport.add(terminalGlass);
+  const terminalRoof = new THREE.Mesh(round(42, 0.6, 16, 0.2, 2), new THREE.MeshStandardMaterial({ color: 0xcfd6cc, roughness: 0.7 }));
+  terminalRoof.position.set(-252, 9.3, 78);
+  airport.add(terminalRoof);
+  const airportSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(22, 5.5),
+    new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture("AEROPORTO", "#1f3a44", "#ffffff")) }),
+  );
+  airportSign.position.set(-252, 7.4, 70.8);
+  airport.add(airportSign);
+  // torre de controle
+  const towerStem = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.4, 18, 12), apWall);
+  towerStem.position.set(-200, 9, 78);
+  airport.add(towerStem);
+  const towerCab = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 2.6, 3.4, 12), apGlass);
+  towerCab.position.set(-200, 19.4, 78);
+  airport.add(towerCab);
+  const towerRoof = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 0.5, 12), new THREE.MeshStandardMaterial({ color: 0xcfd6cc, roughness: 0.7 }));
+  towerRoof.position.set(-200, 21.3, 78);
+  airport.add(towerRoof);
+  const towerAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6, 6), trimMat);
+  towerAntenna.position.set(-200, 24.5, 78);
+  airport.add(towerAntenna);
+  // hangar
+  const hangar = new THREE.Mesh(round(26, 9, 18, 0.4, 2), new THREE.MeshStandardMaterial({ color: 0xdfe4d8, roughness: 0.85 }));
+  hangar.position.set(-302, 4.5, 78);
+  airport.add(hangar);
+  const hangarRoof = new THREE.Mesh(new THREE.CylinderGeometry(9.4, 9.4, 26, 14, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0xc6cec2, roughness: 0.7 }));
+  hangarRoof.rotation.z = Math.PI / 2;
+  hangarRoof.position.set(-302, 9, 78);
+  airport.add(hangarRoof);
+  // luzes da pista
+  const runwayLightMat = new THREE.MeshBasicMaterial({ color: 0xfff2b0 });
+  for (let i = 0; i <= 18; i += 1) {
+    [-1, 1].forEach((side) => {
+      const light = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 5), runwayLightMat);
+      light.position.set(-337 + i * 9.4, 0.25, 34 + side * 13.6);
+      airport.add(light);
+    });
+  }
+  // avião estacionado
+  const makePlane = (livery: number) => {
+    const plane = new THREE.Group();
+    const skin = new THREE.MeshStandardMaterial({ color: livery, roughness: 0.35, metalness: 0.45 });
+    const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(1.5, 15, 6, 12), skin);
+    fuselage.rotation.z = Math.PI / 2;
+    fuselage.position.y = 2.2;
+    plane.add(fuselage);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3.4, 12), skin);
+    nose.rotation.z = -Math.PI / 2;
+    nose.position.set(9.4, 2.2, 0);
+    plane.add(nose);
+    const wing = new THREE.Mesh(round(4.6, 0.35, 15, 0.2, 1), skin);
+    wing.position.set(0.4, 2.1, 0);
+    plane.add(wing);
+    const tail = new THREE.Mesh(round(3.2, 0.3, 4.6, 0.15, 1), skin);
+    tail.position.set(-7.4, 3.4, 0);
+    plane.add(tail);
+    const fin = new THREE.Mesh(round(0.35, 3, 3, 0.1, 1), skin);
+    fin.position.set(-7.6, 4.8, 0);
+    plane.add(fin);
+    const windows = new THREE.Mesh(round(0.3, 0.4, 11, 0.1, 1), apGlass);
+    windows.position.set(1, 2.6, 1.52);
+    plane.add(windows);
+    const windows2 = windows.clone();
+    windows2.position.z = -1.52;
+    plane.add(windows2);
+    const engineGeo = new THREE.CylinderGeometry(0.9, 0.9, 3.2, 10);
+    engineGeo.rotateX(Math.PI / 2);
+    [-5.2, 5.2].forEach((z) => {
+      const engine = new THREE.Mesh(engineGeo, skin);
+      engine.position.set(1.4, 1.4, z);
+      plane.add(engine);
+    });
+    const gear = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.6, 6), trimMat);
+    gear.position.set(1.5, 0.8, 0);
+    plane.add(gear);
+    return plane;
+  };
+  const parkedPlane = makePlane(0xf2f5ee);
+  parkedPlane.position.set(-268, 0, 66);
+  parkedPlane.rotation.y = -0.2;
+  airport.add(parkedPlane);
+  const taxiPlane = makePlane(0xdfe9f2);
+  taxiPlane.position.set(-320, 0, 34);
+  taxiPlane.rotation.y = 0;
+  airport.add(taxiPlane);
+
+  // ---------------------------------------------------------------- margem da via expressa: posto, pátio e armazém
+  const roadside = new THREE.Group();
+  scene.add(roadside);
+  const rsWall = new THREE.MeshStandardMaterial({ color: 0xf1f3ea, roughness: 0.8 });
+  const rsDark = new THREE.MeshStandardMaterial({ color: 0x39443c, roughness: 0.5, metalness: 0.4 });
+  const rsCanopy = new THREE.MeshStandardMaterial({ color: 0xf7f9f3, roughness: 0.6 });
+  // piso do posto
+  const forecourt = new THREE.Mesh(new THREE.PlaneGeometry(64, 22), new THREE.MeshStandardMaterial({ color: 0x9aa39a, roughness: 0.95 }));
+  forecourt.rotation.x = -Math.PI / 2;
+  forecourt.position.set(132, 0.05, -176);
+  roadside.add(forecourt);
+  // cobertura
+  const canopy = new THREE.Mesh(round(20, 0.9, 11, 0.2, 2), rsCanopy);
+  canopy.position.set(124, 6.4, -176);
+  roadside.add(canopy);
+  const canopyStripe = new THREE.Mesh(round(20.2, 0.5, 0.6, 0.1, 1), new THREE.MeshStandardMaterial({ color: BRAND, roughness: 0.6 }));
+  canopyStripe.position.set(124, 6.9, -171);
+  roadside.add(canopyStripe);
+  [[116, -172], [132, -172], [116, -180], [132, -180]].forEach(([px, pz]) => {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.55, 6, 0.55), rsWall);
+    pillar.position.set(px, 3, pz);
+    roadside.add(pillar);
+  });
+  // bombas
+  [118, 124, 130].forEach((px) => {
+    const pump = new THREE.Mesh(round(1.1, 1.9, 0.7, 0.12, 1), rsDark);
+    pump.position.set(px, 1, -176);
+    roadside.add(pump);
+    const pumpTop = new THREE.Mesh(round(1.2, 0.4, 0.8, 0.08, 1), new THREE.MeshStandardMaterial({ color: BRAND, roughness: 0.5 }));
+    pumpTop.position.set(px, 2.1, -176);
+    roadside.add(pumpTop);
+  });
+  // loja de conveniência
+  const store = new THREE.Mesh(round(11, 4.4, 7, 0.3, 2), rsWall);
+  store.position.set(124, 2.2, -166);
+  roadside.add(store);
+  const storeGlass = new THREE.Mesh(round(9.6, 2.2, 0.2, 0.08, 1), new THREE.MeshStandardMaterial({ color: 0x2f3a34, roughness: 0.2, metalness: 0.6 }));
+  storeGlass.position.set(124, 1.9, -169.6);
+  roadside.add(storeGlass);
+  const storeSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(8.4, 2.1),
+    new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture("POSTO · CONVENIÊNCIA", "#3f7d34", "#ffffff")) }),
+  );
+  storeSign.position.set(124, 3.5, -169.7);
+  storeSign.rotation.y = Math.PI;
+  roadside.add(storeSign);
+  // armazém da beira da estrada
+  const shed = new THREE.Mesh(round(34, 9, 14, 0.4, 2), wallMat);
+  shed.position.set(205, 4.5, -170);
+  roadside.add(shed);
+  const shedRoof = new THREE.Mesh(round(35, 0.5, 15, 0.2, 2), new THREE.MeshStandardMaterial({ color: 0xcfd6cc, roughness: 0.75 }));
+  shedRoof.position.set(205, 9.2, -170);
+  roadside.add(shedRoof);
+  [-9, 0, 9].forEach((dx) => {
+    const door = new THREE.Mesh(round(6, 5.2, 0.2, 0.1, 1), new THREE.MeshStandardMaterial({ color: 0x8d9690, roughness: 0.7, metalness: 0.3 }));
+    door.position.set(205 + dx, 2.6, -177.1);
+    roadside.add(door);
+  });
+  const shedSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 3.5),
+    new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture("ARMAZÉM 3", "#4a4f58", "#ffffff")) }),
+  );
+  shedSign.position.set(205, 7.2, -177.2);
+  shedSign.rotation.y = Math.PI;
+  roadside.add(shedSign);
+  // caminhões estacionados no pátio
+  [148, 160, 172].forEach((px, index) => {
+    const parked = makeSimpleTruck(`GT-90${index + 1}`);
+    parked.traverse((child) => {
+      if ((child as THREE.Sprite).isSprite) child.visible = false;
+    });
+    parked.position.set(px, 0, -176);
+    parked.rotation.y = Math.PI / 2;
+    parked.scale.setScalar(0.9);
+    roadside.add(parked);
+  });
+  // outdoors ao longo da estrada
+  const billboardMessages = ["Menos custo. Mais controle.", "Simule seu frete em segundos.", "Tracking em tempo real."];
+  billboardMessages.forEach((message, index) => {
+    const board = new THREE.Group();
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(14, 5),
+      new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture(message, index % 2 === 0 ? "#2f6f4f" : "#1f3a44", "#ffffff")) }),
+    );
+    panel.position.y = 7.2;
+    board.add(panel);
+    const frame = new THREE.Mesh(round(14.4, 5.4, 0.3, 0.1, 1), rsDark);
+    frame.position.set(0, 7.2, -0.2);
+    board.add(frame);
+    [-4.5, 4.5].forEach((dx) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 7, 0.4), rsDark);
+      leg.position.set(dx, 3.5, -0.3);
+      board.add(leg);
+    });
+    board.position.set(78 + index * 92, 0, -188);
+    board.rotation.y = Math.PI;
+    roadside.add(board);
+  });
+
+  // caminhões extras circulando pela avenida
+  const avenueTrucks: { group: THREE.Group; speed: number; offset: number; dir: number; lane: number; z: number }[] = [];
+  [
+    { name: "GT-5120", lane: 1.6, dir: -1, speed: 0.05, offset: 0.2 },
+    { name: "GT-7788", lane: -1.6, dir: 1, speed: 0.045, offset: 0.55 },
+    { name: "GT-3390", lane: 1.6, dir: -1, speed: 0.038, offset: 0.8 },
+  ].forEach((item) => {
+    const truckMesh = makeSimpleTruck(item.name);
+    truckMesh.traverse((child) => {
+      if ((child as THREE.Sprite).isSprite) child.visible = false;
+    });
+    truckMesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
+    truckMesh.scale.setScalar(0.9);
+    truckMesh.position.set(-4.4 + item.lane, 0, item.dir > 0 ? -120 : 40);
+    scene.add(truckMesh);
+    avenueTrucks.push({ group: truckMesh, speed: item.speed, offset: item.offset, dir: item.dir, lane: item.lane, z: 0 });
+  });
+
   const parkedCars: THREE.Group[] = [];
   // estacionamento com vagas pintadas
   const lotPad = new THREE.Mesh(new THREE.PlaneGeometry(78, 22), new THREE.MeshStandardMaterial({ color: 0x2b332c, roughness: 0.95 }));
@@ -4529,6 +4770,17 @@ hub.scale.setScalar(1.15);
       car.group.visible = t > 0.001;
     });
 
+    // caminhões extras da avenida
+    avenueTrucks.forEach((item) => {
+      const progress = (time * item.speed + item.offset + p * 0.15) % 1;
+      const z = item.dir > 0 ? lerp(-130, 50, progress) : lerp(50, -130, progress);
+      const sameLane = Math.abs(item.group.position.x - truck.position.x) < 4.6;
+      const gap = (z - truck.position.z) * item.dir;
+      if (!(sameLane && gap > -14 && gap < 18)) item.group.position.z = z;
+      item.group.visible = p < 0.66;
+    });
+    // avião taxia na pista do aeroporto
+    taxiPlane.position.x = -330 + ((time * 0.028) % 1) * 158;
     // drone
     const droneIn = easeOut(range(pb, 0.18, 0.28));
     drone.scale.setScalar(Math.max(0.001, droneIn));
@@ -4635,6 +4887,10 @@ hub.scale.setScalar(1.15);
 
     // no encerramento a câmera sobe acima das nuvens: elas somem para não tapar a vista
     const cloudFade = 1 - clamp01((p - 0.972) / 0.018);
+    // a vista de drone abre a neblina para enxergar a cidade inteira
+    if (scene.fog instanceof THREE.FogExp2) {
+      scene.fog.density = 0.0014 * (1 - 0.62 * clamp01((p - 0.965) / 0.03));
+    }
     cloudMat.opacity = 0.92 * cloudFade;
     clouds.visible = cloudFade > 0.02;
     // tráfego da via expressa

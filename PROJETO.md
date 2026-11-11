@@ -66,6 +66,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Veículos ambientes freiam quando o caminhão do cliente ou outro veículo está à frente (via expressa, periferia e avenida).
 - O final sobe em zoom de drone acima da via expressa, com as nuvens desaparecendo, mostrando os caminhões seguindo para cada destino.
 
+## Cidade em movimento
+- Aeroporto na ala oeste: pista com sinalização e luzes, terminal, torre de controle, hangar e um avião taxiando.
+- Margem da via expressa preenchida: posto com cobertura e bombas, conveniência, armazém com docas, pátio com caminhões e três outdoors.
+- Três caminhões extras circulando pela avenida, com a mesma lógica de espera.
+- Chão com tom mais suave (menos branco) e neblina reduzida no encerramento.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
