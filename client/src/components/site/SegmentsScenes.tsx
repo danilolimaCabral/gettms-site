@@ -100,7 +100,7 @@ export default function SegmentsScenes() {
       style={{ height: `${SEGMENTS.length * 150}vh` }}
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.94)_0%,rgba(11,16,12,0.82)_42%,rgba(11,16,12,0.55)_72%,rgba(11,16,12,0.35)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(11,16,12,0.86)_0%,rgba(11,16,12,0.68)_36%,rgba(11,16,12,0.28)_66%,rgba(11,16,12,0.04)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0b100c]/85 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0b100c] to-transparent" />
         <div className="container-wide relative grid w-full items-center">
