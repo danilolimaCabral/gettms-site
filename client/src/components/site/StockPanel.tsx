@@ -75,12 +75,12 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
 
   return (
     <div
-      className={`pointer-events-auto absolute inset-x-3 bottom-4 z-20 transition-all duration-500 md:inset-x-auto md:right-6 md:top-24 md:bottom-auto md:w-[340px] ${
+      className={`pointer-events-auto absolute inset-x-3 bottom-20 z-20 transition-all duration-500 md:inset-x-auto md:right-6 md:top-24 md:bottom-auto md:w-[340px] ${
         open && active ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0 md:-translate-y-2 md:translate-x-4"
       }`}
       aria-hidden={!(open && active)}
     >
-      <div className="overflow-hidden rounded-2xl border border-white/12 bg-[#0b110d]/92 shadow-[0_30px_70px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+      <div className="max-h-[46vh] overflow-hidden rounded-2xl border border-white/12 bg-[#0b110d]/92 md:max-h-none shadow-[0_30px_70px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl">
         <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#8fe04a]/15 text-[#a9ec6a]">
@@ -96,7 +96,7 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 px-4 py-3">
+        <div className="hidden grid-cols-3 gap-2 px-4 py-3 md:grid">
           {[
             { icon: Boxes, label: "Unidades", value: totalUnits.toLocaleString("pt-BR") },
             { icon: Truck, label: "Carregando", value: loadingUnits.toLocaleString("pt-BR") },
@@ -135,7 +135,7 @@ export default function StockPanel({ active, progress }: { active: boolean; prog
           ))}
         </div>
 
-        <ul className="max-h-[176px] overflow-y-auto px-2 pb-2 md:max-h-[220px]">
+        <ul className="max-h-[132px] overflow-y-auto px-2 pb-2 md:max-h-[220px]">
           {visible.map((item) => (
             <li key={item.code}>
               <button
