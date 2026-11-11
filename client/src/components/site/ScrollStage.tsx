@@ -281,7 +281,7 @@ export default function ScrollStage() {
         {/* hero */}
         <div
           ref={heroRef}
-          className="hero-compact absolute inset-0 flex items-end pb-20 pt-24 md:items-center md:pb-0 md:pt-24 [@media(max-height:720px)]:pb-8 [@media(max-height:720px)]:pt-20"
+          className="hero-compact absolute inset-0 flex items-end pb-28 pt-24 md:items-center md:pb-0 md:pt-24 [@media(max-height:720px)]:pb-8 [@media(max-height:720px)]:pt-20"
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70 md:to-transparent" />
           <div className="container-wide relative">
@@ -305,7 +305,7 @@ export default function ScrollStage() {
                   Agendar demonstração
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
-                <button type="button" onClick={() => jumpTo(0.34)} className="btn btn-ghost">
+                <button type="button" onClick={() => jumpTo(0.34)} className="btn btn-ghost col-span-2 justify-center sm:col-auto">
                   <Play className="h-3.5 w-3.5 fill-current" />
                   Ver a plataforma
                 </button>
@@ -324,7 +324,7 @@ export default function ScrollStage() {
                     window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
                     window.addEventListener("wheel", (e) => sceneRef.current?.orbitZoom(e.deltaY * 0.05), { passive: true });
                   }}
-                  className={`btn btn-ghost ${orbit ? "!border-brand !text-brand-dark" : ""}`}
+                  className={`btn btn-ghost hidden sm:inline-flex ${orbit ? "!border-brand !text-brand-dark" : ""}`}
                 >
                   <RotateCw className="h-3.5 w-3.5" />
                   {orbit ? "360° · arraste" : "Ver em 360°"}
