@@ -5475,30 +5475,48 @@ hub.scale.setScalar(1.15);
       const rimMat = new THREE.MeshStandardMaterial({ color: 0x8d968d, roughness: 0.4, metalness: 0.6 });
       const tireGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22);
       const rimGeo = new THREE.CylinderGeometry(wheelR * 0.62, wheelR * 0.62, wheelW * 0.55, 18);
-      // bitola fixa: um pneu de cada lado por eixo
+      // eixos a partir da posição da cabine (vidros), com bitola fixa
       const cloneBox = new THREE.Box3().setFromObject(clone);
       const cloneSize = cloneBox.getSize(new THREE.Vector3());
-      const modelLateralIsX = cloneSize.x < cloneSize.z;
+      const cloneCenter = cloneBox.getCenter(new THREE.Vector3());
+      const travelIsZ = cloneSize.z >= cloneSize.x;
+      const length = travelIsZ ? cloneSize.z : cloneSize.x;
       const track = (request.length / 17) * 1.28;
-      const axles = new Map<number, { x: number; z: number }>();
-      wheelMeshes.forEach((mesh) => {
-        const box = new THREE.Box3().setFromObject(mesh);
-        const center = box.getCenter(new THREE.Vector3());
-        const along = modelLateralIsX ? center.z : center.x;
-        const key = Math.round(along * 2.4) / 2.4;
-        if (!axles.has(key)) {
-          axles.set(key, { x: modelLateralIsX ? center.x : along, z: modelLateralIsX ? along : center.z });
+      let cabObject: THREE.Object3D | null = null;
+      clone.traverse((child) => {
+        const name = child.name.toLowerCase();
+        if (!cabObject && (child as THREE.Mesh).isMesh && (name.includes("window") || name.includes("glass") || name.includes("cab"))) {
+          cabObject = child;
         }
+      });
+      const cabBox = cabObject ? new THREE.Box3().setFromObject(cabObject) : cloneBox.clone();
+      const cabAlong = travelIsZ ? cabBox.getCenter(new THREE.Vector3()).z : cabBox.getCenter(new THREE.Vector3()).x;
+      const centerAlong = travelIsZ ? cloneCenter.z : cloneCenter.x;
+      const dir = cabAlong >= centerAlong ? 1 : -1;
+      const farEnd = centerAlong - (dir * length) / 2;
+      const axleAlong = [
+        cabAlong - dir * length * 0.09,
+        cabAlong - dir * length * 0.2,
+        cabAlong - dir * length * 0.28,
+        farEnd + dir * length * 0.16,
+        farEnd + dir * length * 0.25,
+      ];
+      wheelMeshes.forEach((mesh) => {
         mesh.visible = false;
       });
-      axles.forEach(({ x, z }) => {
+      const lateralCenter = travelIsZ ? cloneCenter.x : cloneCenter.z;
+      axleAlong.forEach((along) => {
         [-1, 1].forEach((side) => {
           const tire = new THREE.Mesh(tireGeo, tireMat);
           const rim = new THREE.Mesh(rimGeo, rimMat);
           [tire, rim].forEach((part) => {
-            if (modelLateralIsX) part.rotation.z = Math.PI / 2;
+            if (travelIsZ) part.rotation.z = Math.PI / 2;
             else part.rotation.x = Math.PI / 2;
-            part.position.set(modelLateralIsX ? x + side * track : x, wheelR + 0.02, modelLateralIsX ? z : z + side * track);
+            part.position.set(
+              travelIsZ ? lateralCenter + side * track : along,
+              wheelR + 0.02,
+              travelIsZ ? along : lateralCenter + side * track,
+            );
             wrapper.add(part);
           });
         });
