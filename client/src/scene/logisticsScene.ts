@@ -15,7 +15,15 @@ export type LogisticsSceneHandle = {
   setSegmentView: (kind: string | null) => void;
   setFeatureScreen: (index: number) => void;
   setSegmentZoom: (z: number) => void;
-  debugCam?: () => { pos: number[]; zoom: number; view: string };
+  debugCam?: () => {
+    pos: number[];
+    zoom: number;
+    view: string;
+    truck?: number[];
+    phase?: number;
+    progress?: number;
+  };
+  snapTruck?: () => void;
   orbitBy: (delta: number) => void;
   orbitZoom: (delta: number) => void;
   resize: () => void;
@@ -40,23 +48,100 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.1, pos: [30, 16, 34], look: [-16, 4, -8] },
   { t: 0.2, pos: [14, 15, 22], look: [-14, 5, -14] },
   { t: 0.3, pos: [42, 20, 24], look: [12, 5, -10] },
-  { t: 0.4, pos: [32, 19, 18], look: [6, 4, -30] },
-  { t: 0.5, pos: [20, 24, 22], look: [0, 4, -70] },
-  { t: 0.6, pos: [10, 24, 24], look: [0, 3, -50] },
-  { t: 0.7, pos: [6, 26, 34], look: [0, 2, -60] },
-  { t: 0.8, pos: [6, 32, 8], look: [50, 8, -50] },
-  { t: 0.9, pos: [32, 26, -8], look: [52, 9, -54] },
-  { t: 1.0, pos: [34, 21, -32], look: [58, 13, -58] },
+  { t: 0.4, pos: [34, 26, -6], look: [0, 2, -120] },
+  { t: 0.5, pos: [14, 30, -140], look: [40, 2, -200] },
+  { t: 0.6, pos: [90, 38, -160], look: [180, 2, -204] },
+  { t: 0.7, pos: [240, 32, -180], look: [300, 2, -260] },
+  { t: 0.8, pos: [318, 24, -300], look: [299, 2, -386] },
+  { t: 0.86, pos: [344, 16, -404], look: [392, 4, -358] },
+  { t: 0.9, pos: [376, 20, -406], look: [402, 4, -356] },
+  { t: 0.915, pos: [392, 16, -396], look: [404, 4, -356] },
+  { t: 0.95, pos: [412, 7.5, -368], look: [438, 5, -368] },
+  { t: 1.0, pos: [432, 40, -436], look: [400, 2, -356] },
 ];
 
+/**
+ * Trajeto do caminhão protagonista, em coordenadas de chão (x, z).
+ * Avenida inteira (mão sul) -> trevo com semáforo -> via expressa (mão leste) ->
+ * saída para a periferia -> rua da periferia -> portaria e pátio do cliente.
+ */
+const HERO_ROUTE: [number, number][] = [
+  [-4.4, 74],
+  [-4.4, 34],
+  [-4.4, -6],
+  [-4.4, -46],
+  [-4.4, -88],
+  [-4.4, -128],
+  [-4.4, -156],
+  [-4.4, -176],
+  [-5.4, -184],
+  [-2.6, -191],
+  [5, -199],
+  [17, -203.2],
+  [52, -203.2],
+  [100, -203.2],
+  [150, -203.2],
+  [200, -203.2],
+  [236, -203.2],
+  [256, -205],
+  [276, -211],
+  [291, -221],
+  [296.6, -236],
+  [296.6, -272],
+  [296.6, -308],
+  [296.6, -342],
+  [299, -362],
+  [307, -374],
+  [318, -379.5],
+  [336, -377],
+  [356, -370],
+  [374, -362],
+  [390, -357.5],
+  [402, -357.5],
+];
+
+/** Marcos do trajeto: [progresso da página, índice do ponto]. */
+const HERO_ROUTE_KEYS: [number, number][] = [
+  [0.05, 0],
+  [0.16, 2],
+  [0.26, 4],
+  [0.34, 6],
+  [0.42, 9],
+  [0.5, 11],
+  [0.6, 14],
+  [0.66, 17],
+  [0.72, 20],
+  [0.78, 23],
+  [0.83, 26],
+  [0.87, 31],
+];
+
+/** Câmera que acompanha o caminhão na viagem: distância atrás (negativo = na frente), altura, deslocamento lateral e olhar à frente. */
+const CHASE_KEYS: { t: number; ahead: number; height: number; side: number; look: number }[] = [
+  { t: 0.26, ahead: 26, height: 15, side: 2, look: 10 },
+  { t: 0.34, ahead: 30, height: 22, side: 8, look: 12 },
+  { t: 0.42, ahead: 34, height: 32, side: 20, look: 14 },
+  { t: 0.47, ahead: -38, height: 20, side: 26, look: 2 },
+  { t: 0.55, ahead: -34, height: 26, side: 32, look: 2 },
+  { t: 0.61, ahead: 44, height: 46, side: 26, look: 18 },
+  { t: 0.67, ahead: 36, height: 30, side: 14, look: 14 },
+  { t: 0.73, ahead: 30, height: 20, side: 6, look: 12 },
+  { t: 0.79, ahead: 34, height: 24, side: 12, look: 12 },
+  { t: 0.86, ahead: 38, height: 28, side: 20, look: 8 },
+];
+
+/** Pontos iluminados da rota exibidos na cena. */
 const ROUTE_POINTS: [number, number, number][] = [
-  [0, 0.32, 12],
-  [-1.2, 0.32, -2],
-  [1.2, 0.32, -20],
-  [-1.2, 0.32, -40],
-  [4, 0.32, -48],
-  [34, 0.32, -47],
-  [57, 0.32, -44],
+  [-4.4, 0.32, 74],
+  [-4.4, 0.32, -88],
+  [-4.4, 0.32, -176],
+  [17, 0.32, -203.2],
+  [120, 0.32, -203.2],
+  [236, 0.32, -203.2],
+  [296.6, 0.32, -236],
+  [296.6, 0.32, -342],
+  [318, 0.32, -379.5],
+  [402, 0.32, -357.5],
 ];
 
 function makeShadowTexture() {
@@ -137,10 +222,11 @@ function makeFeatureScreen(kind: number) {
     ctx.font = "500 20px Inter, sans-serif";
     ctx.fillText(row[0], 36, y + 29);
     ctx.fillStyle = "rgba(232,244,220,0.6)";
-    ctx.fillText(row[1], 360, y + 29);
+    ctx.font = "500 18px Inter, sans-serif";
+    ctx.fillText(row[1], 356, y + 29);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 20px Inter, sans-serif";
-    ctx.fillText(row[2], 450, y + 29);
+    ctx.fillText(row[2], 468, y + 29);
     if (best) {
       ctx.fillStyle = "#8fe04a";
       ctx.beginPath();
@@ -355,7 +441,7 @@ export function createLogisticsScene(
   };
 
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(800, 800, 1, 1),
+    new THREE.PlaneGeometry(1600, 1600, 1, 1),
     new THREE.ShaderMaterial({
       uniforms: groundUniforms,
       transparent: true,
@@ -398,7 +484,7 @@ export function createLogisticsScene(
   scene.add(ground);
   // base opaca para o piso não deixar o céu aparecer
   const floorBase = new THREE.Mesh(
-    new THREE.PlaneGeometry(900, 900),
+    new THREE.PlaneGeometry(1700, 1700),
     new THREE.MeshStandardMaterial({ color: 0xeef2e6, roughness: 1, metalness: 0 }),
   );
   floorBase.rotation.x = -Math.PI / 2;
@@ -445,11 +531,11 @@ export function createLogisticsScene(
   const hillMat = new THREE.MeshStandardMaterial({ color: 0xd8e0cc, roughness: 0.95, metalness: 0 });
   const hillGeo = new THREE.SphereGeometry(1, 20, 14);
   const hills = new THREE.Group();
-  for (let i = 0; i < 9; i += 1) {
+  for (let i = 0; i < 11; i += 1) {
     const hill = new THREE.Mesh(hillGeo, hillMat);
-    const r = 26 + Math.random() * 34;
-    hill.scale.set(r * 1.7, r * 0.32, r * 1.4);
-    hill.position.set(-260 + i * 62 + Math.random() * 20, -r * 0.16, -300 - Math.random() * 70);
+    const r = 30 + Math.random() * 40;
+    hill.scale.set(r * 1.7, r * 0.34, r * 1.4);
+    hill.position.set(-420 + i * 84 + Math.random() * 24, -r * 0.16, -500 - Math.random() * 90);
     hills.add(hill);
   }
   scene.add(hills);
@@ -499,8 +585,8 @@ export function createLogisticsScene(
     transparent: true,
     opacity: 0,
   });
-  const asphalt = new THREE.Mesh(round(12, 0.3, 260, 0.12, 2), asphaltMat);
-  asphalt.position.set(0, 0.1, -30);
+  const asphalt = new THREE.Mesh(round(12, 0.3, 286, 0.12, 2), asphaltMat);
+  asphalt.position.set(0, 0.1, -43);
   road.add(asphalt);
 
   const curbMat = new THREE.MeshStandardMaterial({
@@ -511,15 +597,15 @@ export function createLogisticsScene(
     opacity: 0,
   });
   [-6.3, 6.3].forEach((x) => {
-    const curb = new THREE.Mesh(round(0.55, 0.34, 260, 0.14, 2), curbMat);
-    curb.position.set(x, 0.16, -30);
+    const curb = new THREE.Mesh(round(0.55, 0.34, 286, 0.14, 2), curbMat);
+    curb.position.set(x, 0.16, -43);
     road.add(curb);
   });
 
   const edgeMat = new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0 });
   [-5.7, 5.7].forEach((x) => {
-    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 260), edgeMat);
-    edge.position.set(x, 0.27, -30);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 286), edgeMat);
+    edge.position.set(x, 0.27, -43);
     road.add(edge);
   });
 
@@ -541,7 +627,7 @@ export function createLogisticsScene(
     gridRoads.push(street);
   };
   [-150, -96, 30, 84, 138, 192].forEach((z) => addStreet(0, z, 420, true));
-  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addStreet(x, -20, 460, false));
+  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addStreet(x, 20, 380, false));
   addStreet(0, -52, 180, false);
   addStreet(0, 6, 120, false);
   // calcadas e meio-fio nas ruas transversais
@@ -563,20 +649,26 @@ export function createLogisticsScene(
     });
   };
   [-150, -96, 30, 84, 138, 192].forEach((z) => addGridWalks(0, z, 420, true));
-  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addGridWalks(x, -20, 460, false));
+  [-210, -150, -60, 64, 128, 190, 250].forEach((x) => addGridWalks(x, 20, 380, false));
   addGridWalks(0, -52, 180, false);
   addGridWalks(0, 6, 120, false);
 
   const dashMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0, transparent: true, opacity: 0 });
-  const dashCount = 88;
+  const dashCount = 96;
   const dashes = new THREE.InstancedMesh(round(0.2, 0.05, 3, 0.06, 1), dashMat, dashCount);
   const dashDummy = new THREE.Object3D();
   for (let i = 0; i < dashCount; i += 1) {
-    dashDummy.position.set(i % 2 === 0 ? -2 : 2, 0.27, 88 - Math.floor(i / 2) * 5.8);
+    dashDummy.position.set(i % 2 === 0 ? -3 : 3, 0.27, 88 - Math.floor(i / 2) * 5.8);
     dashDummy.updateMatrix();
     dashes.setMatrixAt(i, dashDummy.matrix);
   }
   road.add(dashes);
+  // eixo duplo da avenida
+  [-0.16, 0.16].forEach((x) => {
+    const axis = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 274), dashMat);
+    axis.position.set(x, 0.27, -39);
+    road.add(axis);
+  });
 
   // postes com braço curvo
   const poleMat = new THREE.MeshStandardMaterial({ color: 0x7c877c, roughness: 0.7, metalness: 0.3 });
@@ -877,9 +969,11 @@ export function createLogisticsScene(
   const skyline = new THREE.Group();
   for (let i = 0; i < 64; i += 1) {
     const angle = (i / 64) * Math.PI * 2 + Math.sin(i) * 0.06;
-    const radius = 200 + ((i * 37) % 150);
+    let radius = 200 + ((i * 37) % 150);
     const w = 8 + ((i * 13) % 14);
     const h = 16 + ((i * 29) % 62);
+    // o setor sul é o trecho rural e o cliente: a cidade distante vai para o horizonte
+    if (Math.sin(angle) < -0.25) radius = 620 + ((i * 23) % 130);
     const facade = facadeTextures[i % facadeTextures.length].clone();
     facade.repeat.set(Math.max(1, Math.round(w / 8)), Math.max(2, Math.round(h / 8)));
     facade.needsUpdate = true;
@@ -887,7 +981,7 @@ export function createLogisticsScene(
       new THREE.BoxGeometry(w, h, w * 0.9),
       new THREE.MeshStandardMaterial({ map: facade, color: i % 3 === 0 ? 0xe3e9dd : 0xf2f5ee, roughness: 0.95 }),
     );
-    tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 40);
+    tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 60);
     skyline.add(tower);
   }
   scene.add(skyline);
@@ -1029,6 +1123,7 @@ hub.scale.setScalar(1.15);
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
   const signalPoleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
   const signalBoxMat = new THREE.MeshStandardMaterial({ color: 0x2a302c, roughness: 0.6 });
+  const signalLamps: { red: THREE.MeshBasicMaterial; green: THREE.MeshBasicMaterial }[] = [];
   [42, -42, -96, 30, 84, 138, -150, 192].forEach((crossZ) => {
     for (let i = 0; i < 7; i += 1) {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
@@ -1042,9 +1137,12 @@ hub.scale.setScalar(1.15);
       arm.position.set(side * (7.9 - 1.1), 4.1, crossZ + 3.4);
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.34), signalBoxMat);
       box.position.set(side * 6.9, 3.6, crossZ + 3.4);
-      const red = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a3c }));
+      const redMat = new THREE.MeshBasicMaterial({ color: 0xff5a3c });
+      const greenMat = new THREE.MeshBasicMaterial({ color: 0x2a3a2c });
+      signalLamps.push({ red: redMat, green: greenMat });
+      const red = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), redMat);
       red.position.set(side * 6.9, 3.95, crossZ + 3.22);
-      const green = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshBasicMaterial({ color: 0x8fe04a }));
+      const green = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), greenMat);
       green.position.set(side * 6.9, 3.28, crossZ + 3.22);
       scene.add(pole, arm, box, red, green);
     });
@@ -1063,25 +1161,1034 @@ hub.scale.setScalar(1.15);
   dockRoadLink.position.set(0, 0.05, -90);
   scene.add(dockRoadLink);
 
-  const truckPath = new THREE.CatmullRomCurve3(
-    [
-      new THREE.Vector3(-3.6, 0, -6),
-      new THREE.Vector3(-3.6, 0, -60),
-      new THREE.Vector3(-3.6, 0, -92),
-      new THREE.Vector3(12, 0, -99),
-      new THREE.Vector3(40, 0, -99),
-      new THREE.Vector3(58, 0, -99),
-      new THREE.Vector3(60, 0, -106),
-      new THREE.Vector3(60, 0, -99),
-      new THREE.Vector3(40, 0, -99),
-      new THREE.Vector3(14, 0, -99),
-      new THREE.Vector3(-3.6, 0, -92),
-      new THREE.Vector3(-3.6, 0, -50)
-    ],
-    true,
-    "catmullrom",
+
+  // ---------------------------------------------------------------- sul: trevo, via expressa, trecho rural, periferia e cliente
+  // Elementos revelados pela rolagem: opacidade para o asfalto, altura para as construções.
+  const revealFades: { mat: THREE.Material & { opacity: number }; from: number; to: number; base: number }[] = [];
+  const fadeIn = <T extends THREE.Material & { opacity: number }>(mat: T, from: number, to: number, base = 1) => {
+    mat.transparent = true;
+    revealFades.push({ mat, from, to, base });
+    return mat;
+  };
+  const riseGroups: { group: THREE.Object3D; from: number; to: number; axis: "y" | "x" }[] = [];
+  const riseIn = (group: THREE.Object3D, from: number, to: number, axis: "y" | "x" = "y") => {
+    riseGroups.push({ group, from, to, axis });
+    return group;
+  };
+
+  const southGlassMat = new THREE.MeshStandardMaterial({
+    color: 0x0b1418,
+    roughness: 0.06,
+    metalness: 0.96,
+    emissive: 0x1d3a47,
+    emissiveIntensity: 0.75,
+  });
+  const southTireMat = new THREE.MeshStandardMaterial({ color: 0x0d0f0d, roughness: 0.95 });
+  const south = new THREE.Group();
+  scene.add(south);
+
+  const highMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0x474e4d, roughness: 0.95, metalness: 0.08, transparent: true, opacity: 0 }),
+    0.28,
+    0.4,
+  );
+  const highLineMat = fadeIn(new THREE.MeshBasicMaterial({ color: 0xf3f8ec, transparent: true, opacity: 0 }), 0.3, 0.42, 0.9);
+  const shoulderMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0xc2c6ba, roughness: 1, transparent: true, opacity: 0 }),
+    0.28,
+    0.4,
+  );
+  const medianMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0x9fbd7d, roughness: 1, transparent: true, opacity: 0 }),
+    0.3,
+    0.42,
+  );
+  const walkSMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0xe9ebe3, roughness: 0.95, transparent: true, opacity: 0 }),
+    0.44,
+    0.58,
+  );
+  const fieldMats = [0x93bb6b, 0xd6c188, 0x82b05f, 0xc3d086, 0x6fa255].map((c) =>
+    fadeIn(new THREE.MeshStandardMaterial({ color: c, roughness: 1, transparent: true, opacity: 0 }), 0.34, 0.5),
+  );
+  const dirtMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0xc3ab84, roughness: 1, transparent: true, opacity: 0 }),
+    0.36,
     0.5,
   );
+  const fenceMat = new THREE.MeshStandardMaterial({ color: 0xb59d78, roughness: 0.95 });
+  const guardMat = new THREE.MeshStandardMaterial({ color: 0xc7ccc7, roughness: 0.4, metalness: 0.75 });
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xd7dbd6, roughness: 0.35, metalness: 0.8 });
+  const wireMat = new THREE.LineBasicMaterial({ color: 0x2b3330, transparent: true, opacity: 0.55 });
+  const signGreenMat = new THREE.MeshStandardMaterial({ color: 0x1f6b3f, roughness: 0.6, metalness: 0.2 });
+  const signWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f8f1, roughness: 0.6 });
+  const asphaltYardMat = fadeIn(
+    new THREE.MeshStandardMaterial({ color: 0x3a423b, roughness: 0.95, transparent: true, opacity: 0 }),
+    0.6,
+    0.72,
+  );
+
+  const makeRoadRibbon = (pts: [number, number][], width: number, mat: THREE.Material, y = 0.06) => {
+    const curve = new THREE.CatmullRomCurve3(
+      pts.map(([x, z]) => new THREE.Vector3(x, 0, z)),
+      false,
+      "centripetal",
+    );
+    const steps = Math.max(20, pts.length * 10);
+    const positions: number[] = [];
+    const indices: number[] = [];
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const point = curve.getPointAt(t);
+      const tan = curve.getTangentAt(t);
+      const nx = -tan.z;
+      const nz = tan.x;
+      const half = width / 2;
+      positions.push(point.x + nx * half, y, point.z + nz * half);
+      positions.push(point.x - nx * half, y, point.z - nz * half);
+      if (i < steps) {
+        const a = i * 2;
+        indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat);
+  };
+
+  const flatRoad = (w: number, d: number, x: number, z: number, mat: THREE.Material, y = 0.05) => {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, y, z);
+    return mesh;
+  };
+
+  const makeTextPanel = (
+    title: string,
+    subtitle: string,
+    w: number,
+    h: number,
+    bg = "#0f1a12",
+    accent = "#8fe04a",
+  ) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = Math.round((1024 * h) / w);
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.roundRect(6, 6, canvas.width - 12, canvas.height - 12, 26);
+    ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.fillRect(6, 6, 14, canvas.height - 12);
+    ctx.fillStyle = "#f5f9ef";
+    ctx.textBaseline = "middle";
+    let titleSize = canvas.height * 0.42;
+    ctx.font = `700 ${Math.round(titleSize)}px Sora, Inter, sans-serif`;
+    while (ctx.measureText(title).width > canvas.width - 90 && titleSize > 18) {
+      titleSize -= 2;
+      ctx.font = `700 ${Math.round(titleSize)}px Sora, Inter, sans-serif`;
+    }
+    ctx.fillText(title, 54, canvas.height * 0.4);
+    if (subtitle) {
+      ctx.fillStyle = "rgba(245,249,239,0.68)";
+      ctx.font = `600 ${Math.round(canvas.height * 0.17)}px Inter, sans-serif`;
+      ctx.fillText(subtitle, 54, canvas.height * 0.74);
+    }
+    const texture = track(new THREE.CanvasTexture(canvas));
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+  };
+
+  // --- via expressa (duas pistas, canteiro central e guard-rail) ---
+  const highway = new THREE.Group();
+  riseIn(highway, 0.3, 0.42);
+  south.add(highway);
+  const HW_WEST = -520;
+  const HW_EAST = 520;
+  const hwLen = HW_EAST - 34;
+  const HW_FULL = HW_EAST - HW_WEST;
+  highway.add(flatRoad(HW_FULL, 7.4, 0, -203.2, highMat));
+  highway.add(flatRoad(HW_FULL, 7.4, 0, -191.6, highMat));
+  // acostamento de terra
+  highway.add(flatRoad(HW_FULL, 2.2, 0, -207.4, shoulderMat));
+  highway.add(flatRoad(HW_FULL, 2.2, 0, -187.4, shoulderMat));
+  // canteiro central com abertura no trevo
+  const medianGeo = new THREE.BoxGeometry(HW_EAST - 32, 0.34, 2.4);
+  [32 + (HW_EAST - 32) / 2, HW_WEST + (-32 - HW_WEST) / 2].forEach((cx) => {
+    const median = new THREE.Mesh(medianGeo, medianMat);
+    median.position.set(cx, 0.17, -197.4);
+    highway.add(median);
+    const medianRail = new THREE.Mesh(new THREE.BoxGeometry(HW_EAST - 32, 0.12, 0.1), railMat);
+    medianRail.position.set(cx, 0.95, -197.4);
+    highway.add(medianRail);
+  });
+  // faixas tracejadas das duas pistas
+  const hwDashCount = 118;
+  const hwDashes = new THREE.InstancedMesh(round(3.6, 0.05, 0.18, 0.04, 1), highLineMat, hwDashCount);
+  const hwDummy = new THREE.Object3D();
+  for (let i = 0; i < hwDashCount; i += 1) {
+    const east = i % 2 === 0;
+    const x = -497 + Math.floor(i / 2) * 17;
+    hwDummy.position.set(x, 0.08, east ? -203.2 : -191.6);
+    hwDummy.updateMatrix();
+    hwDashes.setMatrixAt(i, hwDummy.matrix);
+  }
+  highway.add(hwDashes);
+  // linhas de bordo
+  [-206.7, -199.7, -195.1, -188.1].forEach((z) => {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(HW_FULL, 0.03, 0.12), highLineMat);
+    line.position.set(0, 0.08, z);
+    highway.add(line);
+  });
+  // guard-rails
+  const guardPosts: number[] = [];
+  for (let x = -516; x < 520; x += 4) {
+    if (x > -12 && x < 12) continue;
+    if (x > 234 && x < 292) continue;
+    guardPosts.push(x);
+  }
+  const postGeo = new THREE.BoxGeometry(0.12, 0.8, 0.12);
+  const guardRail = new THREE.InstancedMesh(postGeo, guardMat, guardPosts.length * 2);
+  guardPosts.forEach((x, i) => {
+    hwDummy.position.set(x, 0.4, -207.6);
+    hwDummy.updateMatrix();
+    guardRail.setMatrixAt(i * 2, hwDummy.matrix);
+    hwDummy.position.set(x, 0.4, -187.2);
+    hwDummy.updateMatrix();
+    guardRail.setMatrixAt(i * 2 + 1, hwDummy.matrix);
+  });
+  highway.add(guardRail);
+  [
+    [-516, -12, -207.6],
+    [12, 234, -207.6],
+    [292, 520, -207.6],
+    [-516, -12, -187.2],
+    [12, 520, -187.2],
+  ].forEach(([x0, x1, z]) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.16, 0.2), railMat);
+    rail.position.set((x0 + x1) / 2, 0.78, z);
+    highway.add(rail);
+  });
+  // postes de iluminação no canteiro
+  for (let x = -480; x < 500; x += 48) {
+    if (x > -40 && x < 40) continue;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 9, 8), poleMat);
+    pole.position.set(x, 4.5, -197.4);
+    highway.add(pole);
+    [-1, 1].forEach((side) => {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.4, 6), poleMat);
+      arm.rotation.x = Math.PI / 2;
+      arm.position.set(x, 8.9, -197.4 + side * 1.2);
+      highway.add(arm);
+      const head = new THREE.Mesh(round(0.5, 0.16, 1.1, 0.05, 1), lampMat);
+      head.position.set(x, 8.8, -197.4 + side * 2.3);
+      highway.add(head);
+    });
+  }
+  // pórticos com placas
+  const gantrySign = (x: number, title: string, subtitle: string) => {
+    const gantry = new THREE.Group();
+    [-1, 1].forEach((side) => {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 8.6, 10), poleMat);
+      post.position.set(0, 4.3, side * 9.6);
+      gantry.add(post);
+    });
+    const beam = new THREE.Mesh(round(0.5, 0.5, 19.6, 0.1, 2), poleMat);
+    beam.position.set(0, 8.4, 0);
+    gantry.add(beam);
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(7.6, 2.6),
+      makeTextPanel(title, subtitle, 7.6, 2.6, "#1f6b3f", "#ffffff"),
+    );
+    panel.position.set(0, 6.6, -1.4);
+    panel.rotation.y = -Math.PI / 2;
+    gantry.add(panel);
+    gantry.position.set(x, 0, -197.4);
+    highway.add(gantry);
+  };
+  gantrySign(96, "VIA EXPRESSA", "Acesso ao cliente · 6 km");
+  gantrySign(268, "CLIENTE HORIZONTE", "Saída 12 · última milha");
+  // marcos quilométricos
+  for (let x = 70; x < 500; x += 60) {
+    const marker = new THREE.Mesh(round(0.3, 1.1, 0.16, 0.04, 1), signWhiteMat);
+    marker.position.set(x, 0.55, -206.6);
+    highway.add(marker);
+    const cap = new THREE.Mesh(round(0.34, 0.24, 0.18, 0.04, 1), new THREE.MeshBasicMaterial({ color: BRAND }));
+    cap.position.set(x, 1.06, -206.6);
+    highway.add(cap);
+  }
+  // passarela rural sobre a via expressa
+  const overpass = new THREE.Group();
+  const deck = new THREE.Mesh(round(13, 1.1, 46, 0.25, 2), concreteMat);
+  deck.position.set(-150, 8.6, -197.4);
+  overpass.add(deck);
+  const deckRoad = flatRoad(11, 44, 0, 0, roadMat, 9.2);
+  deckRoad.position.set(-150, 9.2, -197.4);
+  overpass.add(deckRoad);
+  [-1, 1].forEach((side) => {
+    const parapet = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.1, 44), signWhiteMat);
+    parapet.position.set(-150 + side * 6.3, 9.6, -197.4);
+    overpass.add(parapet);
+  });
+  [-1, 1].forEach((side) => {
+    const pier = new THREE.Mesh(round(2.6, 8.2, 2.6, 0.2, 2), concreteMat);
+    pier.position.set(-150, 4.1, -197.4 + side * 13);
+    overpass.add(pier);
+  });
+  south.add(riseIn(overpass, 0.36, 0.48));
+
+  // --- trevo da avenida com a via expressa ---
+  const junction = new THREE.Group();
+  riseIn(junction, 0.28, 0.4);
+  south.add(junction);
+  junction.add(flatRoad(16, 6, 0, -188.5, highMat, 0.045));
+  // faixa de pedestre e sinal do trevo
+  for (let i = 0; i < 7; i += 1) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
+    stripe.position.set(-5.1 + i * 1.7, 0.14, -184);
+    junction.add(stripe);
+  }
+  const stopLine = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.03, 0.5), highLineMat);
+  stopLine.position.set(-4.4, 0.12, -181.4);
+  junction.add(stopLine);
+  // seta de conversão à esquerda
+  const arrowCanvas = document.createElement("canvas");
+  arrowCanvas.width = 256;
+  arrowCanvas.height = 512;
+  const arrowCtx = arrowCanvas.getContext("2d")!;
+  arrowCtx.strokeStyle = "#f3f8ec";
+  arrowCtx.lineWidth = 30;
+  arrowCtx.lineCap = "round";
+  arrowCtx.beginPath();
+  arrowCtx.moveTo(128, 470);
+  arrowCtx.lineTo(128, 200);
+  arrowCtx.quadraticCurveTo(128, 120, 70, 120);
+  arrowCtx.stroke();
+  arrowCtx.beginPath();
+  arrowCtx.moveTo(70, 60);
+  arrowCtx.lineTo(70, 180);
+  arrowCtx.lineTo(10, 120);
+  arrowCtx.closePath();
+  arrowCtx.fillStyle = "#f3f8ec";
+  arrowCtx.fill();
+  const turnArrowTex = track(new THREE.CanvasTexture(arrowCanvas));
+  const turnArrowMat = new THREE.MeshBasicMaterial({ map: turnArrowTex, transparent: true });
+  const turnArrow = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 4.4), turnArrowMat);
+  turnArrow.rotation.x = -Math.PI / 2;
+  turnArrow.position.set(-4.4, 0.13, -177.6);
+  junction.add(turnArrow);
+  const junctionSignal = new THREE.Group();
+  junctionSignal.position.set(6.2, 0, -181);
+  const jsPole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.6, 10), signalPoleMat);
+  jsPole.position.y = 2.3;
+  junctionSignal.add(jsPole);
+  const jsArm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.4), signalPoleMat);
+  jsArm.position.set(0, 4.4, -2.2);
+  junctionSignal.add(jsArm);
+  const jsBox = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.15, 0.36), signalBoxMat);
+  jsBox.position.set(0, 3.9, -4.3);
+  junctionSignal.add(jsBox);
+  const jsRedMat = new THREE.MeshBasicMaterial({ color: 0xff5a3c });
+  const jsGreenMat = new THREE.MeshBasicMaterial({ color: 0x2a3a2c });
+  const jsRed = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), jsRedMat);
+  jsRed.position.set(0, 4.27, -4.48);
+  const jsGreen = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), jsGreenMat);
+  jsGreen.position.set(0, 3.6, -4.48);
+  junctionSignal.add(jsRed, jsGreen);
+  signalLamps.push({ red: jsRedMat, green: jsGreenMat });
+  const jsSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 0.9),
+    makeTextPanel("SAÍDA · CLIENTE", "Via expressa leste", 3.4, 0.9, "#1f6b3f", "#ffffff"),
+  );
+  jsSign.position.set(0, 5.4, -4.2);
+  junctionSignal.add(jsSign);
+  junction.add(junctionSignal);
+
+  // --- trecho rural: campos, cerca, fazenda, silos e rede elétrica ---
+  const rural = new THREE.Group();
+  riseIn(rural, 0.34, 0.5);
+  south.add(rural);
+  const fieldLayout: [number, number, number, number, number][] = [
+    [64, -248, 54, 62, 0],
+    [122, -248, 54, 62, 1],
+    [180, -248, 54, 62, 2],
+    [238, -248, 50, 62, 3],
+    [64, -312, 54, 60, 3],
+    [122, -312, 54, 60, 4],
+    [180, -312, 54, 60, 0],
+    [238, -312, 50, 60, 1],
+  ];
+  fieldLayout.forEach(([x, z, w, d, tone]) => {
+    rural.add(flatRoad(w - 2, d - 2, x, z, fieldMats[tone], 0.03));
+    // sulcos de plantio
+    const rows = 7;
+    for (let r = 0; r < rows; r += 1) {
+      const row = new THREE.Mesh(new THREE.BoxGeometry(w - 8, 0.06, 0.5), fieldMats[(tone + 2) % fieldMats.length]);
+      row.position.set(x, 0.07, z - d / 2 + 6 + r * ((d - 12) / (rows - 1)));
+      rural.add(row);
+    }
+  });
+  // base de grama do trecho rural
+  const ruralGrass = new THREE.MeshStandardMaterial({ color: 0x9dbb7c, roughness: 1, transparent: true, opacity: 0 });
+  revealFades.push({ mat: ruralGrass, from: 0.32, to: 0.46, base: 1 });
+  rural.add(flatRoad(268, 132, 154, -274, ruralGrass, 0.02));
+  // renques de árvores entre os campos
+  [[36, -216], [72, -280], [110, -216], [158, -216], [196, -280], [232, -216], [250, -300], [30, -300]].forEach(([x, z]) => {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 3, 6), trunkMat);
+    trunk.position.set(x, 1.5, z);
+    rural.add(trunk);
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2.6, 1), leafMat);
+    crown.position.set(x, 4.4, z);
+    crown.scale.set(1, 1.15, 1);
+    rural.add(crown);
+  });
+  // cerca ao longo da via expressa
+  const fencePosts: number[] = [];
+  for (let x = 30; x < 260; x += 3.2) fencePosts.push(x);
+  const fencePostMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 1.15, 0.14), fenceMat, fencePosts.length);
+  fencePosts.forEach((x, i) => {
+    hwDummy.position.set(x, 0.57, -213);
+    hwDummy.updateMatrix();
+    fencePostMesh.setMatrixAt(i, hwDummy.matrix);
+  });
+  rural.add(fencePostMesh);
+  [0.5, 1.0].forEach((y) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(230, 0.09, 0.08), fenceMat);
+    rail.position.set(145, y, -213);
+    rural.add(rail);
+  });
+  // estrada de terra da passarela até a fazenda
+  rural.add(makeRoadRibbon([[150, -213], [150, -236], [148, -258], [150, -276]], 5.2, dirtMat, 0.055));
+  // fazenda
+  const farm = new THREE.Group();
+  farm.position.set(150, 0, -292);
+  rural.add(farm);
+  const farmWallMat = new THREE.MeshStandardMaterial({ color: 0xf1e6cf, roughness: 0.9 });
+  const farmRoofMat = new THREE.MeshStandardMaterial({ color: 0xa8593c, roughness: 0.85 });
+  const farmHouse = new THREE.Mesh(round(13, 4.6, 10, 0.2, 2), farmWallMat);
+  farmHouse.position.set(-14, 2.3, 0);
+  farm.add(farmHouse);
+  const houseRoof = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 13.6, 4, 1, false, 0, Math.PI), farmRoofMat);
+  houseRoof.rotation.z = Math.PI / 2;
+  houseRoof.rotation.y = Math.PI / 4;
+  houseRoof.scale.set(1, 1, 0.62);
+  houseRoof.position.set(-14, 4.6, 0);
+  farm.add(houseRoof);
+  const barn = new THREE.Mesh(round(16, 6.4, 11, 0.2, 2), new THREE.MeshStandardMaterial({ color: 0xb8472f, roughness: 0.85 }));
+  barn.position.set(8, 3.2, -4);
+  farm.add(barn);
+  const barnRoof = new THREE.Mesh(round(16.8, 0.4, 11.8, 0.12, 2), roofMat);
+  barnRoof.position.set(8, 6.6, -4);
+  farm.add(barnRoof);
+  const barnDoor = new THREE.Mesh(round(4.6, 4, 0.2, 0.08, 2), new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.9 }));
+  barnDoor.position.set(8, 2.1, 1.6);
+  farm.add(barnDoor);
+  [20, 25].forEach((sx) => {
+    const silo = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 13, 20), new THREE.MeshStandardMaterial({ color: 0xd7dcd2, roughness: 0.55, metalness: 0.45 }));
+    silo.position.set(sx, 6.5, -12);
+    farm.add(silo);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(3, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xc3cac0, roughness: 0.5, metalness: 0.5 }));
+    dome.position.set(sx, 13, -12);
+    farm.add(dome);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(3.04, 3.04, 0.2, 20), new THREE.MeshBasicMaterial({ color: BRAND_DEEP }));
+    band.position.set(sx, 9.4, -12);
+    farm.add(band);
+  });
+  // fardos de feno
+  const baleGeo = new THREE.CylinderGeometry(1.15, 1.15, 1.7, 16);
+  baleGeo.rotateZ(Math.PI / 2);
+  const baleMat = new THREE.MeshStandardMaterial({ color: 0xd8c07a, roughness: 1 });
+  [[86, -300], [91, -304], [96, -300], [90, -296], [200, -290], [206, -294]].forEach(([x, z]) => {
+    const bale = new THREE.Mesh(baleGeo, baleMat);
+    bale.position.set(x, 1.15, z);
+    bale.rotation.y = (x + z) * 0.05;
+    rural.add(bale);
+  });
+  // vacas
+  const cowMat = new THREE.MeshStandardMaterial({ color: 0xf2f1ea, roughness: 0.9 });
+  const cowSpotMat = new THREE.MeshStandardMaterial({ color: 0x3a3a36, roughness: 0.9 });
+  [[54, -270], [60, -276], [47, -280], [64, -266], [210, -262]].forEach(([x, z], i) => {
+    const cow = new THREE.Group();
+    const body = new THREE.Mesh(round(1.9, 0.95, 0.85, 0.3, 2), cowMat);
+    body.position.y = 1.15;
+    cow.add(body);
+    const spot = new THREE.Mesh(round(0.7, 0.6, 0.88, 0.2, 2), cowSpotMat);
+    spot.position.set(0.2, 1.2, 0);
+    cow.add(spot);
+    const head = new THREE.Mesh(round(0.55, 0.55, 0.7, 0.2, 2), cowMat);
+    head.position.set(1.05, 1.35, 0);
+    cow.add(head);
+    [
+      [-0.6, 0.35],
+      [-0.6, -0.35],
+      [0.65, 0.35],
+      [0.65, -0.35],
+    ].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.75, 0.14), cowMat);
+      leg.position.set(lx, 0.37, lz);
+      cow.add(leg);
+    });
+    cow.position.set(x, 0, z);
+    cow.rotation.y = i * 1.3;
+    rural.add(cow);
+  });
+  // rede elétrica rural
+  const poleLine: THREE.Vector3[] = [];
+  for (let x = 34; x < 500; x += 38) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.2, 8.4, 8), fenceMat);
+    pole.position.set(x, 4.2, -210);
+    rural.add(pole);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 0.14), fenceMat);
+    cross.position.set(x, 7.9, -210);
+    rural.add(cross);
+    poleLine.push(new THREE.Vector3(x, 7.9, -210));
+  }
+  const wirePts: number[] = [];
+  poleLine.forEach((a, i) => {
+    const b = poleLine[i + 1];
+    if (!b) return;
+    [-0.9, 0, 0.9].forEach((off) => {
+      const mid = a.clone().add(b).multiplyScalar(0.5);
+      mid.y -= 0.8;
+      wirePts.push(a.x, a.y, a.z + off, mid.x, mid.y, mid.z + off, mid.x, mid.y, mid.z + off, b.x, b.y, b.z + off);
+    });
+  });
+  const wireGeo = new THREE.BufferGeometry();
+  wireGeo.setAttribute("position", new THREE.Float32BufferAttribute(wirePts, 3));
+  rural.add(new THREE.LineSegments(wireGeo, wireMat));
+
+  // --- periferia ---
+  const periph = new THREE.Group();
+  riseIn(periph, 0.46, 0.64);
+  south.add(periph);
+  // rua da periferia
+  periph.add(flatRoad(9, 172, 299, -298, highMat, 0.055));
+  [-6.1, 6.1].forEach((side) => {
+    periph.add(flatRoad(2.4, 172, 299 + side, -298, walkSMat, 0.08));
+    const curb = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 172), gridCurbMat);
+    curb.position.set(299 + side * 4.7, 0.13, -298);
+    periph.add(curb);
+  });
+  const periDash = new THREE.InstancedMesh(round(0.16, 0.04, 2.6, 0.05, 1), highLineMat, 30);
+  for (let i = 0; i < 30; i += 1) {
+    hwDummy.position.set(299, 0.1, -222 - i * 5.4);
+    hwDummy.updateMatrix();
+    periDash.setMatrixAt(i, hwDummy.matrix);
+  }
+  periph.add(periDash);
+  // acesso ao cliente (curva da rua para a portaria)
+  periph.add(makeRoadRibbon([[296.6, -356], [298, -368], [305, -376], [318, -379.5], [330, -379.5]], 9, highMat, 0.06));
+  // rampa de saída da via expressa para a rua da periferia
+  periph.add(
+    makeRoadRibbon(
+      [
+        [230, -203.2],
+        [246, -204.4],
+        [262, -207.2],
+        [277, -212.4],
+        [289, -221],
+        [295.4, -231],
+        [296.6, -242],
+      ],
+      7,
+      highMat,
+      0.06,
+    ),
+  );
+  // sinalização da saída
+  const exitSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.6, 1.4),
+    makeTextPanel("SAÍDA 12", "Periferia · Cliente Horizonte", 4.6, 1.4, "#1f6b3f", "#ffffff"),
+  );
+  exitSign.position.set(286, 3.4, -222);
+  exitSign.rotation.y = -Math.PI / 2.6;
+  periph.add(exitSign);
+  const exitPost = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 3.4, 8), poleMat);
+  exitPost.position.set(286, 1.7, -222.2);
+  periph.add(exitPost);
+  // sinal e faixa de pedestre na periferia
+  [(-300)].forEach((cz) => {
+    for (let i = 0; i < 5; i += 1) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 3.6), stripeMat);
+      stripe.position.set(295.8 + i * 1.55, 0.12, cz);
+      periph.add(stripe);
+    }
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 4, 10), signalPoleMat);
+    pole.position.set(305.6, 2, cz + 2.6);
+    periph.add(pole);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.95, 0.3), signalBoxMat);
+    box.position.set(305.6, 3.6, cz + 2.6);
+    periph.add(box);
+    const red = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a3c }));
+    red.position.set(305.6, 3.9, cz + 2.44);
+    const green = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0x2a3a2c }));
+    green.position.set(305.6, 3.32, cz + 2.44);
+    periph.add(red, green);
+  });
+  // casas e comércio da periferia
+  const periWallMats = [0xf2e8d8, 0xe9dcc8, 0xf4f1e6, 0xdfe4da, 0xf0d9c4, 0xe3e8ea].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.92 }),
+  );
+  const periRoofMats = [0xb85a3a, 0x9c4a30, 0x6b6f68, 0xc27a4a].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }),
+  );
+  const shopSigns = ["MERCADO", "PADARIA", "OFICINA", "LANCHONETE", "FARMÁCIA", "AUTO PEÇAS", "MATERIAIS", "SALÃO"];
+  const periAwningMats = [0x7d9a63, 0x9a6b4a, 0xb08a4a, 0x5f7f6a, 0x8f6a5a].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75 }),
+  );
+  const addPeriphBuilding = (x: number, z: number, w: number, d: number, h: number, face: number, i: number, rotY = 0) => {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(round(w, h, d, 0.2, 2), periWallMats[i % periWallMats.length]);
+    body.position.y = h / 2;
+    g.add(body);
+    const roof = new THREE.Mesh(round(w + 0.5, 0.35, d + 0.5, 0.12, 2), periRoofMats[i % periRoofMats.length]);
+    roof.position.y = h + 0.1;
+    g.add(roof);
+    const parapetMat = periWallMats[i % periWallMats.length];
+    [
+      [0, (d + 0.5) / 2, w + 0.7, 0.22],
+      [0, -(d + 0.5) / 2, w + 0.7, 0.22],
+      [(w + 0.5) / 2, 0, 0.22, d + 0.7],
+      [-(w + 0.5) / 2, 0, 0.22, d + 0.7],
+    ].forEach(([px, pz, pw, pd]) => {
+      const parapet = new THREE.Mesh(round(pw, 0.55, pd, 0.04, 1), parapetMat);
+      parapet.position.set(px, h + 0.42, pz);
+      g.add(parapet);
+    });
+    if (i % 3 === 0) {
+      const tank = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.85, 0.85, 1.3, 14),
+        new THREE.MeshStandardMaterial({ color: 0x93a7ab, roughness: 0.55, metalness: 0.2 }),
+      );
+      tank.position.set(w * 0.24, h + 1.1, -d * 0.2);
+      g.add(tank);
+      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 5), poleMat);
+      antenna.position.set(-w * 0.3, h + 1.7, d * 0.1);
+      g.add(antenna);
+    }
+    // vitrine e porta
+    const glass = new THREE.Mesh(round(w * 0.7, h * 0.34, 0.14, 0.05, 1), shopGlassMat);
+    glass.position.set(0, h * 0.26, (d / 2 + 0.06) * face);
+    g.add(glass);
+    // janelas superiores
+    const winMat = new THREE.MeshStandardMaterial({ color: 0x2e3d38, roughness: 0.3, metalness: 0.5 });
+    for (let r = 1; r < Math.max(2, Math.floor(h / 3)); r += 1) {
+      for (let c = 0; c < 2; c += 1) {
+        const win = new THREE.Mesh(round(w * 0.24, 1.05, 0.12, 0.04, 1), winMat);
+        win.position.set(-w * 0.24 + c * w * 0.48, r * 2.6 + 0.6, (d / 2 + 0.06) * face);
+        g.add(win);
+      }
+    }
+    // toldo e placa
+    const awning = new THREE.Mesh(round(w * 0.86, 0.12, 1.5, 0.05, 1), periAwningMats[i % periAwningMats.length]);
+    awning.position.set(0, h * 0.5, (d / 2 + 0.62) * face);
+    awning.rotation.x = face > 0 ? -0.16 : 0.16;
+    g.add(awning);
+    if (i % 2 === 0) {
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(w * 0.72, 1.05),
+        makeTextPanel(shopSigns[i % shopSigns.length], "", w * 0.72, 1.05, "#f7f4ea", "#0f1a12"),
+      );
+      sign.position.set(0, h * 0.68, (d / 2 + 0.1) * face);
+      sign.rotation.y = face > 0 ? 0 : Math.PI;
+      g.add(sign);
+    }
+    // caixa de ar-condicionado
+    if (i % 3 === 0) {
+      const ac = new THREE.Mesh(round(0.9, 0.55, 0.5, 0.08, 1), unitMat);
+      ac.position.set(w * 0.28, h * 0.62, (d / 2 + 0.3) * face);
+      g.add(ac);
+    }
+    g.position.set(x, 0, z);
+    g.rotation.y = rotY;
+    periph.add(g);
+  };
+  for (let i = 0; i < 9; i += 1) {
+    const z = -242 - i * 13.4;
+    addPeriphBuilding(286.4, z, 11.5, 9.5, 5.5 + (i % 3) * 2.2, 1, i, Math.PI / 2);
+    addPeriphBuilding(311.6, z - 6.5, 11.5, 9.5, 6 + ((i + 1) % 3) * 2.4, 1, i + 3, -Math.PI / 2);
+  }
+  // postes e fios da rua
+  const periPoles: THREE.Vector3[] = [];
+  for (let z = -224; z > -366; z -= 22) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 8, 8), poleMat);
+    pole.position.set(306.4, 4, z);
+    periph.add(pole);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.12, 0.12), poleMat);
+    cross.position.set(306.4, 7.5, z);
+    periph.add(cross);
+    periPoles.push(new THREE.Vector3(306.4, 7.5, z));
+  }
+  const periWire: number[] = [];
+  periPoles.forEach((a, i) => {
+    const b = periPoles[i + 1];
+    if (!b) return;
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    mid.y -= 0.55;
+    [-0.7, 0.7].forEach((off) => {
+      periWire.push(a.x + off, a.y, a.z, mid.x + off, mid.y, mid.z, mid.x + off, mid.y, mid.z, b.x + off, b.y, b.z);
+    });
+  });
+  const periWireGeo = new THREE.BufferGeometry();
+  periWireGeo.setAttribute("position", new THREE.Float32BufferAttribute(periWire, 3));
+  periph.add(new THREE.LineSegments(periWireGeo, wireMat));
+  // caixa d'água
+  const waterTower = new THREE.Group();
+  const wtLegs = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 12, 8), poleMat);
+  wtLegs.position.y = 6;
+  waterTower.add(wtLegs);
+  const wtTank = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 4, 20), new THREE.MeshStandardMaterial({ color: 0xcfd8d4, roughness: 0.5, metalness: 0.4 }));
+  wtTank.position.y = 13.4;
+  waterTower.add(wtTank);
+  const wtTop = new THREE.Mesh(new THREE.SphereGeometry(3.2, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xb8c2be, roughness: 0.5, metalness: 0.4 }));
+  wtTop.position.y = 15.4;
+  waterTower.add(wtTop);
+  waterTower.position.set(322, 0, -258);
+  periph.add(waterTower);
+  // ponto de ônibus
+  const busStop = new THREE.Group();
+  const busRoof = new THREE.Mesh(round(4.4, 0.16, 1.6, 0.06, 1), new THREE.MeshStandardMaterial({ color: 0x39443a, roughness: 0.6, metalness: 0.4 }));
+  busRoof.position.y = 2.6;
+  busStop.add(busRoof);
+  [-1.9, 1.9].forEach((x) => {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.6, 0.12), poleMat);
+    post.position.set(x, 1.3, -0.6);
+    busStop.add(post);
+  });
+  const bench = new THREE.Mesh(round(3.4, 0.14, 0.6, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x8d6a45, roughness: 0.8 }));
+  bench.position.set(0, 0.5, 0.2);
+  busStop.add(bench);
+  busStop.position.set(292.2, 0, -306);
+  busStop.rotation.y = Math.PI / 2;
+  periph.add(busStop);
+  // árvores da periferia
+  [[288, -234], [310, -232], [288, -330], [311, -352], [290, -358]].forEach(([x, z]) => {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 2.2, 6), trunkMat);
+    trunk.position.set(x, 1.1, z);
+    periph.add(trunk);
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.7, 1), leafMat);
+    crown.position.set(x, 3.2, z);
+    crown.scale.set(1, 0.9, 1);
+    periph.add(crown);
+  });
+
+  // --- cliente distante ---
+  const clientSite = new THREE.Group();
+  riseIn(clientSite, 0.6, 0.78);
+  south.add(clientSite);
+  const clientYard = flatRoad(150, 58, 392, -380, asphaltYardMat, 0.07);
+  south.add(clientYard);
+  const clientWarehouse = new THREE.Group();
+  clientSite.add(clientWarehouse);
+  const cwBody = new THREE.Mesh(round(80, 13, 24, 0.6, 3), wallMat);
+  cwBody.position.set(392, 6.5, -340);
+  clientWarehouse.add(cwBody);
+  const cwRoof = new THREE.Mesh(round(81.6, 0.6, 25.6, 0.3, 2), roofMat);
+  cwRoof.position.set(392, 13.2, -340);
+  clientWarehouse.add(cwRoof);
+  const cwPlinth = new THREE.Mesh(round(80.6, 0.8, 24.6, 0.2, 2), trimMat);
+  cwPlinth.position.set(392, 0.4, -340);
+  clientWarehouse.add(cwPlinth);
+  const cwGlass = new THREE.Mesh(
+    round(76, 4.6, 0.4, 0.1, 2),
+    new THREE.MeshStandardMaterial({ color: 0x4a5c50, roughness: 0.28, metalness: 0.45 }),
+  );
+  cwGlass.position.set(392, 10.2, -351.9);
+  clientWarehouse.add(cwGlass);
+  const cwMullionMat = new THREE.MeshStandardMaterial({ color: 0xf2f5ee, roughness: 0.5, metalness: 0.2 });
+  for (let i = 0; i <= 10; i += 1) {
+    const mullion = new THREE.Mesh(round(0.26, 4.7, 0.5, 0.04, 1), cwMullionMat);
+    mullion.position.set(354 + i * 7.6, 10.2, -352);
+    clientWarehouse.add(mullion);
+  }
+  const cwSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(34, 5.6),
+    makeTextPanel("CLIENTE HORIZONTE", "CENTRO DE DISTRIBUIÇÃO · RECEBIMENTO", 34, 5.6, "#0f1a12", "#8fe04a"),
+  );
+  cwSign.position.set(392, 9.6, -352.15);
+  clientWarehouse.add(cwSign);
+  const cwCanopy = new THREE.Mesh(round(76, 0.25, 5.4, 0.1, 2), concreteMat);
+  cwCanopy.position.set(392, 6.6, -349.4);
+  clientWarehouse.add(cwCanopy);
+  const cwCanopyEdge = new THREE.Mesh(new THREE.BoxGeometry(76, 0.12, 0.16), stripMat);
+  cwCanopyEdge.position.set(392, 6.5, -346.8);
+  clientWarehouse.add(cwCanopyEdge);
+  for (let i = 0; i < 9; i += 1) {
+    const column = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 6.5, 8), poleMat);
+    column.position.set(356 + i * 9, 3.25, -347);
+    clientWarehouse.add(column);
+  }
+  const clientDoorMats: THREE.MeshBasicMaterial[] = [];
+  const clientDoorMeshes: THREE.Mesh[] = [];
+  [360, 376, 392, 408, 424].forEach((x) => {
+    const doorMat = new THREE.MeshBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0 });
+    clientDoorMats.push(doorMat);
+    const door = new THREE.Mesh(round(6, 5.6, 0.22, 0.08, 2), doorMat);
+    door.position.set(x, 3, -351.9);
+    clientDoorMeshes.push(door);
+    clientWarehouse.add(door);
+    const lintel = new THREE.Mesh(round(6.6, 0.5, 1, 0.12, 2), trimMat);
+    lintel.position.set(x, 6.1, -352);
+    clientWarehouse.add(lintel);
+    [-2, 2].forEach((dx) => {
+      const bumper = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 1, 10), trimMat);
+      bumper.rotation.x = Math.PI / 2;
+      bumper.position.set(x + dx, 1, -352.2);
+      clientWarehouse.add(bumper);
+    });
+  });
+  [-20, -6, 8, 22].forEach((dx) => {
+    const unit = new THREE.Mesh(round(3.6, 1.1, 2.6, 0.2, 2), unitMat);
+    unit.position.set(392 + dx, 14, -344);
+    clientWarehouse.add(unit);
+  });
+  const clientLight = new THREE.PointLight(0xffd9a0, 40, 70, 2);
+  clientLight.position.set(392, 6, -362);
+  clientWarehouse.add(clientLight);
+  // vagas pintadas no pátio
+  const clientBayMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.55 });
+  for (let i = 0; i < 12; i += 1) {
+    const bay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 6.4), clientBayMat);
+    bay.position.set(352 + i * 7.6, 0.13, -362);
+    south.add(bay);
+  }
+  const clientBayBar = new THREE.Mesh(new THREE.BoxGeometry(86, 0.02, 0.16), clientBayMat);
+  clientBayBar.position.set(392, 0.13, -358.8);
+  south.add(clientBayBar);
+  // portaria, cancela e totem
+  const cGate = new THREE.Group();
+  cGate.position.set(318, 0, -388);
+  const gateHouse = new THREE.Mesh(round(5, 3, 4, 0.25, 2), wallMat);
+  gateHouse.position.set(0, 1.5, 0);
+  cGate.add(gateHouse);
+  const cGateRoof = new THREE.Mesh(round(5.8, 0.3, 4.8, 0.1, 2), roofMat);
+  cGateRoof.position.set(0, 3.1, 0);
+  cGate.add(cGateRoof);
+  const cGateWindow = new THREE.Mesh(round(3.2, 1.1, 0.12, 0.06, 2), new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.2, metalness: 0.8 }));
+  cGateWindow.position.set(0, 1.9, 2.06);
+  cGate.add(cGateWindow);
+  const cBarrierPost = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.3, 8), trimMat);
+  cBarrierPost.position.set(3.4, 0.65, 3.6);
+  cGate.add(cBarrierPost);
+  const barrierArm = new THREE.Mesh(new THREE.BoxGeometry(7, 0.14, 0.14), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  barrierArm.position.set(6.6, 1.25, 3.6);
+  cGate.add(barrierArm);
+  const stripeA = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
+  stripeA.position.set(4.6, 1.25, 3.6);
+  cGate.add(stripeA);
+  const stripeB = stripeA.clone();
+  stripeB.position.x = 8.2;
+  cGate.add(stripeB);
+  clientSite.add(cGate);
+  const totem = new THREE.Group();
+  const totemPole = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5), trimMat);
+  totemPole.position.y = 3;
+  totem.add(totemPole);
+  const totemPanel = new THREE.Mesh(
+    new THREE.PlaneGeometry(7, 4.2),
+    makeTextPanel("CLIENTE", "HORIZONTE · recebimento", 7, 4.2, "#0f1a12", "#8fe04a"),
+  );
+  totemPanel.position.set(0, 5.6, 0.3);
+  totem.add(totemPanel);
+  totem.position.set(306, 0, -396);
+  totem.rotation.y = Math.PI * 0.25;
+  clientSite.add(totem);
+  // estacionamento de visitantes
+  [0xffffff, 0x2f3a34, 0x63b32e].forEach((color, index) => {
+    const car = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.65 });
+    const body = new THREE.Mesh(round(1.95, 0.72, 4.3, 0.3, 3), bodyMat);
+    body.position.y = 0.66;
+    const cabin = new THREE.Mesh(round(1.72, 0.62, 2.2, 0.28, 3), southGlassMat);
+    cabin.position.set(0, 1.2, -0.1);
+    car.add(body, cabin);
+    const wg = new THREE.CylinderGeometry(0.36, 0.36, 0.26, 10);
+    wg.rotateZ(Math.PI / 2);
+    [
+      [0.95, 1.35],
+      [-0.95, 1.35],
+      [0.95, -1.35],
+      [-0.95, -1.35],
+    ].forEach(([x, z]) => {
+      const wheel = new THREE.Mesh(wg, southTireMat);
+      wheel.position.set(x, 0.36, z);
+      car.add(wheel);
+    });
+    car.position.set(336 + index * 5, 0, -398);
+    car.rotation.y = Math.PI / 2;
+    clientSite.add(car);
+  });
+  // paletes, cones e contêiner no pátio do cliente
+  const yardBoxMat = new THREE.MeshStandardMaterial({ color: 0xc9a877, roughness: 0.95 });
+  const yardPalletMat = new THREE.MeshStandardMaterial({ color: 0xa77b4c, roughness: 0.95 });
+  [
+    [368, -356.6, 2],
+    [378, -356.6, 3],
+    [410, -356.6, 1],
+  ].forEach(([x, z, count]) => {
+    const base = new THREE.Mesh(round(1.3, 0.14, 1.1, 0.04, 1), yardPalletMat);
+    base.position.set(x, 0.07, z);
+    clientSite.add(base);
+    for (let k = 0; k < count; k += 1) {
+      const box = new THREE.Mesh(round(1.1, 0.8, 0.9, 0.04, 1), yardBoxMat);
+      box.position.set(x, 0.54 + k * 0.82, z);
+      clientSite.add(box);
+    }
+  });
+  const yardConeMat = new THREE.MeshStandardMaterial({ color: 0xf07a2a, roughness: 0.6 });
+  for (let i = 0; i < 7; i += 1) {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.66, 12), yardConeMat);
+    cone.position.set(352 + i * 12, 0.33, -364.5);
+    clientSite.add(cone);
+  }
+  const container = new THREE.Mesh(round(6, 2.6, 2.4, 0.08, 1), new THREE.MeshStandardMaterial({ color: 0x3f6a7d, roughness: 0.7, metalness: 0.3 }));
+  container.position.set(452, 1.3, -394);
+  container.rotation.y = 0.12;
+  clientSite.add(container);
+
+  // postes de luz do pátio
+  [344, 372, 400, 428, 450].forEach((x) => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 7, 8), poleMat);
+    pole.position.set(x, 3.5, -402);
+    clientSite.add(pole);
+    const head = new THREE.Mesh(round(1.2, 0.16, 0.5, 0.06, 1), lampMat);
+    head.position.set(x, 7, -401.2);
+    clientSite.add(head);
+  });
+  // cerca do pátio
+  for (let x = 322; x <= 462; x += 4) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.6, 0.12), guardMat);
+    post.position.set(x, 0.8, -408);
+    clientSite.add(post);
+  }
+  const fenceRail = new THREE.Mesh(new THREE.BoxGeometry(140, 0.08, 0.08), guardMat);
+  fenceRail.position.set(392, 1.5, -408);
+  clientSite.add(fenceRail);
+  // empilhadeira do cliente
+  const clientForklift = new THREE.Group();
+  const cfBody = new THREE.Mesh(round(1.9, 1.3, 2.8, 0.3, 3), new THREE.MeshStandardMaterial({ color: 0xf0b13a, roughness: 0.5, metalness: 0.35 }));
+  cfBody.position.y = 1.05;
+  clientForklift.add(cfBody);
+  const cfMast = new THREE.Mesh(round(0.35, 3.2, 0.3, 0.1, 2), trimMat);
+  cfMast.position.set(0, 1.9, 1.35);
+  clientForklift.add(cfMast);
+  const cfSeat = new THREE.Mesh(round(0.8, 0.7, 0.8, 0.2, 2), trimMat);
+  cfSeat.position.set(0, 1.95, -0.3);
+  clientForklift.add(cfSeat);
+  const cfWheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 14);
+  cfWheelGeo.rotateZ(Math.PI / 2);
+  [
+    [0.9, 1],
+    [-0.9, 1],
+    [0.9, -0.9],
+    [-0.9, -0.9],
+  ].forEach(([x, z]) => {
+    const wheel = new THREE.Mesh(cfWheelGeo, southTireMat);
+    wheel.position.set(x, 0.42, z);
+    clientForklift.add(wheel);
+  });
+  clientForklift.position.set(392, 0, -364);
+  clientForklift.rotation.y = Math.PI / 2;
+  clientSite.add(clientForklift);
+
+  // escritório de recebimento do cliente (tela com o dashboard)
+  const clientOffice = new THREE.Group();
+  clientOffice.position.set(446, 0, -368);
+  clientSite.add(clientOffice);
+  const coShell = new THREE.Mesh(round(16, 9, 14, 0.4, 3), wallMat);
+  coShell.position.y = 4.5;
+  clientOffice.add(coShell);
+  const coRoof = new THREE.Mesh(round(17, 0.5, 15, 0.25, 2), roofMat);
+  coRoof.position.y = 9.2;
+  clientOffice.add(coRoof);
+  const coGlass = new THREE.Mesh(
+    round(10, 6.4, 0.2, 0.1, 2),
+    new THREE.MeshStandardMaterial({ color: 0xcfe6ee, roughness: 0.08, metalness: 0.9, transparent: true, opacity: 0.2 }),
+  );
+  coGlass.position.set(0, 4.2, -7.05);
+  clientOffice.add(coGlass);
+  const coAwning = new THREE.Mesh(round(17, 0.3, 3, 0.12, 2), roofMat);
+  coAwning.position.set(0, 9.3, -7.6);
+  clientOffice.add(coAwning);
+  // fachada: porta, janelas e faixa
+  const coDoor = new THREE.Mesh(round(0.16, 2.7, 1.7, 0.06, 2), southGlassMat);
+  coDoor.position.set(-8.06, 1.35, 5.4);
+  clientOffice.add(coDoor);
+  const coWinMat = new THREE.MeshStandardMaterial({ color: 0x223029, roughness: 0.15, metalness: 0.8 });
+  [-5.6, 5.6].forEach((dz) => {
+    const win = new THREE.Mesh(round(0.14, 2.1, 3, 0.05, 1), coWinMat);
+    win.position.set(-8.06, 5.6, dz);
+    clientOffice.add(win);
+  });
+  const coBand = new THREE.Mesh(round(0.1, 0.18, 15.6, 0.04, 1), new THREE.MeshBasicMaterial({ color: BRAND }));
+  coBand.position.set(-8.04, 8.2, 0);
+  clientOffice.add(coBand);
+  const coPlinth = new THREE.Mesh(round(16.6, 0.7, 14.6, 0.2, 2), trimMat);
+  coPlinth.position.set(0, 0.35, 0);
+  clientOffice.add(coPlinth);
+  const coLight = new THREE.PointLight(0xfff3dd, 26, 30, 2);
+  coLight.position.set(0, 6.5, 4);
+  clientOffice.add(coLight);
+
+  // trajeto completo do caminhão protagonista (avenida -> trevo -> via expressa -> periferia -> cliente)
+  const heroRoute = new THREE.CatmullRomCurve3(
+    HERO_ROUTE.map(([x, z]) => new THREE.Vector3(x, 0, z)),
+    false,
+    "centripetal",
+    0.5,
+  );
+  const heroRouteLength = heroRoute.getLength();
+  const heroSamples = 1600;
+  const heroSpaced = heroRoute.getSpacedPoints(heroSamples);
+  const heroPointPhases: number[] = [];
+  {
+    let cursor = 0;
+    HERO_ROUTE.forEach(([x, z]) => {
+      let best = Infinity;
+      let bestIndex = cursor;
+      for (let i = cursor; i < heroSpaced.length; i += 1) {
+        const dx = heroSpaced[i].x - x;
+        const dz = heroSpaced[i].z - z;
+        const d = dx * dx + dz * dz;
+        if (d < best) {
+          best = d;
+          bestIndex = i;
+        }
+      }
+      cursor = bestIndex;
+      heroPointPhases.push(bestIndex / heroSamples);
+    });
+  }
+  const heroPhaseAt = (waypoint: number) => heroPointPhases[Math.max(0, Math.min(heroPointPhases.length - 1, waypoint))];
+  // paradas nos semáforos da avenida e no trevo: fase em que a frente do caminhão chega à faixa
+  const heroStops: number[] = [];
+  [42, 30, -42, -96, -150].forEach((crossZ) => {
+    const limit = crossZ + 8.6;
+    const index = heroSpaced.findIndex((pt) => pt.x < -2 && pt.z <= limit);
+    if (index > 0) heroStops.push(index / heroSamples);
+  });
+  {
+    const index = heroSpaced.findIndex((pt) => pt.z <= -181);
+    if (index > 0) heroStops.push(index / heroSamples);
+  }
+  heroStops.sort((a, b) => a - b);
+  function heroPhaseFor(progress: number) {
+    if (progress <= HERO_ROUTE_KEYS[0][0]) return 0;
+    for (let k = 0; k < HERO_ROUTE_KEYS.length - 1; k += 1) {
+      const [pa, wa] = HERO_ROUTE_KEYS[k];
+      const [pb2, wb] = HERO_ROUTE_KEYS[k + 1];
+      if (progress <= pb2) {
+        const raw = clamp01((progress - pa) / (pb2 - pa));
+        const t = raw * raw * (3 - 2 * raw);
+        return lerp(heroPhaseAt(wa), heroPhaseAt(wb), t);
+      }
+    }
+    return heroPhaseAt(HERO_ROUTE_KEYS[HERO_ROUTE_KEYS.length - 1][1]);
+  }
 
   const truck = new THREE.Group();
   const proceduralBodies: { group: THREE.Group; parts: THREE.Object3D[] }[] = [];
@@ -1114,16 +2221,46 @@ hub.scale.setScalar(1.15);
   tagCtx.fillText("GT-1024", 74, 66);
   tagCtx.fillStyle = "#8fe04a";
   tagCtx.font = "600 26px Inter, sans-serif";
-  tagCtx.fillText("PEDIDO #4821 · INDO PARA SÃO PAULO", 74, 128);
+  tagCtx.fillText("PEDIDO #4821 · INDO PARA O CLIENTE", 74, 128);
   tagCtx.fillStyle = "rgba(244,248,239,0.55)";
   tagCtx.font = "500 22px Inter, sans-serif";
   tagCtx.fillText("Tracking em tempo real · getTMS", 74, 166);
   const tagTex = track(new THREE.CanvasTexture(tagCanvas));
   tagTex.colorSpace = THREE.SRGBColorSpace;
   const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
-  tagSprite.scale.set(11, 3.4, 1);
-  tagSprite.position.set(0, 8.4, -2);
+  tagSprite.scale.set(8.6, 2.7, 1);
+  tagSprite.position.set(0, 7.8, -2);
   truck.add(tagSprite);
+
+  const doneCanvas = document.createElement("canvas");
+  doneCanvas.width = 640;
+  doneCanvas.height = 200;
+  const doneCtx = doneCanvas.getContext("2d")!;
+  doneCtx.fillStyle = "rgba(10,16,11,0.92)";
+  doneCtx.beginPath();
+  doneCtx.roundRect(8, 8, 624, 184, 28);
+  doneCtx.fill();
+  doneCtx.fillStyle = "#8fe04a";
+  doneCtx.beginPath();
+  doneCtx.arc(46, 66, 12, 0, Math.PI * 2);
+  doneCtx.fill();
+  doneCtx.fillStyle = "#f4f8ef";
+  doneCtx.font = "700 44px Sora, Inter, sans-serif";
+  doneCtx.textBaseline = "middle";
+  doneCtx.fillText("GT-1024", 74, 66);
+  doneCtx.fillStyle = "#8fe04a";
+  doneCtx.font = "600 26px Inter, sans-serif";
+  doneCtx.fillText("PEDIDO #4821 · ENTREGUE NO CLIENTE", 74, 128);
+  doneCtx.fillStyle = "rgba(244,248,239,0.55)";
+  doneCtx.font = "500 22px Inter, sans-serif";
+  doneCtx.fillText("Comprovante assinado · 14:38 · getTMS", 74, 166);
+  const doneTex = track(new THREE.CanvasTexture(doneCanvas));
+  doneTex.colorSpace = THREE.SRGBColorSpace;
+  const doneSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: doneTex, transparent: true, depthWrite: false }));
+  doneSprite.scale.set(8.6, 2.7, 1);
+  doneSprite.position.set(0, 7.8, -2);
+  doneSprite.visible = false;
+  truck.add(doneSprite);
 
   const headGlow = new THREE.PointLight(0xffe7b0, 26, 26, 2);
   headGlow.position.set(0, 1.9, 6.4);
@@ -1436,7 +2573,7 @@ hub.scale.setScalar(1.15);
   vanShadow.position.y = 0.12;
   van.add(vanShadow);
 
-  van.position.set(-3.2, 0, -110);
+  van.position.set(-1.4, 0, -110);
   van.rotation.y = Math.PI;
 
   // ---------------------------------------------------------------- pessoas
@@ -1579,10 +2716,10 @@ hub.scale.setScalar(1.15);
     cars.push({ group, wheels: carWheels, speed, offset, lane, dir, delay });
   }
 
-  addCar(0xffffff, 2.9, 1, 0.055, 0.15, 0.06);
-  addCar(0x63b32e, 2.9, 1, 0.042, 0.62, 0.08);
-  addCar(0x2f3a34, -2.9, -1, 0.05, 0.35, 0.07);
-  addCar(0xe8ede4, -2.9, -1, 0.038, 0.82, 0.09);
+  addCar(0xffffff, 1.5, 1, 0.055, 0.15, 0.06);
+  addCar(0x63b32e, 1.5, 1, 0.042, 0.62, 0.08);
+  addCar(0x2f3a34, -1.5, -1, 0.05, 0.35, 0.07);
+  addCar(0xe8ede4, -1.5, -1, 0.038, 0.82, 0.09);
 
   // ---------------------------------------------------------------- drone
   const drone = new THREE.Group();
@@ -1933,13 +3070,48 @@ hub.scale.setScalar(1.15);
 
   const roadFleet = ["GT-2201", "GT-8834"].map((name, index) => {
     const vehicle = makeSimpleTruck(name);
-    const dir = index % 2 === 0 ? -1 : 1;
-    vehicle.rotation.y = Math.PI;
+    const dir = 1;
+    vehicle.rotation.y = 0;
     vehicle.scale.setScalar(0.94);
-    vehicle.position.set(3.6, 0, 0);
+    vehicle.position.set(4.4, 0, 0);
     vehicle.add(makeStatusTag(name, fleetStatus[index][0], fleetStatus[index][1]));
     scene.add(vehicle);
-    return { mesh: vehicle, lane: 3.6, speed: 7 + index * 2, offset: index * 46, dir };
+    return { mesh: vehicle, lane: 4.4, speed: 7 + index * 2, offset: index * 46, dir };
+  });
+
+  // caminhão já carregando na doca 5 do cliente
+  const dockedTruck = makeCabOverSource();
+  dockedTruck.position.set(424, 0, -357.5);
+  dockedTruck.rotation.y = Math.PI / 2;
+  dockedTruck.scale.setScalar(0.94);
+  clientSite.add(dockedTruck);
+
+  // tráfego contínuo na via expressa e na periferia
+  const highwayTraffic: { mesh: THREE.Group; lane: number; speed: number; offset: number; dir: number; from: number; to: number }[] = [];
+  [
+    { name: "GT-6410", lane: -199.6, speed: 16, offset: 0, dir: 1, from: -30, to: 540 },
+    { name: "GT-7721", lane: -199.6, speed: 13, offset: 260, dir: 1, from: -30, to: 540 },
+    { name: "GT-3908", lane: -189.8, speed: 15, offset: 90, dir: -1, from: 540, to: -30 },
+    { name: "GT-5126", lane: -189.8, speed: 12, offset: 380, dir: -1, from: 540, to: -30 },
+  ].forEach((item, index) => {
+    const vehicle = makeSimpleTruck(item.name);
+    vehicle.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    vehicle.scale.setScalar(0.92);
+    vehicle.position.set(item.from, 0, item.lane);
+    scene.add(vehicle);
+    highwayTraffic.push({ mesh: vehicle, lane: item.lane, speed: item.speed, offset: item.offset, dir: item.dir, from: item.from, to: item.to });
+    if (index === 0) {
+      vehicle.add(makeStatusTag(item.name, "PEDIDO #4830 · EM TRÂNSITO", "Cliente Horizonte"));
+    }
+  });
+  const peripheryTraffic: { mesh: THREE.Group; speed: number; offset: number }[] = [];
+  ["GT-8810"].forEach((name) => {
+    const vehicle = makeSimpleTruck(name);
+    vehicle.rotation.y = 0;
+    vehicle.scale.setScalar(0.8);
+    vehicle.position.set(301.4, 0, -240);
+    scene.add(vehicle);
+    peripheryTraffic.push({ mesh: vehicle, speed: 4.2, offset: 0 });
   });
 
   // ---------------------------------------------------------------- CD do cliente
@@ -2313,6 +3485,26 @@ hub.scale.setScalar(1.15);
   const heroBezel = new THREE.Mesh(round(3.4, 2.2, 0.08, 0.05, 2), new THREE.MeshStandardMaterial({ color: 0x1a211c, roughness: 0.5 }));
   heroBezel.position.set(0, 3.2, 6.68);
   office.add(heroBezel);
+
+  // painel de recebimento do cliente distante: mesma fonte de dados da plataforma
+  const clientScreenMat = new THREE.MeshBasicMaterial({ map: heroTextures[2], transparent: true });
+  const clientScreenBezel = new THREE.Mesh(
+    round(0.18, 4.8, 9.2, 0.06, 2),
+    new THREE.MeshStandardMaterial({ color: 0x1a211c, roughness: 0.5 }),
+  );
+  clientScreenBezel.position.set(-8.14, 4.9, 0);
+  clientOffice.add(clientScreenBezel);
+  const clientScreen = new THREE.Mesh(new THREE.PlaneGeometry(8.8, 4.3), clientScreenMat);
+  clientScreen.position.set(-8.26, 4.9, 0);
+  clientScreen.rotation.y = -Math.PI / 2;
+  clientOffice.add(clientScreen);
+  const clientScreenTag = new THREE.Mesh(
+    new THREE.PlaneGeometry(6, 1),
+    makeTextPanel("RECEBIMENTO · DADOS EM TEMPO REAL", "", 6, 1, "#0f1a12", "#8fe04a"),
+  );
+  clientScreenTag.position.set(-8.3, 1.9, 0);
+  clientScreenTag.rotation.y = -Math.PI / 2;
+  clientOffice.add(clientScreenTag);
   let heroView: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   const monitorMats: THREE.MeshBasicMaterial[] = [];
   const screenTextures = [0, 1, 2].map((kind) => track(makeScreenTexture(kind)));
@@ -2646,6 +3838,10 @@ hub.scale.setScalar(1.15);
 
   const lookTarget = new THREE.Vector3();
   const camPos = new THREE.Vector3();
+  const truckPoint = new THREE.Vector3();
+  const truckTangent = new THREE.Vector3();
+  const chasePos = new THREE.Vector3();
+  const chaseLook = new THREE.Vector3();
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
@@ -2707,8 +3903,23 @@ hub.scale.setScalar(1.15);
     );
   }
 
+  function sampleChase(p: number) {
+    let i = 0;
+    while (i < CHASE_KEYS.length - 2 && p > CHASE_KEYS[i + 1].t) i += 1;
+    const a = CHASE_KEYS[i];
+    const b = CHASE_KEYS[i + 1];
+    const raw = clamp01((p - a.t) / (b.t - a.t));
+    const t = raw * raw * (3 - 2 * raw);
+    return {
+      ahead: lerp(a.ahead, b.ahead, t),
+      height: lerp(a.height, b.height, t),
+      side: lerp(a.side, b.side, t),
+      look: lerp(a.look, b.look, t),
+    };
+  }
+
   function applyProgress(p: number, time: number) {
-    const frameDt = Math.min(0.05, Math.max(0.001, time - lastFrameTime));
+    const frameDt = Math.min(0.12, Math.max(0.001, time - lastFrameTime));
     lastFrameTime = time;
     const pb = Math.max(0.86, p);
     groundUniforms.uProgress.value = easeOut(range(pb, 0.0, 0.22));
@@ -2732,58 +3943,42 @@ hub.scale.setScalar(1.15);
       (node.beam.material as THREE.MeshBasicMaterial).opacity = t * 0.14;
     });
 
-    // caminhão: aproxima, estaciona na doca e depois parte
-    const enter = easeInOut(range(pb, 0.05, 0.24));
-    const drive = easeInOut(range(pb, 0.62, 0.78));
-    const swing = easeInOut(range(pb, 0.78, 0.85));
-    const reverse = easeInOut(range(pb, 0.85, 0.92));
-
-    // velocidade com aceleração e frenagem nas docas
-    const dockBell = Math.exp(-Math.pow((truckPhase - 0.62) / 0.09, 2));
-    const speedTarget = 0.017 * (1 - 0.72 * dockBell);
-    const accel = (speedTarget - truckSpeed) * Math.min(1, frameDt * 2.2);
-    truckSpeed += accel;
-    truckPhase = (truckPhase + truckSpeed * frameDt) % 1;
-    const loopT = truckPhase;
-    // rota retangular pelas ruas reais: avenida -> transversal -> paralela -> transversal
-    const routePts = [
-      new THREE.Vector2(2.6, 70),
-      new THREE.Vector2(2.6, -96),
-      new THREE.Vector2(-140, -96),
-      new THREE.Vector2(-140, 30),
-    ];
-    const segLens = routePts.map((pt, i) => pt.distanceTo(routePts[(i + 1) % routePts.length]));
-    const routeTotal = segLens.reduce((a, b) => a + b, 0);
-    let routeDist = (truckPhase * routeTotal) % routeTotal;
-    let segIndex = 0;
-    while (routeDist > segLens[segIndex]) {
-      routeDist -= segLens[segIndex];
-      segIndex = (segIndex + 1) % 4;
+    // caminhão protagonista: avenida inteira -> trevo -> via expressa -> periferia -> doca do cliente
+    const signalCycle = (time * 0.14) % 2;
+    const signalGreen = signalCycle < 1.15;
+    const routeTarget = heroPhaseFor(p);
+    const routeGap = routeTarget - truckPhase;
+    let truckStep = THREE.MathUtils.clamp(routeGap * 2.6, -0.45, 0.45);
+    // saltos grandes de rolagem: o caminhão "acelera" para alcançar a cena
+    if (Math.abs(routeGap) > 0.12) truckStep = THREE.MathUtils.clamp(routeGap * 4, -1.1, 1.1);
+    if (Math.abs(routeGap) < 0.0035) truckStep = routeTarget > 0.995 ? 0 : 0.0045;
+    // só obedece o semáforo quando está no ritmo da rolagem (quem rola rápido não fica preso)
+    if (truckStep > 0 && !signalGreen && routeGap < 0.05) {
+      for (const stop of heroStops) {
+        if (stop > truckPhase && stop <= truckPhase + truckStep * frameDt + 0.0004) {
+          truckStep = Math.max(0, (stop - truckPhase) / Math.max(frameDt, 0.001));
+          break;
+        }
+      }
     }
-    const fromPt = routePts[segIndex];
-    const toPt = routePts[(segIndex + 1) % 4];
-    const segT = segLens[segIndex] > 0 ? routeDist / segLens[segIndex] : 0;
-    const truckX = fromPt.x + (toPt.x - fromPt.x) * segT;
-    let truckZ = fromPt.y + (toPt.y - fromPt.y) * segT;
-    // caminhao protagonista tambem respeita o sinal: para antes da faixa do cruzamento
-    const heroSignal = ((Date.now() / 1000) * 0.14) % 2;
-    if (segIndex === 0 && heroSignal >= 1.15 && truckZ <= 46 && truckZ >= 40) {
-      truckZ = 46;
-    }
-    truck.position.set(truckX, 0, truckZ);
-    const targetHeading = Math.atan2(toPt.x - fromPt.x, toPt.y - fromPt.y);
+    const previousPhase = truckPhase;
+    truckPhase = clamp01(truckPhase + truckStep * frameDt);
+    truckSpeed = (truckPhase - previousPhase) / Math.max(frameDt, 0.001);
+    heroRoute.getPointAt(Math.min(0.99999, truckPhase), truckPoint);
+    heroRoute.getTangentAt(Math.min(0.99999, truckPhase), truckTangent);
+    truck.position.set(truckPoint.x, 0, truckPoint.z);
+    const targetHeading = Math.atan2(truckTangent.x, truckTangent.z);
     let turnDelta = targetHeading - truck.rotation.y;
     while (turnDelta > Math.PI) turnDelta -= Math.PI * 2;
     while (turnDelta < -Math.PI) turnDelta += Math.PI * 2;
-    truck.rotation.y += turnDelta * 0.12;
-    truck.rotation.z = THREE.MathUtils.clamp(accel * 6, -0.02, 0.02);
-    truck.rotation.x = -Math.abs(accel) * 1.2;
+    truck.rotation.y += turnDelta * Math.min(1, frameDt * 5);
+    truck.rotation.z = 0;
+    truck.rotation.x = 0;
     truck.visible = true;
-    wheelSpinAcc += truckSpeed * frameDt * 520;
+    wheelSpinAcc += truckSpeed * heroRouteLength * frameDt * 2;
     wheels.forEach((wheel) => {
       wheel.rotation.x = wheelSpinAcc;
     });
-
     smallDockTrucks.forEach((item) => {
       const cycle = ((time * 0.55 + item.phase) % 36) / 36;
       let a = 0;
@@ -2805,15 +4000,13 @@ hub.scale.setScalar(1.15);
       item.mesh.rotation.y = 0;
     });
 
-    const signalCycle = (time * 0.14) % 2;
-    const signalGreen = signalCycle < 1.15;
     roadFleet.forEach((item, fleetIndex) => {
-      const span = 112;
+      const span = 238;
       const travelled = (time * item.speed + item.offset) % span;
-      let z = 70 - travelled;
+      let z = -142 + travelled;
       // respeita o semaforo do cruzamento: para antes da faixa e espera o verde
-      const stopZ = 35.2 + fleetIndex * 5.5;
-      if (!signalGreen && z > stopZ && z < stopZ + 8) {
+      const stopZ = 20 + fleetIndex * 7;
+      if (!signalGreen && z > stopZ && z < stopZ + 12) {
         z = stopZ;
       }
       item.mesh.position.z = z;
@@ -3007,6 +4200,58 @@ hub.scale.setScalar(1.15);
       flow.curve.getPointAt(travel, dot.position);
     });
 
+    // montagem do sul: trevo, via expressa, trecho rural, periferia e cliente
+    revealFades.forEach((item) => {
+      item.mat.opacity = item.base * easeOut(range(pb, item.from, item.to));
+    });
+    riseGroups.forEach((item) => {
+      const t = easeOut(range(pb, item.from, item.to));
+      item.group.scale[item.axis] = Math.max(0.001, t);
+    });
+
+    // semáforos trocam de cor junto com o ciclo
+    signalLamps.forEach((lamp) => {
+      lamp.red.color.setHex(signalGreen ? 0x3a1d18 : 0xff5a3c);
+      lamp.green.color.setHex(signalGreen ? 0x8fe04a : 0x26341f);
+    });
+
+    // tráfego da via expressa
+    highwayTraffic.forEach((item, index) => {
+      const span = Math.abs(item.to - item.from);
+      const travelled = (time * item.speed + item.offset) % span;
+      const x = item.dir > 0 ? item.from + travelled : item.from - travelled;
+      item.mesh.position.set(x, 0, item.lane);
+      item.mesh.visible = p > 0.3;
+      if (index === 0) item.mesh.visible = p > 0.34;
+    });
+    peripheryTraffic.forEach((item) => {
+      const span = 120;
+      const travelled = (time * item.speed + item.offset) % span;
+      item.mesh.position.set(301.4, 0, -366 + travelled);
+      item.mesh.visible = p > 0.46;
+    });
+
+    // entrega no cliente: porta da doca abre, empilhadeira trabalha e etiqueta vira "entregue"
+    const atClient = range(p, 0.74, 0.8);
+    clientDoorMats.forEach((material, index) => {
+      const active = index === 2 ? 1 : 0.55;
+      material.opacity = atClient * active * (0.8 + Math.sin(time * 1.6 + index) * 0.15);
+    });
+    clientDoorMeshes.forEach((door, index) => {
+      const open = index === 2 ? atClient : 0;
+      door.scale.y = 1 - open * 0.92;
+      door.position.y = 3 + open * 2.6;
+    });
+    const cfSwing = (time * 0.25) % 2;
+    const cfPhase = cfSwing < 1 ? cfSwing : 2 - cfSwing;
+    const cfEase = cfPhase * cfPhase * (3 - 2 * cfPhase);
+    clientForklift.position.set(lerp(386, 395, cfEase), 0, lerp(-368, -359, cfEase));
+    clientForklift.rotation.y = cfSwing < 1 ? 0 : Math.PI;
+    const delivered = truckPhase > 0.985 && p > 0.86;
+    doneSprite.visible = delivered;
+    tagSprite.visible = !delivered && p < 0.83;
+    if (clientScreenMat) clientScreenMat.opacity = easeOut(range(pb, 0.8, 0.9));
+
     // rota
     const routeT = easeInOut(range(pb, 0.48, 0.82));
     const indexCount = tubeGeo.index ? tubeGeo.index.count : 0;
@@ -3061,7 +4306,7 @@ hub.scale.setScalar(1.15);
     } else {
       sampleCamera(current, camPos, lookTarget);
     }
-    const chapterMids = [0.13, 0.25, 0.37, 0.49, 0.61, 0.705, 0.78, 0.87, 0.94, 1.04];
+    const chapterMids = [0.13, 0.25, 0.37, 0.48, 0.57, 0.63, 0.71, 0.8, 0.89, 0.97];
     let bell = 0;
     chapterMids.forEach((mid) => {
       bell = Math.max(bell, Math.max(0, 1 - Math.abs(current - mid) / 0.065));
@@ -3075,35 +4320,38 @@ hub.scale.setScalar(1.15);
       camPos.sub(lookTarget).multiplyScalar(pull).add(lookTarget);
     }
 
-    camPos.x += smoothX * 2.6;
-    camPos.y += smoothY * 1.8;
-    // take cinematografico: camera acompanha o caminhao no inicio da pagina
-    if (!segmentView && current < 0.28) {
-      const followT = Math.min(1, Math.max(0, (current - 0.17) / 0.11));
-      const followW = 1 - followT * followT * (3 - 2 * followT);
+    // take cinematográfico: a câmera acompanha o caminhão da avenida até a doca do cliente
+    const chaseIn = THREE.MathUtils.smoothstep(current, 0.25, 0.33);
+    const chaseOut = 1 - THREE.MathUtils.smoothstep(current, 0.82, 0.885);
+    const chaseW = segmentView ? 0 : chaseIn * chaseOut;
+    if (chaseW > 0.001) {
+      const chase = sampleChase(current);
       const rawHeading = truck.rotation.y;
       let deltaHeading = rawHeading - camHeading;
       while (deltaHeading > Math.PI) deltaHeading -= Math.PI * 2;
       while (deltaHeading < -Math.PI) deltaHeading += Math.PI * 2;
-      camHeading += deltaHeading * 0.06;
-      const heading = camHeading;
-      const fwdX = Math.sin(heading);
-      const fwdZ = Math.cos(heading);
-      const rightX = Math.cos(heading);
-      const rightZ = -Math.sin(heading);
-      followPos.set(
-        truck.position.x - fwdX * 24 + rightX * 1.5,
-        14,
-        truck.position.z - fwdZ * 24 + rightZ * 1.5,
+      camHeading += deltaHeading * Math.min(1, dt * 2.4);
+      const fwdX = Math.sin(camHeading);
+      const fwdZ = Math.cos(camHeading);
+      const rightX = Math.cos(camHeading);
+      const rightZ = -Math.sin(camHeading);
+      const chasePull = aspect < 1.3 ? Math.min(1.7, 1.25 / aspect) : 1;
+      chasePos.set(
+        truck.position.x - fwdX * chase.ahead * chasePull + rightX * chase.side,
+        chase.height * chasePull,
+        truck.position.z - fwdZ * chase.ahead * chasePull + rightZ * chase.side,
       );
-      followLook.set(
-        truck.position.x + fwdX * 10,
-        2.6,
-        truck.position.z + fwdZ * 10,
+      chaseLook.set(
+        truck.position.x + fwdX * chase.look,
+        2.8,
+        truck.position.z + fwdZ * chase.look,
       );
-      camPos.lerp(followPos, followW);
-      lookTarget.lerp(followLook, followW);
+      camPos.lerp(chasePos, chaseW);
+      lookTarget.lerp(chaseLook, chaseW);
     }
+
+    camPos.x += smoothX * 2.6 * (1 - chaseW * 0.7);
+    camPos.y += smoothY * 1.8 * (1 - chaseW * 0.7);
 
     if (!segmentView) {
       camera.position.copy(camPos);
@@ -3149,8 +4397,8 @@ hub.scale.setScalar(1.15);
     const lamp = new THREE.MeshBasicMaterial({ color: 0xfff6dc });
     const rearLamp = new THREE.MeshBasicMaterial({ color: 0xd8352a });
     // chassis
-    const chassis = new THREE.Mesh(round(2.2, 0.42, 14.6, 0.08, 1), dark);
-    chassis.position.set(0, 0.95, -0.4);
+    const chassis = new THREE.Mesh(round(2.2, 0.42, 16, 0.08, 1), dark);
+    chassis.position.set(0, 0.95, -1.0);
     root.add(chassis);
     // cabine toco
     const cab = new THREE.Mesh(round(2.5, 2.85, 2.35, 0.28, 3), body);
@@ -3216,39 +4464,45 @@ hub.scale.setScalar(1.15);
     root.add(fifth);
     // carreta
     const trailer = new THREE.Mesh(round(2.56, 2.95, 12.4, 0.12, 2), body);
-    trailer.position.set(0, 3.05, -4.4);
+    trailer.position.set(0, 2.98, -2.9);
     root.add(trailer);
-    const skirt = new THREE.Mesh(round(2.6, 0.5, 12.4, 0.08, 1), dark);
-    skirt.position.set(0, 1.2, -4.4);
+    const skirt = new THREE.Mesh(round(2.6, 0.55, 12.4, 0.08, 1), dark);
+    skirt.position.set(0, 1.18, -2.9);
     root.add(skirt);
     const stripe = new THREE.Mesh(round(2.6, 0.16, 12.42, 0.05, 1), new THREE.MeshBasicMaterial({ color: 0x63b32e }));
-    stripe.position.set(0, 1.52, -4.4);
+    stripe.position.set(0, 1.5, -2.9);
     root.add(stripe);
     const rear = new THREE.Mesh(round(2.5, 2.7, 0.14, 0.06, 1), dark);
-    rear.position.set(0, 3.0, -10.62);
+    rear.position.set(0, 2.94, -9.12);
     root.add(rear);
     [-0.8, 0.8].forEach((x) => {
       const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.06), rearLamp);
-      tail.position.set(x, 1.35, -10.66);
+      tail.position.set(x, 1.32, -9.16);
       root.add(tail);
     });
     // rodas
     const tire = new THREE.MeshStandardMaterial({ color: 0x20241f, roughness: 0.9 });
     const rim = new THREE.MeshStandardMaterial({ color: 0xcfd4d6, roughness: 0.3, metalness: 0.8 });
-    const wheelGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.36, 20);
+    const wheelGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.4, 20);
     wheelGeo.rotateZ(Math.PI / 2);
-    const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.38, 16);
+    const rimGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.42, 16);
     rimGeo.rotateZ(Math.PI / 2);
-    [6.3, -1.4, -2.9, -6.6, -8.1].forEach((z) => {
-      [-1.14, 1.14].forEach((x) => {
+    [6.4, 0.6, -0.8, -8.4, -7.0, -5.6].forEach((z) => {
+      [-1.12, 1.12].forEach((x) => {
         const wheel = new THREE.Mesh(wheelGeo, tire);
-        wheel.position.set(x, 0.52, z);
+        wheel.position.set(x, 0.62, z);
         wheel.name = "wheel";
         root.add(wheel);
         const hub = new THREE.Mesh(rimGeo, rim);
-        hub.position.set(x, 0.52, z);
+        hub.position.set(x, 0.62, z);
         root.add(hub);
       });
+    });
+    // paralamas traseiros ligam as rodas à carreta
+    [-8.4, -7.0, -5.6].forEach((z) => {
+      const fender = new THREE.Mesh(round(2.5, 0.1, 1.5, 0.06, 1), dark);
+      fender.position.set(0, 1.42, z);
+      root.add(fender);
     });
     root.traverse((child) => {
       child.castShadow = false;
@@ -3382,6 +4636,8 @@ hub.scale.setScalar(1.15);
     setFeatureScreen(index: number) {
       heroMat.map = heroTextures[Math.max(0, Math.min(3, index))];
       heroMat.needsUpdate = true;
+      clientScreenMat.map = heroTextures[Math.max(0, Math.min(3, index))];
+      clientScreenMat.needsUpdate = true;
     },
     setSegmentView(kind: string | null) {
       if (!kind) {
@@ -3397,11 +4653,17 @@ hub.scale.setScalar(1.15);
       pointerX = x;
       pointerY = y;
     },
+    snapTruck() {
+      truckPhase = heroPhaseFor(current);
+    },
     debugCam() {
       return {
         pos: [camera.position.x, camera.position.y, camera.position.z],
         zoom: segmentZoom,
         view: segmentView ? "set" : "null",
+        truck: [truck.position.x, truck.position.z],
+        phase: truckPhase,
+        progress: current,
       };
     },
     resize,

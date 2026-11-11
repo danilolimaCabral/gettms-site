@@ -33,3 +33,14 @@
 
 ## 10. Qualidade e entrega
 - [x] SEO básico (lang pt-BR, title, description, OG), favicon, rotas declaradas em `/manus-routes.json`, responsivo em 375/768/1280+, sem erros de TypeScript.
+
+## 11. Filme 3D — estrada de saída, trecho rural e cliente distante
+- [x] Avenida inteira com eixo duplo, faixas reais e semáforos animados (vermelho/verde).
+- [x] Caminhão para no vermelho, faz o trevo e entra na via expressa.
+- [x] Via expressa com canteiro, guard-rail, pórticos, marcos, passarela e tráfego.
+- [x] Trecho rural com campos, cerca, fazenda, silos, vacas e rede elétrica.
+- [x] Saída 12 com rampa para a periferia.
+- [x] Periferia com comércio, postes, caixa d'água, ponto de ônibus e sinal.
+- [x] Cliente Horizonte com portaria, pátio, docas, empilhadeira e painel de recebimento.
+- [x] Câmera de perseguição do início ao fim e capítulos do scroll retimados.
+- [ ] Modelo PBR no caminhão do hero.
