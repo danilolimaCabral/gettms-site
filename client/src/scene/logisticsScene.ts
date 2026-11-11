@@ -987,6 +987,44 @@ hub.scale.setScalar(1.15);
     });
   }
   scene.add(sidewalkGroup);
+
+  // comercio de rua: lojas e predios comerciais
+  const shopWallMats = [0xf4f5ef, 0xe8ebe2, 0xdfe4da, 0xf0ede4].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 }),
+  );
+  const shopGlassMat = new THREE.MeshStandardMaterial({ color: 0x4b5a63, roughness: 0.25, metalness: 0.5 });
+  const awningMats = [0x63b32e, 0x2f6f4f, 0xd9b23a, 0x8fd14f].map(
+    (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7 }),
+  );
+  const signMat = new THREE.MeshBasicMaterial({ color: 0xf7fff0 });
+  const addShop = (x: number, z: number, w: number, d: number, h: number, face: number, i: number) => {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(round(w, h, d, 0.18, 1), shopWallMats[i % shopWallMats.length]);
+    body.position.y = h / 2;
+    const glass = new THREE.Mesh(round(w * 0.82, h * 0.34, 0.16, 0.06, 1), shopGlassMat);
+    glass.position.set(0, h * 0.28, (d / 2 + 0.06) * face);
+    const awning = new THREE.Mesh(round(w * 0.92, 0.12, 1.5, 0.05, 1), awningMats[i % awningMats.length]);
+    awning.position.set(0, h * 0.56, (d / 2 + 0.6) * face);
+    awning.rotation.x = face > 0 ? -0.14 : 0.14;
+    const sign = new THREE.Mesh(round(w * 0.5, h * 0.13, 0.12, 0.04, 1), signMat);
+    sign.position.set(0, h * 0.8, (d / 2 + 0.07) * face);
+    const signBrand = new THREE.Mesh(round(w * 0.3, h * 0.07, 0.14, 0.03, 1), awningMats[(i + 1) % awningMats.length]);
+    signBrand.position.set(0, h * 0.8, (d / 2 + 0.13) * face);
+    g.add(body, glass, awning, sign, signBrand);
+    g.position.set(x, 0, z);
+    scene.add(g);
+  };
+  const shopRows: Array<[number, number, number]> = [
+    [-30, 58, 0], [-14, 58, 0], [16, 58, 0], [32, 58, 0],
+    [-34, 20, 0], [-18, 20, 0], [18, 20, 0], [34, 20, 0],
+    [-32, -20, 0], [-16, -20, 0], [16, -20, 0], [32, -20, 0],
+    [-30, -74, 0], [-14, -74, 0], [18, -74, 0], [34, -74, 0],
+    [-30, 108, 0], [16, 108, 0], [46, 30, 1], [-46, 30, 1],
+  ];
+  shopRows.forEach(([sx, sz, f], i) => {
+    addShop(sx, sz, 8 + (i % 3), 8 + ((i + 1) % 3), 6 + (i % 4) * 2.5, f === 0 ? -1 : 1, i);
+  });
+
   // faixas de pedestre e semaforos nos cruzamentos da avenida
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
   const signalPoleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
