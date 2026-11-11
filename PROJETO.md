@@ -91,6 +91,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Otimizado com gltf-transform (texturas 1024 + quantização, sem juntar malhas): 3,1 MB → 2,3 MB, mantendo os nós de roda.
 - Livery sem achatar detalhes: trator e capô em branco getTMS, textura da carreta preservada (creme com sulcos), faixas verde getTMS e wordmark com o pino aplicados por cima; vidros, cromados e pneus originais mantidos.
 
+## Veículos e fachadas (refino)
+- Carros da avenida trocados pelos modelos CC0 do Cozy Vehicles Kit (Sedan, Hatchback, SUV) e pelo Electric Car: texturas 512 + quantização, 437-666 KB cada, rodas próprias por nó.
+- Caminhões do cenário passaram a usar os GLBs detalhados (semi-truck, tanker-truck, delivery-truck) com rodas originais; faixas separadas: caminhões nas faixas externas (±4,4) e carros nas centrais (±1,5).
+- Fila por faixa corrigida (ordenação frente/trás): distância mínima de 8 m entre carros, 24 m entre caminhões, ninguém se sobrepõe.
+- Fallback automático de rodas para qualquer modelo sem nós de roda nomeados.
+- Lojas da avenida ganharam fachada texturizada com janelas, platibanda, ar-condicionado e caixa d'água (antes eram caixas lisas).
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

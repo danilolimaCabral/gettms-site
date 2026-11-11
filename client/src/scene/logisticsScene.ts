@@ -362,6 +362,44 @@ function makeTruckSideTexture(name: string) {
   return texture;
 }
 
+function makeShopFacadeTexture(base: string, trim: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 256);
+  // textura de reboco
+  for (let i = 0; i < 900; i += 1) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.03})`;
+    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+  }
+  // faixa do rodapé
+  ctx.fillStyle = trim;
+  ctx.fillRect(0, 232, 256, 24);
+  // janelas em duas fileiras
+  [64, 156].forEach((y) => {
+    for (let x = 18; x < 240; x += 62) {
+      ctx.fillStyle = trim;
+      ctx.fillRect(x - 4, y - 4, 48, 44);
+      const grad = ctx.createLinearGradient(x, y, x + 40, y + 36);
+      grad.addColorStop(0, "#5b7f86");
+      grad.addColorStop(0.55, "#2f4a4e");
+      grad.addColorStop(1, "#3f6167");
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, 40, 36);
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillRect(x, y, 40, 3);
+      ctx.fillStyle = trim;
+      ctx.fillRect(x + 19, y, 2, 36);
+    }
+  });
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
 function makeWallTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
@@ -1367,9 +1405,17 @@ hub.scale.setScalar(1.15);
     "Casa do Pão",
   ];
   const avenueSignBgs = ["#3f7d34", "#c0563c", "#2f5f8a", "#b8862f", "#4a4f58", "#7a3f6d"];
+  const shopWallColors = ["#e9e2d2", "#dfe4da", "#f0ede4", "#e3dccb", "#dbe3d2", "#ece3d6"];
+  const shopTrimColors = ["#c9c2b2", "#b9c2bd", "#cfc6b4", "#c4bda9", "#bcc7be", "#cbc2b2"];
+  const shopTrimMat = new THREE.MeshStandardMaterial({ color: 0xd8d4c6, roughness: 0.9 });
+  const shopAcMat = new THREE.MeshStandardMaterial({ color: 0xcfd6d2, roughness: 0.6, metalness: 0.3 });
+  const shopTankMat = new THREE.MeshStandardMaterial({ color: 0x3f6b8a, roughness: 0.6, metalness: 0.2 });
   const addShop = (x: number, z: number, w: number, d: number, h: number, face: number, i: number) => {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(round(w, h, d, 0.18, 1), shopWallMats[i % shopWallMats.length]);
+    const facade = makeShopFacadeTexture(shopWallColors[i % shopWallColors.length], shopTrimColors[i % shopTrimColors.length]);
+    facade.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
+    const bodyMat = new THREE.MeshStandardMaterial({ map: facade, roughness: 0.85, metalness: 0.05 });
+    const body = new THREE.Mesh(round(w, h, d, 0.18, 1), bodyMat);
     body.position.y = h / 2;
     const glass = new THREE.Mesh(round(w * 0.82, h * 0.34, 0.16, 0.06, 1), shopGlassMat);
     glass.position.set(0, h * 0.28, (d / 2 + 0.06) * face);
@@ -1384,7 +1430,14 @@ hub.scale.setScalar(1.15);
     );
     sign.position.set(0, h * 0.78, (d / 2 + 0.09) * face);
     if (face < 0) sign.rotation.y = Math.PI;
-    g.add(body, glass, awning, sign);
+    // cobertura: caixa d'água, ar-condicionado e platibanda
+    const parapet = new THREE.Mesh(round(w + 0.2, 0.45, d + 0.2, 0.1, 1), shopTrimMat);
+    parapet.position.y = h + 0.2;
+    const ac = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1), shopAcMat);
+    ac.position.set(-w * 0.18, h + 0.62, d * 0.1);
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 1.5, 14), shopTankMat);
+    tank.position.set(w * 0.22, h + 0.95, -d * 0.15);
+    g.add(body, glass, awning, sign, parapet, ac, tank);
     g.position.set(x, 0, z);
     scene.add(g);
   };
@@ -3091,6 +3144,8 @@ hub.scale.setScalar(1.15);
   type Car = { group: THREE.Group; wheels: THREE.Mesh[]; speed: number; offset: number; lane: number; dir: number; delay: number };
   const cars: Car[] = [];
 
+  const carVariants = ["car-sedan", "car-hatchback", "car-suv", "car-ev"];
+  let carVariantIndex = 0;
   function addCar(color: number, lane: number, dir: number, speed: number, offset: number, delay: number) {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.65 });
@@ -3136,6 +3191,18 @@ hub.scale.setScalar(1.15);
     group.rotation.y = dir > 0 ? 0 : Math.PI;
     group.scale.setScalar(0.001);
     scene.add(group);
+    // corpo detalhado do carro (GLB) no lugar da caixa procedural
+    const variant = carVariants[carVariantIndex % carVariants.length];
+    carVariantIndex += 1;
+    queueGlb({
+      key: variant,
+      holder: group,
+      parts: group.children.filter((child) => child !== shadow),
+      length: 4.3,
+      rotY: 0,
+      color,
+      keepWheels: true,
+    });
     cars.push({ group, wheels: carWheels, speed, offset, lane, dir, delay });
   }
 
@@ -3249,7 +3316,8 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
-  const truckVariants = ["cab-over"];
+  const truckVariants = ["semi-truck", "tanker-truck", "delivery-truck"];
+  const truckLengths: Record<string, number> = { "semi-truck": 15.5, "tanker-truck": 12.5, "delivery-truck": 9.5 };
   const truckColors = [0xffffff, 0x8fe04a, 0x63b32e, 0x2f6f4f, 0xdbe3d2, 0x2b3a30];
   let truckVariantIndex = 0;
   function makeSimpleTruck(name: string) {
@@ -3294,12 +3362,12 @@ hub.scale.setScalar(1.15);
     group.add(cab, cabGlass, windshield, cabRoof, fairing, grille, lampL, lampR, bumper);
     const procedural = [...group.children];
 
-    const simpleWheel = new THREE.CylinderGeometry(0.7, 0.7, 0.55, 12);
+    const simpleWheel = new THREE.CylinderGeometry(0.62, 0.62, 0.5, 22);
     simpleWheel.rotateZ(Math.PI / 2);
     [5.35, 1.55, -5.6, -7.4].forEach((z) => {
       [-1.34, 1.34].forEach((x) => {
         const wheel = new THREE.Mesh(simpleWheel, tireMat);
-        wheel.position.set(x, 0.7, z);
+        wheel.position.set(x, 0.62, z);
         group.add(wheel);
       });
     });
@@ -3315,7 +3383,16 @@ hub.scale.setScalar(1.15);
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
-    queueGlb({ key: variant, holder: group, parts: procedural, length: variant === "delivery-van" ? 12 : 15.4, rotY: 0, color, label: name });
+    queueGlb({
+      key: variant,
+      holder: group,
+      parts: procedural,
+      length: truckLengths[variant] ?? 15.4,
+      rotY: 0,
+      color,
+      label: name,
+      keepWheels: true,
+    });
     return group;
   }
 
@@ -3545,9 +3622,9 @@ hub.scale.setScalar(1.15);
   // caminhões extras circulando pela avenida
   const avenueTrucks: { group: THREE.Group; speed: number; offset: number; dir: number; lane: number; z: number }[] = [];
   [
-    { name: "GT-5120", lane: 1.6, dir: -1, speed: 0.05, offset: 0.2 },
-    { name: "GT-7788", lane: -1.6, dir: 1, speed: 0.045, offset: 0.55 },
-    { name: "GT-3390", lane: 1.6, dir: -1, speed: 0.038, offset: 0.8 },
+    { name: "GT-5120", lane: 4.4, dir: -1, speed: 0.05, offset: 0.2 },
+    { name: "GT-7788", lane: -4.4, dir: 1, speed: 0.045, offset: 0.55 },
+    { name: "GT-3390", lane: 4.4, dir: -1, speed: 0.038, offset: 0.8 },
   ].forEach((item) => {
     const truckMesh = makeSimpleTruck(item.name);
     truckMesh.traverse((child) => {
@@ -3555,7 +3632,7 @@ hub.scale.setScalar(1.15);
     });
     truckMesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
     truckMesh.scale.setScalar(0.9);
-    truckMesh.position.set(-4.4 + item.lane, 0, item.dir > 0 ? -120 : 40);
+    truckMesh.position.set(item.lane, 0, item.dir > 0 ? -120 : 40);
     scene.add(truckMesh);
     avenueTrucks.push({ group: truckMesh, speed: item.speed, offset: item.offset, dir: item.dir, lane: item.lane, z: 0 });
   });
@@ -4938,7 +5015,8 @@ hub.scale.setScalar(1.15);
     Object.values(spacing).forEach((list) => {
       if (list.length < 2) return;
       const dir = list[0].dir;
-      list.sort((a, b) => (dir > 0 ? a.z - b.z : b.z - a.z));
+      // frente primeiro: quem tem o z mais adiantado no sentido do fluxo
+      list.sort((a, b) => (dir > 0 ? b.z - a.z : a.z - b.z));
       for (let i = 1; i < list.length; i += 1) {
         const back = list[i];
         const front = list[i - 1];
@@ -5547,6 +5625,31 @@ hub.scale.setScalar(1.15);
         wheelMeshes.push(mesh);
       }
     });
+    if (!wheelMeshes.length && !request.keepWheels) {
+      // modelo sem rodas nomeadas: garante rodas para o veículo não aparecer "sumido"
+      const wheelR = (request.length / 17) * 0.5;
+      const wheelW = (request.length / 17) * 0.4;
+      const tireMat = new THREE.MeshStandardMaterial({ color: 0x14181a, roughness: 0.88 });
+      const tireGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22);
+      const box = new THREE.Box3().setFromObject(clone);
+      const size = box.getSize(new THREE.Vector3());
+      const alongZ = size.z >= size.x;
+      const length = alongZ ? size.z : size.x;
+      const lateral = alongZ ? size.x : size.z;
+      [-0.34, 0.32].forEach((frac) => {
+        [-1, 1].forEach((side) => {
+          const tire = new THREE.Mesh(tireGeo, tireMat);
+          if (alongZ) tire.rotation.z = Math.PI / 2;
+          else tire.rotation.x = Math.PI / 2;
+          tire.position.set(
+            alongZ ? side * (lateral / 2 - wheelW * 0.5) : frac * length,
+            wheelR + 0.02,
+            alongZ ? frac * length : side * (lateral / 2 - wheelW * 0.5),
+          );
+          wrapper.add(tire);
+        });
+      });
+    }
     if (wheelMeshes.length && !request.keepWheels) {
       const wheelR = (request.length / 17) * 0.53;
       const wheelW = (request.length / 17) * 0.42;
@@ -5727,7 +5830,7 @@ hub.scale.setScalar(1.15);
     wheelScale: 1,
     label: "GT-1024",
     livery: true,
-    keepWheels: false,
+    keepWheels: true,
   };
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
@@ -5747,7 +5850,14 @@ hub.scale.setScalar(1.15);
       glbRequests.splice(i, 1);
     }
   }
-  ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "1990s-sedan", "1990s-hatchback", "1990s-suv", "1990s-delivery-van", "forklift"].forEach((key) => {
+  (window as unknown as { __gettmsSceneRef?: THREE.Scene }).__gettmsSceneRef = scene;
+  (window as unknown as { __gettmsVehicles?: () => unknown }).__gettmsVehicles = () => ({
+    truck: { x: truck.position.x, z: truck.position.z, len: 17 },
+    cars: cars.map((car) => ({ x: car.group.position.x, z: car.group.position.z, dir: car.dir, len: 4.3, scale: car.group.scale.x })),
+    avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 15.4, scale: item.group.scale.x })),
+    highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 15 })),
+  });
+  ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
       glbSources[key] = gltf.scene;
