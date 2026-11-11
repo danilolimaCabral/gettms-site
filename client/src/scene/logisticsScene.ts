@@ -966,7 +966,7 @@ hub.scale.setScalar(1.15);
   scene.add(sidewalkGroup);
   // faixas de pedestre e semaforos nos cruzamentos da avenida
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
-  const poleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
+  const signalPoleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
   const signalBoxMat = new THREE.MeshStandardMaterial({ color: 0x2a302c, roughness: 0.6 });
   [42, -42].forEach((crossZ) => {
     for (let i = 0; i < 7; i += 1) {
@@ -975,9 +975,9 @@ hub.scale.setScalar(1.15);
       scene.add(stripe);
     }
     [-1, 1].forEach((side) => {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.2, 10), poleMat);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 4.2, 10), signalPoleMat);
       pole.position.set(side * 7.9, 2.1, crossZ + 3.4);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), poleMat);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), signalPoleMat);
       arm.position.set(side * (7.9 - 1.1), 4.1, crossZ + 3.4);
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.05, 0.34), signalBoxMat);
       box.position.set(side * 6.9, 3.6, crossZ + 3.4);
