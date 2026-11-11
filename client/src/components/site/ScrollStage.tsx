@@ -281,7 +281,7 @@ export default function ScrollStage() {
         {/* hero */}
         <div
           ref={heroRef}
-          className="absolute inset-0 flex items-end pb-24 pt-28 md:items-center md:pb-0 md:pt-24"
+          className="hero-compact absolute inset-0 flex items-end pb-20 pt-24 md:items-center md:pb-0 md:pt-24 [@media(max-height:720px)]:pb-8 [@media(max-height:720px)]:pt-20"
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70 md:to-transparent" />
           <div className="container-wide relative">
@@ -300,8 +300,8 @@ export default function ScrollStage() {
               <p className="lede mt-7 max-w-md">
                 Simule fretes, acompanhe cada etapa e reduza a conta frete.
               </p>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <a href={DEMO_URL} target="_blank" rel="noreferrer" className="btn btn-primary">
+              <div className="hero-actions mt-9 grid grid-cols-2 items-center gap-2.5 sm:flex sm:flex-wrap sm:gap-3">
+                <a href={DEMO_URL} target="_blank" rel="noreferrer" className="btn btn-primary col-span-2 justify-center sm:col-auto">
                   Agendar demonstração
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
@@ -330,7 +330,7 @@ export default function ScrollStage() {
                   {orbit ? "360° · arraste" : "Ver em 360°"}
                 </button>
               </div>
-              <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-xs text-ink/45">
+              <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-xs text-ink/45 [@media(max-height:720px)]:hidden">
                 <span>Simulação de frete</span>
                 <span className="h-1 w-1 rounded-full bg-ink/20" />
                 <span>Tracking em tempo real</span>

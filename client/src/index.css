@@ -156,6 +156,28 @@
     font-size: clamp(2.75rem, 7.4vw, 6.6rem);
   }
 
+  @media (max-height: 720px) and (max-width: 767px) {
+    .hero-compact .display-xl {
+      font-size: clamp(1.95rem, 8.4vw, 2.6rem);
+    }
+    .hero-compact .lede {
+      margin-top: 0.85rem;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .hero-compact .eyebrow {
+      margin-bottom: 0.85rem;
+      font-size: 0.6rem;
+    }
+    .hero-compact .hero-actions {
+      margin-top: 1.1rem;
+    }
+    .hero-compact .btn {
+      padding-top: 0.65rem;
+      padding-bottom: 0.65rem;
+      font-size: 0.7rem;
+    }
+  }
   .display-lg {
     font-family: var(--font-display);
     font-weight: 600;

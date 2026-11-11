@@ -121,7 +121,11 @@ export default function DesktopScene() {
                       <Search className="h-3 w-3" /> app.gettms.com.br/operacao
                     </div>
                     <div className="flex items-center gap-2 text-[9px] text-white/40">
-                      <Bell className="h-3 w-3" /> <span className="hidden md:inline">quarta, 18:42</span>
+                      <span className="relative">
+                        <Bell className="h-3 w-3" />
+                        <span className="absolute -right-1.5 -top-1.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#8fe04a] text-[6px] font-bold text-[#0b100c]">3</span>
+                      </span>
+                      <span className="hidden md:inline">quarta, 18:42</span>
                     </div>
                   </div>
 
@@ -153,6 +157,13 @@ export default function DesktopScene() {
                           <Icon className="h-3.5 w-3.5" /> {label}
                         </button>
                       ))}
+                      <div className="mt-auto flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1.5">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#8fe04a]/20 text-[9px] font-semibold text-[#b7f27f]">DL</span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-[10px] text-white/80">Daniel Lima</span>
+                          <span className="block text-[8px] text-white/35">Operação · admin</span>
+                        </span>
+                      </div>
                     </aside>
 
                     {/* conteúdo */}
@@ -177,7 +188,14 @@ export default function DesktopScene() {
                         ].map(([k, v]) => (
                           <div key={k} className="rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1.5">
                             <p className="text-[7.5px] uppercase tracking-[0.12em] text-white/35">{k}</p>
-                            <p className="font-display text-[13px] font-semibold leading-tight text-white">{v}</p>
+                            <div className="flex items-end justify-between gap-2">
+                              <p className="font-display text-[13px] font-semibold leading-tight text-white">{v}</p>
+                              <span className="flex h-4 items-end gap-[2px]">
+                                {[40, 62, 50, 78, 66, 92].map((h, i) => (
+                                  <span key={i} className="w-[2px] rounded-sm bg-[#8fe04a]/70" style={{ height: `${h}%` }} />
+                                ))}
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -231,6 +249,18 @@ export default function DesktopScene() {
                                 )}
                               </div>
                             ))}
+                          </div>
+                          <div className="mt-2 hidden items-center gap-3 rounded-lg border border-white/8 bg-[linear-gradient(180deg,rgba(143,224,74,0.06),rgba(255,255,255,0.02))] px-2.5 py-2 md:flex">
+                            <svg viewBox="0 0 180 40" className="h-9 flex-1" aria-hidden="true">
+                              <path d="M8 32 C 46 32, 54 8, 92 8 S 140 26, 172 12" fill="none" stroke="rgba(143,224,74,0.55)" strokeWidth="1.6" strokeDasharray="4 3" />
+                              <circle cx="8" cy="32" r="3" fill="#8fe04a" />
+                              <circle cx="172" cy="12" r="3" fill="#f4f8ef" />
+                              <circle cx="92" cy="8" r="2.4" fill="rgba(244,248,239,0.5)" />
+                            </svg>
+                            <div className="text-[9px] leading-tight text-white/45">
+                              <p className="text-white/70">408 km · rodovia + urbano</p>
+                              <p>restrição de circulação respeitada</p>
+                            </div>
                           </div>
                           <div className="mt-2 hidden grid-cols-3 gap-2 text-[10px] md:grid">
                             {[
@@ -338,6 +368,20 @@ export default function DesktopScene() {
               style={{ clipPath: "polygon(28% 0, 72% 0, 100% 100%, 0 100%)" }}
             />
             <div className="mx-auto h-2 w-52 rounded-full bg-[linear-gradient(180deg,#2b352d,#131913)] shadow-[0_10px_24px_-10px_rgba(0,0,0,0.9)] md:w-64" />
+            {/* acessórios de mesa */}
+            <div className="relative mx-auto mt-2 h-8 w-full max-w-[560px]">
+              <div className="absolute left-1/2 top-0 h-[18px] w-[220px] -translate-x-1/2 rounded-[5px] bg-[linear-gradient(180deg,#242d26,#141a15)] shadow-[0_10px_18px_-10px_rgba(0,0,0,0.85)] md:w-[300px]">
+                <div className="absolute inset-x-3 top-[5px] grid grid-cols-12 gap-[3px] opacity-40">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <span key={i} className="h-[3px] rounded-[1px] bg-white/50" />
+                  ))}
+                </div>
+              </div>
+              <div className="absolute left-[calc(50%+130px)] top-0 hidden h-5 w-3 rounded-full bg-[#2a332c] md:block" />
+              <div className="absolute left-[calc(50%+210px)] top-0 hidden h-6 w-5 rounded-b-[6px] bg-[linear-gradient(180deg,#2c362e,#1a211b)] md:block">
+                <span className="absolute left-1/2 top-[-2px] h-1 w-4 -translate-x-1/2 rounded-full bg-[#8fe04a]/50" />
+              </div>
+            </div>
           </div>
         </div>
 
