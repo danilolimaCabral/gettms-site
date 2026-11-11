@@ -10,6 +10,8 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 
 export type LogisticsSceneHandle = {
   setProgress: (p: number) => void;
+  setWeather: (mode: "auto" | "day" | "night" | "rain") => void;
+  setActive: (active: boolean) => void;
   setPointer: (x: number, y: number) => void;
   setOrbit: (active: boolean) => void;
   setSegmentView: (kind: string | null) => void;
@@ -21,6 +23,7 @@ export type LogisticsSceneHandle = {
     view: string;
     truck?: number[];
     phase?: number;
+    weather?: string;
     progress?: number;
   };
   snapTruck?: () => void;
@@ -571,10 +574,32 @@ export function createLogisticsScene(
   const fogDay = new THREE.Color(0xe2edf5);
   const fogNight = new THREE.Color(0x2a3550);
   const tmpColor = new THREE.Color();
+  let weatherMode: "auto" | "day" | "night" | "rain" = "auto";
+  let weatherP = 0;
+  let weatherRain = 0;
+  let lastWeatherTime = -1;
   function applyWeather(p: number, time: number) {
+    const dt = lastWeatherTime < 0 ? 0.016 : Math.min(0.2, Math.max(0.001, time - lastWeatherTime));
+    lastWeatherTime = time;
+    let targetP = p;
+    let targetRain = range(p, 0.58, 0.64) * (1 - range(p, 0.8, 0.86));
+    if (weatherMode === "day") {
+      targetP = 0.06;
+      targetRain = 0;
+    } else if (weatherMode === "night") {
+      targetP = 1;
+      targetRain = 0;
+    } else if (weatherMode === "rain") {
+      targetP = 0.8;
+      targetRain = 1;
+    }
+    const ease = Math.min(1, dt * 1.8);
+    weatherP += (targetP - weatherP) * ease;
+    weatherRain += (targetRain - weatherRain) * ease;
+    const wp = weatherP;
     // 0 = dia, 1 = noite (anoitece na periferia, chega no cliente à noite)
-    const dusk = range(p, 0.42, 0.6);
-    const night = range(p, 0.6, 0.82);
+    const dusk = range(wp, 0.42, 0.6);
+    const night = range(wp, 0.6, 0.82);
     const lightMix = dusk * 0.55 + night * 0.45;
     tmpColor.copy(dayBase).lerp(duskBase, dusk).lerp(nightBase, night);
     key.color.copy(tmpColor);
@@ -594,11 +619,11 @@ export function createLogisticsScene(
       scene.fog.color.copy(fogDay).lerp(skyDusk, dusk * 0.7).lerp(fogNight, night);
       scene.fog.density = 0.0014 + night * 0.0006;
     }
-    // chuva entre a saída e a periferia
-    const rainIn = range(p, 0.58, 0.64) * (1 - range(p, 0.8, 0.86));
-    rainMat.opacity = rainIn * 0.55;
+    // chuva (automática no trecho rural/periferia ou ligada no controle)
+    const rainIn = weatherRain;
+    rainMat.opacity = rainIn * 0.6;
     rain.visible = rainIn > 0.01;
-    if (rain.visible) {
+    if (rain.visible && frameCount % 2 === 0) {
       const arr = rainGeo.attributes.position.array as Float32Array;
       for (let i = 0; i < RAIN_COUNT; i += 1) {
         const yi = i * 3 + 1;
@@ -612,7 +637,10 @@ export function createLogisticsScene(
       rainGeo.attributes.position.needsUpdate = true;
       rain.position.set(camera.position.x, 0, camera.position.z);
     }
-    void time;
+    if (rainIn > 0.35) {
+      hemi.intensity *= 1 - 0.18 * rainIn;
+      key.intensity *= 1 - 0.22 * rainIn;
+    }
   }
   // ---------------------------------------------------------------- morros
   const hillMat = new THREE.MeshStandardMaterial({ color: 0xd8e0cc, roughness: 0.95, metalness: 0 });
@@ -4438,9 +4466,16 @@ hub.scale.setScalar(1.15);
   let perfTime = 0;
   let perfFrames = 0;
   let perfAdjusted = low;
+  let sceneActive = true;
+  let frameCount = 0;
   function render() {
     if (disposed) return;
+    if (!sceneActive || document.hidden) {
+      frame = requestAnimationFrame(render);
+      return;
+    }
     const now = performance.now();
+    frameCount += 1;
     perfFrames += 1;
     perfTime += Math.min(0.5, (now - lastTime) / 1000);
     if (perfTime > 2.5) {
@@ -4897,6 +4932,12 @@ hub.scale.setScalar(1.15);
       pointerX = x;
       pointerY = y;
     },
+    setWeather(mode) {
+      weatherMode = mode;
+    },
+    setActive(active) {
+      sceneActive = active;
+    },
     snapTruck() {
       truckPhase = heroPhaseFor(current);
       if (truckPhase >= DOCK_START) dockAnim = 1;
@@ -4909,6 +4950,7 @@ hub.scale.setScalar(1.15);
         truck: [truck.position.x, truck.position.z],
         phase: truckPhase,
         progress: current,
+        weather: `${weatherMode}:${weatherP.toFixed(2)}:${weatherRain.toFixed(2)}`,
       };
     },
     resize,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight, Play, RotateCw } from "lucide-react";
+import { ArrowDown, ArrowUpRight, CloudRain, Moon, Play, RotateCw, Sparkles, Sun } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
 import StockPanel from "@/components/site/StockPanel";
 import { WHATSAPP_URL, DEMO_URL } from "@/content/site";
@@ -16,6 +16,13 @@ type Chapter = {
   split?: boolean;
 };
 
+type WeatherMode = "auto" | "day" | "night" | "rain";
+const WEATHERS: { id: WeatherMode; label: string; icon: typeof Sun }[] = [
+  { id: "auto", label: "Auto", icon: Sparkles },
+  { id: "day", label: "Dia", icon: Sun },
+  { id: "night", label: "Noite", icon: Moon },
+  { id: "rain", label: "Chuva", icon: CloudRain },
+];
 const GIANT_WORDS = [
   { word: "LOGÍSTICA", at: 0.02 },
   { word: "CONTROLE", at: 0.24 },
@@ -161,10 +168,16 @@ export default function ScrollStage() {
   const activeRef = useRef(-1);
   const [auto, setAuto] = useState(true);
   const autoRef = useRef(true);
+  const [weather, setWeather] = useState<WeatherMode>("auto");
+  const weatherRef = useRef<WeatherMode>("auto");
+  const stageRef = useRef<HTMLElement | null>(null);
+  const viewObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     autoRef.current = auto;
-  }, [auto]);
+    weatherRef.current = weather;
+    sceneRef.current?.setWeather(weather);
+  }, [auto, weather]);
 
   useEffect(() => {
     const onSeek = (event: Event) => {
@@ -193,7 +206,16 @@ export default function ScrollStage() {
       .then(({ createLogisticsScene }) => {
         if (cancelled) return;
         scene = createLogisticsScene(canvas, { quality: low ? "low" : "high" });
+        scene.setWeather(weatherRef.current);
         sceneRef.current = scene;
+        if (sectionRef.current) {
+          const observer = new IntersectionObserver(
+            ([entry]) => sceneRef.current?.setActive(entry.isIntersecting),
+            { rootMargin: "150px 0px" },
+          );
+          observer.observe(sectionRef.current);
+          viewObserverRef.current = observer;
+        }
         (window as unknown as { __gettmsScene?: LogisticsSceneHandle }).__gettmsScene = scene;
       })
       .catch((error) => {
@@ -294,6 +316,8 @@ export default function ScrollStage() {
       window.removeEventListener("pointermove", onPointer);
       userEvents.forEach((name) => window.removeEventListener(name, markUser));
       scene?.dispose();
+      viewObserverRef.current?.disconnect();
+      viewObserverRef.current = null;
       sceneRef.current = null;
     };
   }, []);
@@ -351,6 +375,30 @@ export default function ScrollStage() {
           </button>
         </div>
 
+        {/* seletor de clima */}
+        <div className="absolute left-6 top-[10.5rem] z-20 md:left-12">
+          <div className="flex items-center gap-0.5 rounded-full border border-ink/10 bg-paper/80 p-1 backdrop-blur">
+            <span className="hidden px-2 text-[9px] font-medium uppercase tracking-[0.22em] text-ink/35 sm:inline">Clima</span>
+            {WEATHERS.map(({ id, label, icon: Icon }) => {
+              const active = weather === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setWeather(id)}
+                  aria-pressed={active}
+                  aria-label={`Clima: ${label}`}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] transition ${
+                    active ? "bg-brand text-[#0a0f0b]" : "text-ink/55 hover:text-ink"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         {/* letras gigantes ao fundo */}
         <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
           {GIANT_WORDS.map((item, index) => {
