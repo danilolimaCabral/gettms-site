@@ -2952,9 +2952,9 @@ hub.scale.setScalar(1.15);
       const rightX = Math.cos(heading);
       const rightZ = -Math.sin(heading);
       followPos.set(
-        truck.position.x - fwdX * 34 + rightX * 18,
-        15,
-        truck.position.z - fwdZ * 34 + rightZ * 18,
+        truck.position.x - fwdX * 30 + rightX * 15,
+        9.5,
+        truck.position.z - fwdZ * 30 + rightZ * 15,
       );
       followLook.set(
         truck.position.x + fwdX * 16,
