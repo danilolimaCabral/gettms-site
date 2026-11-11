@@ -833,6 +833,21 @@ export function createLogisticsScene(
     { x: 22, z: 26, w: 8, d: 8, h: 16 },
     { x: 34, z: 22, w: 9, d: 9, h: 24 },
     { x: -34, z: 22, w: 10, d: 10, h: 20 },
+    { x: 62, z: -22, w: 11, d: 11, h: 34 },
+    { x: 70, z: 18, w: 9, d: 9, h: 22 },
+    { x: 46, z: 40, w: 10, d: 10, h: 26 },
+    { x: 18, z: 44, w: 9, d: 9, h: 18 },
+    { x: -12, z: 46, w: 10, d: 10, h: 24 },
+    { x: -46, z: 46, w: 9, d: 9, h: 16 },
+    { x: -62, z: -46, w: 10, d: 10, h: 28 },
+    { x: -24, z: -50, w: 12, d: 12, h: 32 },
+    { x: 10, z: -52, w: 10, d: 10, h: 20 },
+    { x: 44, z: -46, w: 9, d: 9, h: 24 },
+    { x: 78, z: -4, w: 10, d: 10, h: 30 },
+    { x: -74, z: 30, w: 9, d: 9, h: 18 },
+    { x: 30, z: 60, w: 11, d: 11, h: 28 },
+    { x: -30, z: 62, w: 10, d: 10, h: 22 },
+    { x: 66, z: 52, w: 9, d: 9, h: 20 },
   ];
 
   // horizonte distante
@@ -1337,6 +1352,18 @@ hub.scale.setScalar(1.15);
     walkRange: number;
     delay: number;
   };
+
+  // pedestres nas calcadas e nos patios
+  const pedestrianSpots: Array<[number, number, number]> = [
+    [7.2, -60, Math.PI], [7.2, -34, Math.PI], [7.2, -8, Math.PI], [7.2, 20, Math.PI],
+    [-7.2, -52, 0], [-7.2, -26, 0], [-7.2, 2, 0], [-7.2, 30, 0],
+    [14, -70, Math.PI * 0.5], [-14, 12, -Math.PI * 0.5], [20, 34, Math.PI],
+    [-20, -60, 0], [9.5, 44, Math.PI], [-9.5, -80, 0],
+  ];
+  pedestrianSpots.forEach(([px, pz, pr], i) => {
+    addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4);
+  });
+  const pantMat = new THREE.MeshStandardMaterial({ color: 0x27302a, roughness: 0.85 });
   const people: Person[] = [];
 
   const skinMats = [
@@ -1344,7 +1371,6 @@ hub.scale.setScalar(1.15);
     new THREE.MeshStandardMaterial({ color: 0xa9744f, roughness: 0.8 }),
     new THREE.MeshStandardMaterial({ color: 0x6f4a32, roughness: 0.8 }),
   ];
-  const pantMat = new THREE.MeshStandardMaterial({ color: 0x27302a, roughness: 0.85 });
 
   function addPerson(
     x: number,
