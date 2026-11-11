@@ -86,6 +86,11 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Carros e caminhões da avenida mantêm distância mínima na mesma faixa (não se sobrepõem mais).
 - Carreta do hero com faixa inferior e linha verde de base; rótulo da cena trocado por "Cena 3D · getTMS".
 
+## Caminhão do hero: modelo de catálogo
+- Modelo trocado pelo "Semi Truck" do kit Cozy Vehicles (Grab3D), licença CC0 (domínio público, sem atribuição): 49.550 triângulos, texturas 2K, rodas separadas por eixo e carreta com portas nervuradas e pernas de apoio.
+- Otimizado com gltf-transform (texturas 1024 + quantização, sem juntar malhas): 3,1 MB → 2,3 MB, mantendo os nós de roda.
+- Livery sem achatar detalhes: trator e capô em branco getTMS, textura da carreta preservada (creme com sulcos), faixas verde getTMS e wordmark com o pino aplicados por cima; vidros, cromados e pneus originais mantidos.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

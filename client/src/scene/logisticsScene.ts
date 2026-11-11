@@ -2572,6 +2572,7 @@ hub.scale.setScalar(1.15);
     wheelScale?: number;
     wheelSpin?: THREE.Object3D[];
     livery?: boolean;
+    keepWheels?: boolean;
   };
   const glbRequests: GlbRequest[] = [];
   const glbSources: Record<string, THREE.Object3D> = {};
@@ -5455,11 +5456,31 @@ hub.scale.setScalar(1.15);
             std.needsUpdate = true;
             return std;
           }
-          if (matName.includes("paint") || matName.includes("body") || matName.includes("trailer") || matName.includes("trim")) {
+          if (matName.includes("paint")) {
+            // cabine branca getTMS, mantendo o relevo e o brilho da pintura
             std.map = null;
-            std.color.set(0xf5f8f1);
-            std.metalness = Math.min(std.metalness ?? 0.2, 0.25);
-            std.roughness = 0.38;
+            std.color.set(0xf7f9f3);
+            std.metalness = Math.min(std.metalness ?? 0.2, 0.3);
+            std.roughness = 0.3;
+            std.needsUpdate = true;
+            return std;
+          }
+          if (matName.includes("body")) {
+            // trator (capô, cabine) branco getTMS
+            std.map = null;
+            std.color.set(0xf7f9f3);
+            std.metalness = Math.min(std.metalness ?? 0.2, 0.3);
+            std.roughness = 0.32;
+            std.needsUpdate = true;
+            return std;
+          }
+          if (matName.includes("trailer")) {
+            // carreta/carroceria: mantém a textura original (sulcos, detalhes) sem tingir
+            std.color.set(0xffffff);
+            std.needsUpdate = true;
+            return std;
+          }
+          if (matName.includes("trim")) {
             std.needsUpdate = true;
             return std;
           }
@@ -5489,7 +5510,7 @@ hub.scale.setScalar(1.15);
         wheelMeshes.push(mesh);
       }
     });
-    if (wheelMeshes.length) {
+    if (wheelMeshes.length && !request.keepWheels) {
       const wheelR = (request.length / 17) * 0.53;
       const wheelW = (request.length / 17) * 0.42;
       const tireMat = new THREE.MeshStandardMaterial({ color: 0x14181a, roughness: 0.88 });
@@ -5563,14 +5584,13 @@ hub.scale.setScalar(1.15);
       plateCanvas.width = 1024;
       plateCanvas.height = 256;
       const plateCtx = plateCanvas.getContext("2d")!;
-      plateCtx.fillStyle = "#f7f9f3";
-      plateCtx.fillRect(0, 0, 1024, 256);
+      plateCtx.clearRect(0, 0, 1024, 256);
       plateCtx.fillStyle = "#63b32e";
-      plateCtx.fillRect(0, 0, 1024, 16);
-      plateCtx.fillRect(0, 240, 1024, 16);
+      plateCtx.fillRect(232, 4, 560, 8);
+      plateCtx.fillRect(232, 244, 560, 8);
       plateCtx.textBaseline = "middle";
       // pino getTMS
-      const pinX = 74;
+      const pinX = 244;
       const pinY = 44;
       const pinW = 78;
       const pinH = 132;
@@ -5594,17 +5614,17 @@ hub.scale.setScalar(1.15);
       // wordmark
       plateCtx.fillStyle = "#4d4d4d";
       plateCtx.font = "500 92px Sora, Inter, sans-serif";
-      plateCtx.fillText("get", 178, 104);
+      plateCtx.fillText("get", 352, 104);
       plateCtx.fillStyle = "#63b32e";
       plateCtx.font = "800 92px Sora, Inter, sans-serif";
-      plateCtx.fillText("TMS", 336, 104);
+      plateCtx.fillText("TMS", 512, 104);
       plateCtx.fillStyle = "#6b7a6d";
       plateCtx.font = "600 40px Inter, sans-serif";
-      plateCtx.fillText(request.label, 150, 186);
+      plateCtx.fillText(request.label, 330, 186);
       plateCtx.fillStyle = "#1d2a20";
       plateCtx.font = "700 34px Inter, sans-serif";
       plateCtx.textAlign = "right";
-      plateCtx.fillText("PLATAFORMA TMS", 960, 186);
+      plateCtx.fillText("PLATAFORMA TMS", 900, 186);
       plateCtx.textAlign = "left";
       const plateTex = track(new THREE.CanvasTexture(plateCanvas));
       plateTex.colorSpace = THREE.SRGBColorSpace;
@@ -5617,8 +5637,8 @@ hub.scale.setScalar(1.15);
         const tCenter = tb.getCenter(new THREE.Vector3());
         const lengthAlongX = tSize.x >= tSize.z;
         const trailerLength = Math.max(tSize.x, tSize.z);
-        const plateW = trailerLength * 0.62;
-        const plateH = Math.min(tSize.y * 0.55, plateW * 0.26);
+        const plateW = trailerLength * 0.52;
+        const plateH = Math.min(tSize.y * 0.5, plateW * 0.25);
         [-1, 1].forEach((side) => {
           const plate = new THREE.Mesh(new THREE.PlaneGeometry(plateW, plateH), plateMat);
           if (lengthAlongX) {
@@ -5670,6 +5690,7 @@ hub.scale.setScalar(1.15);
     wheelScale: 1,
     label: "GT-1024",
     livery: true,
+    keepWheels: false,
   };
   proceduralBodies.push({ group: truck, parts: truckRequest.parts });
   queueGlb(truckRequest);
