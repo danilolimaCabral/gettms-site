@@ -1029,7 +1029,7 @@ hub.scale.setScalar(1.15);
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
   const signalPoleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
   const signalBoxMat = new THREE.MeshStandardMaterial({ color: 0x2a302c, roughness: 0.6 });
-  [42, -42].forEach((crossZ) => {
+  [42, -42, -96, 30, 84, 138, -150, 192].forEach((crossZ) => {
     for (let i = 0; i < 7; i += 1) {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
       stripe.position.set(-5.1 + i * 1.7, 0.14, crossZ);
