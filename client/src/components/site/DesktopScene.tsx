@@ -232,6 +232,18 @@ export default function DesktopScene() {
                               </div>
                             ))}
                           </div>
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
+                            {[
+                              ["Prazo total", "3 dias"],
+                              ["Custo por km", "R$ 4,12"],
+                              ["Modal", "Rodoviário"],
+                            ].map(([k, v]) => (
+                              <div key={k} className="rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5">
+                                <span className="block text-[8px] uppercase tracking-[0.14em] text-white/35">{k}</span>
+                                <span className="block text-white/85">{v}</span>
+                              </div>
+                            ))}
+                          </div>
                           <button type="button" className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#8fe04a] py-1.5 text-[10px] font-semibold text-[#0b100c]">
                             Aprovar cotação e gerar pedido #4821 <ChevronRight className="h-3 w-3" />
                           </button>
@@ -301,6 +313,14 @@ export default function DesktopScene() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-white/8 bg-[#0d1410] px-3 py-1.5 text-[8.5px] text-white/35 md:px-4">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#8fe04a]" /> sincronizado · 18:42
+                    </span>
+                    <span className="hidden md:inline">3 transportadoras consultadas · API integrada</span>
+                    <span>GetTMS v4.2</span>
                   </div>
                 </div>
 
