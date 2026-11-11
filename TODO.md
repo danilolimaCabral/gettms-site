@@ -44,3 +44,5 @@
 - [x] Cliente Horizonte com portaria, pátio, docas, empilhadeira e painel de recebimento.
 - [x] Câmera de perseguição do início ao fim e capítulos do scroll retimados.
 - [x] Modelo PBR no caminhão do hero (GLB semi-truck com pintura getTMS e placa lateral).
+- [x] Orientação do caminhão alinhada ao trajeto (sem andar de lado).
+- [x] Filme automático: caminhão e capítulos avançam sozinhos, com pausa ao interagir e botão para ligar/desligar.

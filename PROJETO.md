@@ -36,6 +36,7 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Câmera: take de perseguição entre ~0,26 e ~0,88 (atrás, na frente e aéreo), fechando na tela do cliente e numa vista geral do pátio.
 - Montagem: asfalto entra por opacidade e as construções crescem em altura, no mesmo estilo do resto da cena.
 - Capítulos do scroll: 01 mapa · 02 armazém · 03 pátio · 04 cidade · 05 saída · 06 via expressa · 07 periferia · 08 chegada · 09 doca · 10 análise.
+- Filme automático: a cena avança sozinha (~70s do início ao fim) e troca de capítulo; qualquer gesto (rolar, tocar, tecla) pausa por ~4,5s. Botão "Filme automático" no canto superior esquerdo para pausar/retomar.
 
 ## Pendências
 - Ré dos caminhões em algumas docas

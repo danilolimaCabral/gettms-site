@@ -151,6 +151,7 @@ export default function ScrollStage() {
   const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const lastUserRef = useRef(0);
   const chapterRefs = useRef<(HTMLDivElement | null)[]>([]);
   const railRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const railFillRef = useRef<HTMLDivElement>(null);
@@ -158,6 +159,12 @@ export default function ScrollStage() {
   const [active, setActive] = useState(-1);
   const sceneRef = useRef<LogisticsSceneHandle | null>(null);
   const activeRef = useRef(-1);
+  const [auto, setAuto] = useState(true);
+  const autoRef = useRef(true);
+
+  useEffect(() => {
+    autoRef.current = auto;
+  }, [auto]);
 
   useEffect(() => {
     const onSeek = (event: Event) => {
@@ -166,6 +173,7 @@ export default function ScrollStage() {
       const section = sectionRef.current;
       if (!section) return;
       const travel = section.offsetHeight - window.innerHeight;
+      lastUserRef.current = performance.now();
       window.scrollTo({ top: section.offsetTop + travel * detail, behavior: "smooth" });
     };
     window.addEventListener("gettms:seek", onSeek);
@@ -211,13 +219,31 @@ export default function ScrollStage() {
     };
     window.addEventListener("resize", onViewport);
 
+    // o filme anda sozinho; qualquer gesto do usuário pausa a reprodução por alguns segundos
+    const markUser = () => {
+      lastUserRef.current = performance.now();
+    };
+    const userEvents: (keyof WindowEventMap)[] = ["wheel", "touchstart", "keydown", "pointerdown", "mousedown"];
+    userEvents.forEach((name) => window.addEventListener(name, markUser, { passive: true }));
+
     let raf = 0;
+    let lastTs = performance.now();
     const update = () => {
       const section = sectionRef.current;
+      const now = performance.now();
+      const dt = Math.min(250, now - lastTs);
+      lastTs = now;
       if (section) {
         const rect = section.getBoundingClientRect();
         const travel = rect.height - vhRef.current;
         const p = travel > 0 ? clamp01(-rect.top / travel) : 0;
+
+        // reprodução automática do filme (≈70s do início ao fim da cena)
+        const inView = rect.top <= 1 && rect.bottom >= vhRef.current - 1;
+        const idle = now - lastUserRef.current > 4500;
+        if (autoRef.current && inView && idle && p < 0.996 && dt > 0) {
+          window.scrollBy(0, travel * (dt / 70000));
+        }
         scene?.setProgress(p);
         if (Math.abs(p - progressRef.current) > 0.008) {
           progressRef.current = p;
@@ -262,6 +288,7 @@ export default function ScrollStage() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("resize", onViewport);
       window.removeEventListener("pointermove", onPointer);
+      userEvents.forEach((name) => window.removeEventListener(name, markUser));
       scene?.dispose();
       sceneRef.current = null;
     };
@@ -294,6 +321,30 @@ export default function ScrollStage() {
           <div className="hidden text-[10px] uppercase tracking-[0.28em] text-ink/35 md:block">
             Role para montar a cena
           </div>
+        </div>
+
+        {/* reprodução automática */}
+        <div className="absolute left-6 top-32 z-20 md:left-12">
+          <button
+            type="button"
+            onClick={() => setAuto((value) => !value)}
+            aria-pressed={auto}
+            className="group flex items-center gap-2 rounded-full border border-ink/10 bg-paper/80 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-ink/60 backdrop-blur transition hover:border-brand/50 hover:text-ink"
+          >
+            <span className={`flex h-4 w-4 items-center justify-center rounded-full ${auto ? "bg-brand text-[#0a0f0b]" : "bg-ink/10 text-ink/60"}`}>
+              {auto ? (
+                <svg viewBox="0 0 10 10" className="h-2 w-2" aria-hidden="true">
+                  <rect x="2" y="1.5" width="2" height="7" fill="currentColor" />
+                  <rect x="6" y="1.5" width="2" height="7" fill="currentColor" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 10 10" className="h-2 w-2" aria-hidden="true">
+                  <path d="M2.5 1.5 L8 5 L2.5 8.5 Z" fill="currentColor" />
+                </svg>
+              )}
+            </span>
+            <span className="hidden sm:inline">{auto ? "Filme automático" : "Retomar filme"}</span>
+          </button>
         </div>
 
         {/* letras gigantes ao fundo */}

@@ -4669,7 +4669,7 @@ hub.scale.setScalar(1.15);
     holder: truck,
     parts: [...truck.children],
     length: 17.0,
-    rotY: -Math.PI / 2,
+    rotY: Math.PI,
     wheelScale: 0.82,
     label: "GT-1024",
     livery: true,
