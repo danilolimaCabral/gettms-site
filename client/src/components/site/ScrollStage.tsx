@@ -27,18 +27,6 @@ const WEATHERS: { id: WeatherMode; label: string; icon: typeof Sun }[] = [
   { id: "night", label: "Noite", icon: Moon },
   { id: "rain", label: "Chuva", icon: CloudRain },
 ];
-const GIANT_WORDS = [
-  { word: "LOGÍSTICA", at: 0.02 },
-  { word: "CONTROLE", at: 0.24 },
-  { word: "PÁTIO", at: 0.4 },
-  { word: "AVENIDA", at: 0.47 },
-  { word: "ESTRADA", at: 0.56 },
-  { word: "EXPRESSA", at: 0.64 },
-  { word: "PERIFERIA", at: 0.72 },
-  { word: "CLIENTE", at: 0.81 },
-  { word: "DOCA", at: 0.89 },
-  { word: "DADOS", at: 0.96 },
-];
 
 const CHAPTERS: Chapter[] = [
   {
@@ -393,9 +381,7 @@ export default function ScrollStage() {
 
         {/* HUD superior */}
         <div className="pointer-events-none absolute inset-x-0 top-24 flex items-center justify-between px-6 md:px-12">
-          <div className="hidden text-[10px] uppercase tracking-[0.28em] text-ink/35 md:block">
-            Role para montar a cena
-          </div>
+          <div className="hidden text-[10px] uppercase tracking-[0.28em] text-ink/30 md:block">Cena 3D · getTMS</div>
         </div>
 
         {/* reprodução automática */}
@@ -458,31 +444,6 @@ export default function ScrollStage() {
               <span className="hidden md:inline">Som</span>
             </button>
           </div>
-        </div>
-        {/* letras gigantes ao fundo */}
-        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
-          {GIANT_WORDS.map((item, index) => {
-            const next = GIANT_WORDS[index + 1]?.at ?? 1.05;
-            const span = Math.max(0.08, next - item.at);
-            const local = (progress - item.at) / span;
-            const visible = local > -0.25 && local < 1.25;
-            const opacity = visible ? Math.max(0, 1 - Math.abs(local - 0.45) * 2.1) * 0.5 : 0;
-            return (
-              <span
-                key={item.word}
-                aria-hidden="true"
-                className="absolute left-0 top-1/2 select-none whitespace-nowrap font-display text-[clamp(5rem,19vw,17rem)] font-semibold leading-none tracking-[-0.05em] text-[#0a0f0b]"
-                style={{
-                  opacity: opacity * 0.38,
-                  transform: `translate3d(${4 + local * -22}vw, -50%, 0)`,
-                  filter: "blur(0.6px)",
-                  mixBlendMode: "multiply",
-                }}
-              >
-                {item.word}
-              </span>
-            );
-          })}
         </div>
         {/* painel split-screen do capítulo ativo */}
         {splitChapter && (

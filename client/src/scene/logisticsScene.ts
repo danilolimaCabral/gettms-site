@@ -4924,6 +4924,27 @@ hub.scale.setScalar(1.15);
       car.group.visible = t > 0.001;
     });
 
+    // mantém distância entre veículos da mesma faixa (ninguém se bate)
+    const spacing: Record<string, { z: number; dir: number; gap: number; set: (z: number) => void }[]> = {};
+    cars.forEach((car) => {
+      const key = `${car.group.position.x.toFixed(1)}:${car.dir}`;
+      (spacing[key] ||= []).push({ z: car.group.position.z, dir: car.dir, gap: 8, set: (z) => { car.group.position.z = z; } });
+    });
+    avenueTrucks.forEach((item) => {
+      const key = `${item.group.position.x.toFixed(1)}:${item.dir}`;
+      (spacing[key] ||= []).push({ z: item.group.position.z, dir: item.dir, gap: 24, set: (z) => { item.group.position.z = z; } });
+    });
+    Object.values(spacing).forEach((list) => {
+      if (list.length < 2) return;
+      const dir = list[0].dir;
+      list.sort((a, b) => (dir > 0 ? a.z - b.z : b.z - a.z));
+      for (let i = 1; i < list.length; i += 1) {
+        const back = list[i];
+        const front = list[i - 1];
+        const required = front.z - dir * Math.max(front.gap, back.gap);
+        if (dir > 0 ? back.z > required : back.z < required) back.set(required);
+      }
+    });
     // caminhões extras da avenida
     avenueTrucks.forEach((item) => {
       const progress = (time * item.speed + item.offset + p * 0.15) % 1;
@@ -5613,15 +5634,20 @@ hub.scale.setScalar(1.15);
         const bandH = Math.max(0.22, Math.min(tSize.y * 0.14, 0.5));
         const bandY = tCenter.y - tSize.y * 0.18;
         [-1, 1].forEach((side) => {
-          const band = new THREE.Mesh(new THREE.PlaneGeometry(trailerLength * 0.96, bandH), stripeMat);
-          if (lengthAlongX) {
-            band.position.set(tCenter.x, bandY, tCenter.z + side * (tSize.z / 2 + 0.05));
-            band.rotation.y = side > 0 ? 0 : Math.PI;
-          } else {
-            band.position.set(tCenter.x + side * (tSize.x / 2 + 0.05), bandY, tCenter.z);
-            band.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
-          }
-          wrapper.add(band);
+          [bandY, tCenter.y - tSize.y * 0.44].forEach((y, index) => {
+            const band = new THREE.Mesh(
+              new THREE.PlaneGeometry(trailerLength * (index === 0 ? 0.96 : 0.98), index === 0 ? bandH : 0.16),
+              stripeMat,
+            );
+            if (lengthAlongX) {
+              band.position.set(tCenter.x, y, tCenter.z + side * (tSize.z / 2 + 0.05));
+              band.rotation.y = side > 0 ? 0 : Math.PI;
+            } else {
+              band.position.set(tCenter.x + side * (tSize.x / 2 + 0.05), y, tCenter.z);
+              band.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+            }
+            wrapper.add(band);
+          });
         });
       } else {
         [-1, 1].forEach((side) => {

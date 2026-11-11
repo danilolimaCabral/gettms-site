@@ -81,6 +81,11 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Rodas do caminhão do hero: o modelo GLB traz os dois pneus do eixo numa única malha e a escala aplicada encolhia as rodas para dentro da carroceria (por isso "sumiam"). Agora os pneus são gerados por eixo com bitola fixa, pneu e aro separados, e a carroceria é levantada para eles aparecerem.
 - Pedestres: pernas e braços passaram a girar no pivô certo (quadril e ombro), com sapatos, mãos e cabelo (capacete só para os operadores do CD).
 
+## Refino visual e trânsito
+- Removidas as palavras gigantes que passavam sobre a cena (peso de blur/blend e poluição visual).
+- Carros e caminhões da avenida mantêm distância mínima na mesma faixa (não se sobrepõem mais).
+- Carreta do hero com faixa inferior e linha verde de base; rótulo da cena trocado por "Cena 3D · getTMS".
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
