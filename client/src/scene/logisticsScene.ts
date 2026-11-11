@@ -2745,10 +2745,32 @@ hub.scale.setScalar(1.15);
     truckSpeed += accel;
     truckPhase = (truckPhase + truckSpeed * frameDt) % 1;
     const loopT = truckPhase;
-    const truckPoint = truckPath.getPointAt(loopT);
-    const truckTangent = truckPath.getTangentAt(loopT);
-    truck.position.set(truckPoint.x, 0, truckPoint.z);
-    truck.rotation.y = Math.atan2(truckTangent.x, truckTangent.z);
+    // rota retangular pelas ruas reais: avenida -> transversal -> paralela -> transversal
+    const routePts = [
+      new THREE.Vector2(2.6, 70),
+      new THREE.Vector2(2.6, -96),
+      new THREE.Vector2(-140, -96),
+      new THREE.Vector2(-140, 30),
+    ];
+    const segLens = routePts.map((pt, i) => pt.distanceTo(routePts[(i + 1) % routePts.length]));
+    const routeTotal = segLens.reduce((a, b) => a + b, 0);
+    let routeDist = (truckPhase * routeTotal) % routeTotal;
+    let segIndex = 0;
+    while (routeDist > segLens[segIndex]) {
+      routeDist -= segLens[segIndex];
+      segIndex = (segIndex + 1) % 4;
+    }
+    const fromPt = routePts[segIndex];
+    const toPt = routePts[(segIndex + 1) % 4];
+    const segT = segLens[segIndex] > 0 ? routeDist / segLens[segIndex] : 0;
+    const truckX = fromPt.x + (toPt.x - fromPt.x) * segT;
+    const truckZ = fromPt.y + (toPt.y - fromPt.y) * segT;
+    truck.position.set(truckX, 0, truckZ);
+    const targetHeading = Math.atan2(toPt.x - fromPt.x, toPt.y - fromPt.y);
+    let turnDelta = targetHeading - truck.rotation.y;
+    while (turnDelta > Math.PI) turnDelta -= Math.PI * 2;
+    while (turnDelta < -Math.PI) turnDelta += Math.PI * 2;
+    truck.rotation.y += turnDelta * 0.12;
     truck.rotation.z = THREE.MathUtils.clamp(accel * 6, -0.02, 0.02);
     truck.rotation.x = -Math.abs(accel) * 1.2;
     truck.visible = true;
