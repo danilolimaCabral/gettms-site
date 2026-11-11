@@ -5429,6 +5429,42 @@ hub.scale.setScalar(1.15);
       -box.min.y * scale,
       -(box.min.z + size.z / 2) * scale,
     );
+    const recolorStripes = (texture: THREE.Texture | null): THREE.Texture | null => {
+      if (!texture || !texture.image) return texture;
+      try {
+        const image = texture.image as HTMLImageElement | ImageBitmap;
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return texture;
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i];
+          const g = px[i + 1];
+          const b = px[i + 2];
+          // coral do modelo original -> verde getTMS
+          if (r > 110 && r > g * 1.22 && r > b * 1.3) {
+            px[i] = 0x63;
+            px[i + 1] = 0xb3;
+            px[i + 2] = 0x2e;
+          }
+        }
+        ctx.putImageData(data, 0, 0);
+        const out = new THREE.CanvasTexture(canvas);
+        out.colorSpace = texture.colorSpace;
+        out.flipY = texture.flipY;
+        out.wrapS = texture.wrapS;
+        out.wrapT = texture.wrapT;
+        out.anisotropy = texture.anisotropy;
+        out.needsUpdate = true;
+        return out;
+      } catch {
+        return texture;
+      }
+    };
     clone.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
@@ -5475,7 +5511,8 @@ hub.scale.setScalar(1.15);
             return std;
           }
           if (matName.includes("trailer")) {
-            // carreta/carroceria: mantém a textura original (sulcos, detalhes) sem tingir
+            // carreta: mantém sulcos e detalhes, só troca o coral pelo verde getTMS
+            std.map = recolorStripes(std.map);
             std.color.set(0xffffff);
             std.needsUpdate = true;
             return std;
