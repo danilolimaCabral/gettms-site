@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import Logo from "./Logo";
 import { DEMO_URL } from "@/content/site";
+import ClientLogin from "@/components/site/ClientLogin";
 
 type NavItem = { label: string; seek?: number; href?: string };
 
@@ -29,6 +30,7 @@ export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [login, setLogin] = useState(false);
   const [active, setActive] = useState("");
 
   useEffect(() => {
@@ -113,6 +115,13 @@ export default function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLogin(true)}
+              className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-ink/55 transition-colors hover:text-brand-dark md:inline-flex"
+            >
+              Painel do cliente
+            </button>
             <a
               href={DEMO_URL}
               target="_blank"
@@ -181,10 +190,21 @@ export default function SiteHeader() {
               Agendar demonstração
               <ArrowUpRight className="h-4 w-4" />
             </a>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setLogin(true);
+              }}
+              className="btn btn-ghost mt-3 w-full justify-center"
+            >
+              Painel do cliente
+            </button>
             <p className="mt-6 text-center text-[11px] text-ink/40">Ou fale com a Mia no canto da tela</p>
           </nav>
         </div>
       )}
+      <ClientLogin open={login} onClose={() => setLogin(false)} />
     </>
   );
 }
