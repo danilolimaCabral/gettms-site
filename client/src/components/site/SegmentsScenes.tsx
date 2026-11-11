@@ -54,8 +54,21 @@ export default function SegmentsScenes() {
       }
     };
     apply();
-    // reaplica ao rolar: a cena 3D carrega depois do primeiro render
-    const onScroll = () => apply();
+    // reaplica ao rolar e solta a vista quando a secao sai da tela
+    const onScroll = () => {
+      const el = sectionRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight * 0.9 && rect.bottom > window.innerHeight * 0.1;
+      const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
+      if (!handle) return;
+      if (inView) {
+        handle.setSegmentView(KINDS[scene]);
+        handle.setSegmentZoom(0.34);
+      } else {
+        handle.setSegmentView(null);
+      }
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {

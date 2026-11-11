@@ -3194,14 +3194,9 @@ hub.scale.setScalar(1.15);
     },
     setSegmentView(kind: string | null) {
       if (!kind) {
-        // outras secoes limpam a vista; so limpa se ninguem reaplicar em 1.2s
-        window.clearTimeout(clearViewTimer);
-        clearViewTimer = window.setTimeout(() => {
-          segmentView = null;
-        }, 1200);
+        segmentView = null;
         return;
       }
-      window.clearTimeout(clearViewTimer);
       const view = SEGMENT_VIEWS[kind];
       if (!view) return;
       if (!segmentView) overrideLook.copy(lookTarget);
