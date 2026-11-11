@@ -308,9 +308,10 @@ export default function ScrollStage() {
                 aria-hidden="true"
                 className="absolute left-0 top-1/2 select-none whitespace-nowrap font-display text-[clamp(5rem,19vw,17rem)] font-semibold leading-none tracking-[-0.05em] text-[#0a0f0b]"
                 style={{
-                  opacity: opacity * 0.16,
-                  transform: `translate3d(${-8 + local * -26}vw, -50%, 0)`,
-                  filter: "blur(1.5px)",
+                  opacity: opacity * 0.38,
+                  transform: `translate3d(${4 + local * -22}vw, -50%, 0)`,
+                  filter: "blur(0.6px)",
+                  mixBlendMode: "multiply",
                 }}
               >
                 {item.word}
