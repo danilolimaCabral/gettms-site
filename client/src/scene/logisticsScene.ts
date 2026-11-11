@@ -2542,9 +2542,10 @@ hub.scale.setScalar(1.15);
     };
   }
   const SEGMENT_VIEWS: Record<string, { pos: THREE.Vector3; look: THREE.Vector3; office?: boolean }> = {
-    alimentos: { pos: new THREE.Vector3(-40, 40, -98), look: new THREE.Vector3(-112, 4, -72) },
-    farma: { pos: new THREE.Vector3(-96, 36, 0), look: new THREE.Vector3(-70, 4, 72) },
-    construcao: { pos: new THREE.Vector3(-80, 36, -26), look: new THREE.Vector3(-152, 4, 0) },
+    cidade: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
+    alimentos: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
+    farma: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
+    construcao: { pos: new THREE.Vector3(58, 86, 96), look: new THREE.Vector3(-30, 0, -6) },
     ecommerce: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     simulacao: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },
     ocorrencias: { pos: new THREE.Vector3(), look: new THREE.Vector3(), office: true },

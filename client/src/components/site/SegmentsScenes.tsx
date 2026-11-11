@@ -37,14 +37,15 @@ export default function SegmentsScenes() {
   }, []);
 
   useEffect(() => {
-    type SceneHandle = { setSegmentView: (k: string | null) => void };
+    type SceneHandle = { setSegmentView: (k: string | null) => void; setSegmentZoom: (z: number) => void };
     let cancelled = false;
     let tries = 0;
     const apply = () => {
       if (cancelled) return;
       const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
       if (handle) {
-        handle.setSegmentView(KINDS[scene]);
+        handle.setSegmentView("cidade");
+        handle.setSegmentZoom(1.02 - scene * 0.07);
         return;
       }
       if (tries < 40) {
