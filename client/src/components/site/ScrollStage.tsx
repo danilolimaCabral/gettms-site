@@ -281,7 +281,7 @@ export default function ScrollStage() {
         {/* hero */}
         <div
           ref={heroRef}
-          className="hero-compact absolute inset-0 flex items-end pb-28 pt-24 md:items-center md:pb-0 md:pt-24 [@media(max-height:720px)]:pb-8 [@media(max-height:720px)]:pt-20"
+          className="hero-compact absolute inset-0 flex items-end pb-28 pt-24 md:items-center md:pb-0 md:pt-24 [@media(max-height:720px)]:pb-24 [@media(max-height:720px)]:pt-20"
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/85 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70 md:to-transparent" />
           <div className="container-wide relative">
