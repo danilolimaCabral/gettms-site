@@ -44,8 +44,14 @@ export default function SegmentsScenes() {
       if (cancelled) return;
       const handle = (window as unknown as { __gettmsScene?: SceneHandle }).__gettmsScene;
       if (handle) {
-        handle.setSegmentView(KINDS[scene]);
-        handle.setSegmentZoom(0.17);
+        const el = sectionRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight * 0.9 && rect.bottom > window.innerHeight * 0.1;
+        if (inView) {
+          handle.setSegmentView(KINDS[scene]);
+          handle.setSegmentZoom(0.17);
+        }
         return;
       }
       if (tries < 400) {

@@ -350,8 +350,8 @@ export function createLogisticsScene(
   // ---------------------------------------------------------------- chão
   const groundUniforms = {
     uProgress: { value: 0 },
-    uLine: { value: new THREE.Color(0x93a98a) },
-    uBase: { value: new THREE.Color(0xe4eade) },
+    uLine: { value: new THREE.Color(0xe3e6dc) },
+    uBase: { value: new THREE.Color(0xf2f4ed) },
   };
 
   const ground = new THREE.Mesh(
@@ -493,7 +493,7 @@ export function createLogisticsScene(
   scene.add(road);
 
   const asphaltMat = new THREE.MeshStandardMaterial({
-    color: 0x151c17,
+    color: 0x4a5150,
     roughness: 0.9,
     metalness: 0.12,
     transparent: true,
@@ -525,7 +525,7 @@ export function createLogisticsScene(
 
   // malha viária conectada
   const gridRoadMat = new THREE.MeshStandardMaterial({
-    color: 0x232b25,
+    color: 0x767d7a,
     roughness: 0.92,
     metalness: 0.1,
     transparent: true,
@@ -938,7 +938,7 @@ hub.scale.setScalar(1.15);
   hub.scale.y = 0.001;
 
   // ---------------------------------------------------------------- caminhão
-  const roadMat = new THREE.MeshStandardMaterial({ color: 0x39423a, roughness: 0.95 });
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a615f, roughness: 0.95 });
   const laneMat = new THREE.MeshBasicMaterial({ color: 0xe9f2e0 });
   const accessRoad = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 104), roadMat);
   accessRoad.rotation.x = -Math.PI / 2;
@@ -1353,18 +1353,8 @@ hub.scale.setScalar(1.15);
     delay: number;
   };
 
-  // pedestres nas calcadas e nos patios
-  const pedestrianSpots: Array<[number, number, number]> = [
-    [7.2, -60, Math.PI], [7.2, -34, Math.PI], [7.2, -8, Math.PI], [7.2, 20, Math.PI],
-    [-7.2, -52, 0], [-7.2, -26, 0], [-7.2, 2, 0], [-7.2, 30, 0],
-    [14, -70, Math.PI * 0.5], [-14, 12, -Math.PI * 0.5], [20, 34, Math.PI],
-    [-20, -60, 0], [9.5, 44, Math.PI], [-9.5, -80, 0],
-  ];
-  pedestrianSpots.forEach(([px, pz, pr], i) => {
-    addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4);
-  });
-  const pantMat = new THREE.MeshStandardMaterial({ color: 0x27302a, roughness: 0.85 });
   const people: Person[] = [];
+  const pantMat = new THREE.MeshStandardMaterial({ color: 0x27302a, roughness: 0.85 });
 
   const skinMats = [
     new THREE.MeshStandardMaterial({ color: 0xd9b08c, roughness: 0.8 }),
@@ -1425,6 +1415,16 @@ hub.scale.setScalar(1.15);
       delay,
     });
   }
+  const pedestrianSpots: Array<[number, number, number]> = [
+    [7.2, -60, Math.PI], [7.2, -34, Math.PI], [7.2, -8, Math.PI], [7.2, 20, Math.PI],
+    [-7.2, -52, 0], [-7.2, -26, 0], [-7.2, 2, 0], [-7.2, 30, 0],
+    [14, -70, Math.PI * 0.5], [-14, 12, -Math.PI * 0.5], [20, 34, Math.PI],
+    [-20, -60, 0], [9.5, 44, Math.PI], [-9.5, -80, 0],
+  ];
+  pedestrianSpots.forEach(([px, pz, pr], i) => {
+    addPerson(px, pz, pr, i % 2 === 0 ? 0x2f6f4f : 0x8fd14f, i % 3 === 0 ? "z" : null, 4, i * 0.4);
+  });
+
 
 
   // ---------------------------------------------------------------- carros
