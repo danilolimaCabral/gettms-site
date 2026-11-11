@@ -93,7 +93,7 @@ export default function DesktopScene() {
           </h2>
         </div>
 
-        <div className="relative w-full max-w-[1080px] px-3" style={{ perspective: "1400px" }}>
+        <div className="relative w-full max-w-[1180px] px-3" style={{ perspective: "1400px" }}>
           {/* brilho da tela e sombra na mesa */}
           <div className="pointer-events-none absolute left-1/2 top-[12%] h-[70%] w-[78%] -translate-x-1/2 rounded-[50%] bg-[#8fe04a]/12 blur-[80px]" />
           <div className="pointer-events-none absolute inset-x-10 -bottom-4 h-10 rounded-[50%] bg-black/60 blur-2xl" />
@@ -129,7 +129,7 @@ export default function DesktopScene() {
                     </div>
                   </div>
 
-                  <div className="flex h-[352px] md:h-[396px]">
+                  <div className="flex h-[360px] md:h-[420px]">
                     {/* menu lateral */}
                     <aside className="hidden w-[168px] shrink-0 flex-col gap-1 border-r border-white/8 bg-[#0c120e] p-3 md:flex">
                       <div className="mb-3 flex items-center gap-2">
@@ -262,19 +262,7 @@ export default function DesktopScene() {
                               <p>restrição de circulação respeitada</p>
                             </div>
                           </div>
-                          <div className="mt-2 hidden grid-cols-3 gap-2 text-[10px] md:grid">
-                            {[
-                              ["Prazo total", "3 dias"],
-                              ["Custo por km", "R$ 4,12"],
-                              ["Modal", "Rodoviário"],
-                            ].map(([k, v]) => (
-                              <div key={k} className="rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5">
-                                <span className="block text-[8px] uppercase tracking-[0.14em] text-white/35">{k}</span>
-                                <span className="block text-white/85">{v}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <button type="button" className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#8fe04a] py-1.5 text-[10px] font-semibold text-[#0b100c]">
+                                                    <button type="button" className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#8fe04a] py-1.5 text-[10px] font-semibold text-[#0b100c]">
                             Aprovar cotação e gerar pedido #4821 <ChevronRight className="h-3 w-3" />
                           </button>
                         </div>
@@ -370,10 +358,15 @@ export default function DesktopScene() {
             <div className="mx-auto h-2 w-52 rounded-full bg-[linear-gradient(180deg,#2b352d,#131913)] shadow-[0_10px_24px_-10px_rgba(0,0,0,0.9)] md:w-64" />
             {/* acessórios de mesa */}
             <div className="relative mx-auto mt-2 h-8 w-full max-w-[560px]">
-              <div className="absolute left-1/2 top-0 h-[18px] w-[220px] -translate-x-1/2 rounded-[5px] bg-[linear-gradient(180deg,#242d26,#141a15)] shadow-[0_10px_18px_-10px_rgba(0,0,0,0.85)] md:w-[300px]">
-                <div className="absolute inset-x-3 top-[5px] grid grid-cols-12 gap-[3px] opacity-40">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <span key={i} className="h-[3px] rounded-[1px] bg-white/50" />
+              <div className="absolute left-1/2 top-0 h-[22px] w-[230px] -translate-x-1/2 rounded-[6px] bg-[linear-gradient(180deg,#28322a,#161c17)] shadow-[0_10px_18px_-10px_rgba(0,0,0,0.85)] md:w-[320px]">
+                <div className="absolute inset-x-3 top-[4px] grid grid-cols-14 gap-[2px] opacity-35">
+                  {Array.from({ length: 14 }).map((_, i) => (
+                    <span key={`a${i}`} className="h-[4px] rounded-[1px] bg-white/60" />
+                  ))}
+                </div>
+                <div className="absolute inset-x-6 top-[11px] grid grid-cols-11 gap-[2px] opacity-25">
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <span key={`b${i}`} className="h-[4px] rounded-[1px] bg-white/60" />
                   ))}
                 </div>
               </div>
