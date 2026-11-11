@@ -53,6 +53,7 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 
 ## Performance do modelo PBR
 - semi-truck.glb otimizado com gltf-transform: texturas 2048² → 1024² e malha quantizada (KHR_mesh_quantization), de 3,1 MB para 1,6 MB (-48%).
+- Malha unificada com gltf-transform join: 33 → 7 draw calls (1,8 MB), materiais idênticos deduplicados.
 - Cena pausa render fora da tela, aba oculta e qualidade adaptativa por FPS.
 
 ## Pendências

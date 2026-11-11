@@ -3224,8 +3224,8 @@ hub.scale.setScalar(1.15);
   // tráfego contínuo na via expressa e na periferia
   const highwayTraffic: { mesh: THREE.Group; lane: number; speed: number; offset: number; dir: number; from: number; to: number }[] = [];
   [
-    { name: "GT-6410", lane: -199.6, speed: 16, offset: 0, dir: 1, from: -30, to: 540 },
-    { name: "GT-7721", lane: -199.6, speed: 13, offset: 260, dir: 1, from: -30, to: 540 },
+    { name: "GT-6410", lane: -191.6, speed: 16, offset: 60, dir: -1, from: 540, to: -30 },
+    { name: "GT-7721", lane: -191.6, speed: 13, offset: 300, dir: -1, from: 540, to: -30 },
     { name: "GT-3908", lane: -191.4, speed: 15, offset: 190, dir: -1, from: 540, to: -30 },
     { name: "GT-5126", lane: -191.4, speed: 12, offset: 420, dir: -1, from: 540, to: -30 },
   ].forEach((item, index) => {
