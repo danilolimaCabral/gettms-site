@@ -952,13 +952,13 @@ hub.scale.setScalar(1.15);
   }
   // calcadas continuas com meio-fio ao longo da avenida
   const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xe9ebe3, roughness: 0.95 });
-  const curbMat = new THREE.MeshStandardMaterial({ color: 0xd2d5cb, roughness: 0.9 });
+  const avenueCurbMat = new THREE.MeshStandardMaterial({ color: 0xd2d5cb, roughness: 0.9 });
   const sidewalkGroup = new THREE.Group();
   for (let z = -150; z <= 92; z += 10) {
     [-1, 1].forEach((side) => {
       const walk = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.22, 9.8), sidewalkMat);
       walk.position.set(side * 7.7, 0.11, z);
-      const curb = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 9.8), curbMat);
+      const curb = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 9.8), avenueCurbMat);
       curb.position.set(side * 6.32, 0.17, z);
       sidewalkGroup.add(walk, curb);
     });
