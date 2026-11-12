@@ -362,6 +362,42 @@ function makeTruckSideTexture(name: string) {
   return texture;
 }
 
+function makeContainerTexture(base: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 128);
+  // ondulação lateral
+  for (let x = 0; x < 256; x += 13) {
+    ctx.fillStyle = "rgba(0,0,0,0.13)";
+    ctx.fillRect(x, 12, 7, 98);
+    ctx.fillStyle = "rgba(255,255,255,0.14)";
+    ctx.fillRect(x + 7, 12, 3, 98);
+  }
+  // travessas superior e inferior
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.fillRect(0, 0, 256, 12);
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.fillRect(0, 110, 256, 18);
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.fillRect(0, 104, 256, 4);
+  // postes de canto
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  ctx.fillRect(0, 0, 7, 128);
+  ctx.fillRect(249, 0, 7, 128);
+  // marcação estêncil
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText("getTMS", 96, 60);
+  ctx.fillText("22G1", 104, 78);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  return texture;
+}
 function makeShopFacadeTexture(base: string, trim: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
@@ -1120,8 +1156,9 @@ export function createLogisticsScene(
   ];
 
   crateLayout.forEach((layout, index) => {
+    const crateHex = crateColors[layout.color % crateColors.length].toString(16).padStart(6, "0");
     const mat = new THREE.MeshStandardMaterial({
-      color: crateColors[layout.color % crateColors.length],
+      map: makeContainerTexture(`#${crateHex}`),
       roughness: 0.55,
       metalness: 0.4,
     });
@@ -2700,7 +2737,7 @@ hub.scale.setScalar(1.15);
   headGlow.position.set(0, 1.9, 6.4);
   truck.add(headGlow);
 
-  truck.scale.setScalar(0.9);
+  truck.scale.setScalar(1);
   scene.add(truck);
 
   const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f7f2, roughness: 0.38, metalness: 0.12 });
@@ -3141,7 +3178,7 @@ hub.scale.setScalar(1.15);
 
 
   // ---------------------------------------------------------------- carros
-  type Car = { group: THREE.Group; wheels: THREE.Mesh[]; speed: number; offset: number; lane: number; dir: number; delay: number };
+  type Car = { group: THREE.Group; wheels: THREE.Mesh[]; speed: number; offset: number; lane: number; dir: number; delay: number; z: number; v: number };
   const cars: Car[] = [];
 
   const carVariants = ["car-sedan", "car-hatchback", "car-suv", "car-ev"];
@@ -3203,7 +3240,8 @@ hub.scale.setScalar(1.15);
       color,
       keepWheels: true,
     });
-    cars.push({ group, wheels: carWheels, speed, offset, lane, dir, delay });
+    const startZ = dir > 0 ? lerp(-130, 50, offset) : lerp(50, -130, offset);
+    cars.push({ group, wheels: carWheels, speed, offset, lane, dir, delay, z: startZ, v: speed * 180 });
   }
 
   addCar(0xffffff, 1.5, 1, 0.055, 0.15, 0.06);
@@ -3317,7 +3355,9 @@ hub.scale.setScalar(1.15);
   });
 
   const truckVariants = ["semi-truck", "tanker-truck", "delivery-truck"];
-  const truckLengths: Record<string, number> = { "semi-truck": 15.5, "tanker-truck": 12.5, "delivery-truck": 9.5 };
+  // padrão único de tamanho: todo caminhão da cena tem 15,5 m de comprimento
+  const TRUCK_LENGTH = 15.5;
+  const truckLengths: Record<string, number> = { "semi-truck": TRUCK_LENGTH, "tanker-truck": TRUCK_LENGTH, "delivery-truck": TRUCK_LENGTH };
   const truckColors = [0xffffff, 0x8fe04a, 0x63b32e, 0x2f6f4f, 0xdbe3d2, 0x2b3a30];
   let truckVariantIndex = 0;
   function makeSimpleTruck(name: string) {
@@ -3360,7 +3400,7 @@ hub.scale.setScalar(1.15);
     const bumper = new THREE.Mesh(round(2.9, 0.42, 0.3, 0.1, 2), new THREE.MeshStandardMaterial({ color: 0xd8dee2, roughness: 0.2, metalness: 0.9 }));
     bumper.position.set(0, 0.85, 5.66);
     group.add(cab, cabGlass, windshield, cabRoof, fairing, grille, lampL, lampR, bumper);
-    const procedural = [...group.children];
+    const proceduralParts: THREE.Object3D[] = [];
 
     const simpleWheel = new THREE.CylinderGeometry(0.62, 0.62, 0.5, 22);
     simpleWheel.rotateZ(Math.PI / 2);
@@ -3379,15 +3419,16 @@ hub.scale.setScalar(1.15);
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.2;
     group.add(shadow);
-    proceduralBodies.push({ group, parts: procedural });
+    proceduralBodies.push({ group, parts: group.children.filter((child) => child !== shadow) });
     const variant = truckVariants[truckVariantIndex % truckVariants.length];
     const color = truckColors[truckVariantIndex % truckColors.length];
     truckVariantIndex += 1;
+    proceduralParts.push(...group.children.filter((child) => child !== shadow));
     queueGlb({
       key: variant,
       holder: group,
-      parts: procedural,
-      length: truckLengths[variant] ?? 15.4,
+      parts: proceduralParts,
+      length: truckLengths[variant] ?? TRUCK_LENGTH,
       rotY: 0,
       color,
       label: name,
@@ -3593,7 +3634,7 @@ hub.scale.setScalar(1.15);
     });
     parked.position.set(px, 0, -176);
     parked.rotation.y = Math.PI / 2;
-    parked.scale.setScalar(0.9);
+    parked.scale.setScalar(1);
     roadside.add(parked);
   });
   // outdoors ao longo da estrada
@@ -3631,7 +3672,7 @@ hub.scale.setScalar(1.15);
       if ((child as THREE.Sprite).isSprite) child.visible = false;
     });
     truckMesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
-    truckMesh.scale.setScalar(0.9);
+    truckMesh.scale.setScalar(1);
     truckMesh.position.set(item.lane, 0, item.dir > 0 ? -120 : 40);
     scene.add(truckMesh);
     avenueTrucks.push({ group: truckMesh, speed: item.speed, offset: item.offset, dir: item.dir, lane: item.lane, z: 0 });
@@ -3731,7 +3772,7 @@ hub.scale.setScalar(1.15);
       const parked = makeSimpleTruck(["GT-1140", "GT-7788", "GT-9021"][(Math.round(dx / 9) + 1) % 3]);
       parked.position.set(dx, 0, 15);
       parked.rotation.y = 0;
-      parked.scale.setScalar(0.9);
+      parked.scale.setScalar(1);
       dc.add(parked);
       smallDockTrucks.push({ mesh: parked, baseX: dx, phase: Math.abs(x) * 0.011 + (dx + 9) * 0.06 });
     });
@@ -3758,7 +3799,7 @@ hub.scale.setScalar(1.15);
     orderTag.scale.set(9, 2.25, 1);
     orderTag.position.set(0, 7.6, 0);
     visitor.add(orderTag);
-    visitor.scale.setScalar(0.92);
+    visitor.scale.setScalar(1);
     visitor.position.set(0, 0, 42);
     dc.add(visitor);
     visitors.push({ mesh: visitor, phase: Math.abs(x) * 0.013 });
@@ -3819,7 +3860,7 @@ hub.scale.setScalar(1.15);
     const vehicle = makeSimpleTruck(name);
     const dir = 1;
     vehicle.rotation.y = 0;
-    vehicle.scale.setScalar(0.94);
+    vehicle.scale.setScalar(1);
     vehicle.position.set(4.4, 0, 0);
     vehicle.add(makeStatusTag(name, fleetStatus[index][0], fleetStatus[index][1]));
     scene.add(vehicle);
@@ -3830,23 +3871,23 @@ hub.scale.setScalar(1.15);
   const dockedTruck = makeCabOverSource();
   dockedTruck.position.set(424, 0, -361);
   dockedTruck.rotation.y = Math.PI;
-  dockedTruck.scale.setScalar(0.94);
+  dockedTruck.scale.setScalar(1);
   clientSite.add(dockedTruck);
 
   // tráfego contínuo na via expressa e na periferia
   const highwayTraffic: { mesh: THREE.Group; lane: number; speed: number; offset: number; dir: number; from: number; to: number; x: number }[] = [];
   [
     { name: "GT-6410", lane: -191.6, speed: 16, offset: 60, dir: -1, from: 540, to: -30 },
-    { name: "GT-7721", lane: -191.6, speed: 13, offset: 300, dir: -1, from: 540, to: -30 },
-    { name: "GT-3908", lane: -191.4, speed: 15, offset: 190, dir: -1, from: 540, to: -30 },
-    { name: "GT-5126", lane: -191.4, speed: 12, offset: 420, dir: -1, from: 540, to: -30 },
+    { name: "GT-7721", lane: -192.8, speed: 13, offset: 300, dir: -1, from: 540, to: -30 },
+    { name: "GT-3908", lane: -189.2, speed: 15, offset: 190, dir: -1, from: 540, to: -30 },
+    { name: "GT-5126", lane: -192.8, speed: 12, offset: 420, dir: -1, from: 540, to: -30 },
   ].forEach((item, index) => {
     const vehicle = makeSimpleTruck(item.name);
     vehicle.traverse((child) => {
       if ((child as THREE.Sprite).isSprite) child.visible = false;
     });
     vehicle.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-    vehicle.scale.setScalar(0.92);
+    vehicle.scale.setScalar(1);
     vehicle.position.set(item.from, 0, item.lane);
     scene.add(vehicle);
     highwayTraffic.push({ mesh: vehicle, lane: item.lane, speed: item.speed, offset: item.offset, dir: item.dir, from: item.from, to: item.to, x: item.from + (item.dir > 0 ? item.offset : -item.offset) });
@@ -4148,11 +4189,12 @@ hub.scale.setScalar(1.15);
   yardPad.position.set(0, 0.1, 4);
   yardGroup.add(yardPad);
 
-  const containerColors = [0x63b32e, 0x2f6f4f, 0xdbe3d2, 0xf2f5ee, 0x8aa86f, 0xc4552f];
+  const containerColors = ["#63b32e", "#2f6f4f", "#cfd8cf", "#f2f5ee", "#8aa86f", "#c4552f"];
   const containerGeo = round(6.1, 2.6, 2.5, 0.08, 1);
-  const containerMats = containerColors.map(
-    (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.3 }),
-  );
+  const containerMats = containerColors.map((base) => {
+    const texture = makeContainerTexture(base);
+    return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.55, metalness: 0.35 });
+  });
   const stackSlots: [number, number, number][] = [];
   for (let row = 0; row < 4; row += 1) {
     for (let col = 0; col < 4; col += 1) {
@@ -4990,12 +5032,30 @@ hub.scale.setScalar(1.15);
     cars.forEach((car) => {
       const t = easeOut(range(pb, 0.08 + car.delay, 0.16 + car.delay));
       car.group.scale.setScalar(Math.max(0.001, t));
-      const span = 180;
-      const progress = (time * car.speed + car.offset + p * 0.15) % 1;
-      const z = car.dir > 0 ? lerp(-130, 50, progress) : lerp(50, -130, progress);
-      const sameLane = Math.abs(car.group.position.x - truck.position.x) < 4.4;
-      const gap = (z - truck.position.z) * car.dir;
-      if (!(sameLane && gap > -13 && gap < 15)) car.group.position.z = z;
+      // direção assistida: acelera livre e freia atrás de quem está na frente
+      const minGap = 9;
+      let obstacle = Infinity;
+      cars.forEach((other) => {
+        if (other === car || other.dir !== car.dir) return;
+        if (Math.abs(other.group.position.x - car.group.position.x) > 0.6) return;
+        const ahead = (other.z - car.z) * car.dir;
+        if (ahead > 0 && ahead < obstacle) obstacle = ahead;
+      });
+      // caminhões e o caminhão do hero também contam como obstáculo
+      const heroGap = (truck.position.z - car.z) * car.dir;
+      if (Math.abs(truck.position.x - car.group.position.x) < 2.6 && heroGap > 0 && heroGap < obstacle) obstacle = heroGap;
+      avenueTrucks.forEach((item) => {
+        if (item.dir !== car.dir) return;
+        if (Math.abs(item.group.position.x - car.group.position.x) > 3) return;
+        const ahead = (item.group.position.z - car.z) * car.dir;
+        if (ahead > 0 && ahead < obstacle) obstacle = ahead;
+      });
+      const brakeStart = 26;
+      const factor = obstacle >= brakeStart ? 1 : Math.max(0, (obstacle - minGap) / (brakeStart - minGap));
+      car.z += car.dir * car.v * factor * frameDt;
+      if (car.dir > 0 && car.z > 50) car.z -= 180;
+      if (car.dir < 0 && car.z < -130) car.z += 180;
+      car.group.position.z = car.z;
       car.wheels.forEach((wheel) => {
         wheel.rotation.x += car.speed * 40;
       });
@@ -5703,20 +5763,6 @@ hub.scale.setScalar(1.15);
           });
         });
       });
-      // sobe a carroceria o suficiente para os pneus aparecerem
-      const bodyMeshes: THREE.Object3D[] = [];
-      clone.traverse((child) => {
-        const name = child.name.toLowerCase();
-        if ((child as THREE.Mesh).isMesh && !wheelMeshes.includes(child as THREE.Mesh) && (name.includes("body") || name.includes("trailer"))) {
-          bodyMeshes.push(child);
-        }
-      });
-      const bodyBox = new THREE.Box3();
-      (bodyMeshes.length ? bodyMeshes : [clone]).forEach((object) => bodyBox.union(new THREE.Box3().setFromObject(object)));
-      if (Number.isFinite(bodyBox.min.y)) {
-        const lift = wheelR * 1.15 - bodyBox.min.y;
-        if (lift > 0) clone.position.y += lift;
-      }
     }
     wrapper.add(clone);
     if (request.label) {

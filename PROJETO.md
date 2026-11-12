@@ -98,6 +98,14 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Fallback automático de rodas para qualquer modelo sem nós de roda nomeados.
 - Lojas da avenida ganharam fachada texturizada com janelas, platibanda, ar-condicionado e caixa d'água (antes eram caixas lisas).
 
+## Correções de veículos e contêineres
+- Rodas duplicadas: as peças procedurais eram capturadas antes das rodas, então as rodas antigas continuavam visíveis ao lado das do modelo GLB. A captura passou a acontecer depois e elas são escondidas junto.
+- Carroceria flutuando: removido o "lift" que subia o corpo para deixar os pneus à mostra (era ele que criava o vão entre carroceria e rodas).
+- Padrão único de tamanho: todo caminhão da cena (hero, avenida, via expressa, pátio e doca) usa 15,5 m de comprimento e escala 1.
+- Via expressa: caminhões estavam em faixas a 0,2 m de distância (praticamente sobrepostos); agora são duas faixas reais a 3,6 m.
+- Trânsito de carros: modelo de seguir o da frente, com frenagem proporcional a partir de 26 m e folga mínima de 9 m (antes o carro era empurrado de volta e dava tranco).
+- Contêineres do pátio e da cena do pedido ganharam textura ondulada, travessas, postes de canto e marcação getTMS/22G1.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
