@@ -6259,6 +6259,19 @@ hub.scale.setScalar(1.15);
     });
   }
 
+  // culling por distância: detalhes pequenos e distantes deixam de ser desenhados
+  const detailCull: { mesh: THREE.Mesh; radius: number }[] = [];
+  city.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.geometry) return;
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const size = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z);
+    if (size < 5) detailCull.push({ mesh, radius: low ? 120 : 170 });
+    else if (size < 14) detailCull.push({ mesh, radius: low ? 190 : 260 });
+  });
+  let cullFrame = 0;
+
   function render() {
     if (disposed) return;
     if (!sceneActive || document.hidden) {
@@ -6267,6 +6280,16 @@ hub.scale.setScalar(1.15);
     }
     const now = performance.now();
     lastDrawAt = now;
+    cullFrame += 1;
+    if (cullFrame % 15 === 0 && detailCull.length) {
+      const camPos = camera.position;
+      const tmp = new THREE.Vector3();
+      for (let i = 0; i < detailCull.length; i += 1) {
+        const item = detailCull[i];
+        item.mesh.getWorldPosition(tmp);
+        item.mesh.visible = tmp.distanceTo(camPos) < item.radius;
+      }
+    }
     frameCount += 1;
     perfFrames += 1;
     perfTime += Math.min(0.5, (now - lastTime) / 1000);
