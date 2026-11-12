@@ -2280,14 +2280,14 @@ hub.scale.setScalar(1.15);
   }
 
   // faixas de pedestre e semaforos nos cruzamentos da avenida
-  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const signalPoleMat = new THREE.MeshStandardMaterial({ color: 0x5c635f, roughness: 0.5, metalness: 0.6 });
   const signalBoxMat = new THREE.MeshStandardMaterial({ color: 0x2a302c, roughness: 0.6 });
   const signalLamps: { red: THREE.MeshBasicMaterial; green: THREE.MeshBasicMaterial }[] = [];
   [42, -42, -96, 30, 84, 138, -150, 192].forEach((crossZ) => {
     for (let i = 0; i < 7; i += 1) {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
-      stripe.position.set(-5.1 + i * 1.7, 0.14, crossZ);
+      stripe.position.set(-5.1 + i * 1.7, 0.2, crossZ);
       scene.add(stripe);
     }
     [-1, 1].forEach((side) => {
@@ -2610,7 +2610,7 @@ hub.scale.setScalar(1.15);
   // faixa de pedestre e sinal do trevo
   for (let i = 0; i < 7; i += 1) {
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 4.6), stripeMat);
-    stripe.position.set(-5.1 + i * 1.7, 0.14, -184);
+    stripe.position.set(-5.1 + i * 1.7, 0.2, -184);
     junction.add(stripe);
   }
   const stopLine = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.03, 0.5), highLineMat);
@@ -2955,7 +2955,7 @@ hub.scale.setScalar(1.15);
   [(-300)].forEach((cz) => {
     for (let i = 0; i < 5; i += 1) {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 3.6), stripeMat);
-      stripe.position.set(295.8 + i * 1.55, 0.12, cz);
+      stripe.position.set(295.8 + i * 1.55, 0.18, cz);
       periph.add(stripe);
     }
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 4, 10), signalPoleMat);
@@ -5801,9 +5801,9 @@ hub.scale.setScalar(1.15);
     const signalGreen = signalCycle < 1.15;
     const routeTarget = heroPhaseFor(p);
     const routeGap = routeTarget - truckPhase;
-    let truckStep = THREE.MathUtils.clamp(routeGap * 2.6, -0.45, 0.45);
+    let truckStep = THREE.MathUtils.clamp(routeGap * 1.1, -0.2, 0.2);
     // saltos grandes de rolagem: o caminhão "acelera" para alcançar a cena
-    if (Math.abs(routeGap) > 0.12) truckStep = THREE.MathUtils.clamp(routeGap * 4, -1.1, 1.1);
+    if (Math.abs(routeGap) > 0.18) truckStep = THREE.MathUtils.clamp(routeGap * 1.8, -0.45, 0.45);
     if (Math.abs(routeGap) < 0.0035) truckStep = routeTarget > 0.995 ? 0 : 0.0045;
     // só obedece o semáforo quando está no ritmo da rolagem (quem rola rápido não fica preso)
     if (truckStep > 0 && !signalGreen && routeGap < 0.05) {
@@ -6624,6 +6624,9 @@ hub.scale.setScalar(1.15);
     else glbRequests.push(request);
   }
   function applyGlb(request: GlbRequest, source: THREE.Object3D) {
+    const once = request as unknown as { __applied?: boolean };
+    if (once.__applied) return;
+    once.__applied = true;
     source.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(source);
     const size = box.getSize(new THREE.Vector3());
