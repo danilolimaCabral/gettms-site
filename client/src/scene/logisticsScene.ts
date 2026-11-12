@@ -2701,6 +2701,139 @@ hub.scale.setScalar(1.15);
   const clientLight = new THREE.PointLight(0xffd9a0, 40, 70, 2);
   clientLight.position.set(392, 6, -362);
   clientWarehouse.add(clientLight);
+  // projeto executivo: niveladoras, bollards, numeração de doca e sinalização
+  const dockSteelMat = new THREE.MeshStandardMaterial({ color: 0x8d9497, roughness: 0.42, metalness: 0.72 });
+  const dockYellowMat = new THREE.MeshStandardMaterial({ color: 0xf2b705, roughness: 0.55, metalness: 0.1 });
+  const dockLampMat = new THREE.MeshBasicMaterial({ color: 0x63e07a });
+  const dockNumbers = ["01", "02", "03", "04", "05"];
+  [360, 376, 392, 408, 424].forEach((x, index) => {
+    const leveler = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.9), dockSteelMat);
+    leveler.position.set(x, 1.12, -350.75);
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.32, 0.28), dockSteelMat);
+    lip.position.set(x, 1.02, -349.9);
+    clientWarehouse.add(leveler, lip);
+    [-3.3, 3.3].forEach((dx) => {
+      const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.15, 10), dockYellowMat);
+      bollard.position.set(x + dx, 0.78, -350.2);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 10), trimMat);
+      cap.position.set(x + dx, 1.38, -350.2);
+      clientWarehouse.add(bollard, cap);
+    });
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.14), dockLampMat);
+    lamp.position.set(x + 3.55, 5.45, -351.7);
+    clientWarehouse.add(lamp);
+    const number = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.2, 1.1),
+      makeTextPanel(`DOCA ${dockNumbers[index]}`, "CARRETA 3 EIXOS", 2.2, 1.1, "#101a13", "#ffffff"),
+    );
+    number.position.set(x - 4.5, 4.4, -351.85);
+    clientWarehouse.add(number);
+  });
+  // cobertura: sheds translúcidos, guarda-corpo e exaustores
+  const skylightMat = new THREE.MeshStandardMaterial({ color: 0xdff0ff, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.65 });
+  for (let i = 0; i < 6; i += 1) {
+    const shed = new THREE.Mesh(new THREE.BoxGeometry(7, 0.35, 1.6), skylightMat);
+    shed.position.set(362 + i * 12, 13.7, -340);
+    clientWarehouse.add(shed);
+  }
+  for (let i = 0; i < 10; i += 1) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 0.12), trimMat);
+    post.position.set(353 + i * 8.6, 13.95, -328.6);
+    clientWarehouse.add(post);
+  }
+  const roofRail = new THREE.Mesh(new THREE.BoxGeometry(80, 0.08, 0.08), trimMat);
+  roofRail.position.set(392, 14.4, -328.6);
+  clientWarehouse.add(roofRail);
+  [-26, -13, 13, 26].forEach((dx) => {
+    const vent = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 1.4, 12), dockSteelMat);
+    vent.position.set(392 + dx, 13.9, -334);
+    const ventCap = new THREE.Mesh(new THREE.ConeGeometry(0.95, 0.5, 12), trimMat);
+    ventCap.position.set(392 + dx, 14.85, -334);
+    clientWarehouse.add(vent, ventCap);
+  });
+  // fachadas laterais com janelas altas e porta de pessoas
+  [-392 + 160, 392 + 160].forEach(() => undefined);
+  [352.2, 431.8].forEach((x) => {
+    const sideGlass = new THREE.Mesh(round(0.4, 3.2, 18, 0.1, 2), cwGlass.material as THREE.Material);
+    sideGlass.position.set(x, 10.4, -340);
+    clientWarehouse.add(sideGlass);
+    for (let i = 0; i <= 4; i += 1) {
+      const mullion = new THREE.Mesh(round(0.5, 3.3, 0.26, 0.04, 1), cwMullionMat);
+      mullion.position.set(x, 10.4, -349 + i * 4.5);
+      clientWarehouse.add(mullion);
+    }
+  });
+  const staffDoor = new THREE.Mesh(round(0.24, 2.4, 1.2, 0.06, 2), trimMat);
+  staffDoor.position.set(352.1, 1.2, -334);
+  clientWarehouse.add(staffDoor);
+  const cwExitSign = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.5), new THREE.MeshBasicMaterial({ color: 0x2fbf5a }));
+  cwExitSign.rotation.y = -Math.PI / 2;
+  cwExitSign.position.set(351.95, 2.9, -334);
+  clientWarehouse.add(cwExitSign);
+  // calha e condutores
+  [352.2, 431.8].forEach((x) => {
+    const gutter = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 25), trimMat);
+    gutter.position.set(x, 13.35, -340);
+    clientWarehouse.add(gutter);
+    [-352.2, -327.8].forEach((z) => {
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 13, 8), trimMat);
+      pipe.position.set(x + (x < 392 ? 0.3 : -0.3), 6.5, z);
+      clientWarehouse.add(pipe);
+    });
+  });
+  // pátio: setas de manobra, faixa de pedestre, "PARE" e postes de iluminação
+  const yardMarkMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.5 });
+  for (let i = 0; i < 4; i += 1) {
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.02, 3.4), yardMarkMat);
+    shaft.position.set(360 + i * 21, 0.12, -372);
+    south.add(shaft);
+    const head = new THREE.Mesh(new THREE.CircleGeometry(1.1, 3), yardMarkMat);
+    head.rotation.x = -Math.PI / 2;
+    head.rotation.z = Math.PI / 2;
+    head.position.set(360 + i * 21, 0.12, -374.9);
+    south.add(head);
+  }
+  for (let i = 0; i < 7; i += 1) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.02, 3.2), yardMarkMat);
+    stripe.position.set(340 + i * 1.5, 0.12, -388);
+    south.add(stripe);
+  }
+  const stopSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.2, 1.4),
+    makeTextPanel("PARE", "na cancela", 3.2, 1.4, "#ffffff", "#b3261e"),
+  );
+  stopSign.rotation.x = -Math.PI / 2;
+  stopSign.position.set(318, 0.12, -382);
+  south.add(stopSign);
+  [348, 392, 436].forEach((x) => {
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 11, 10), poleMat);
+    mast.position.set(x, 5.5, -378);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 2.4), poleMat);
+    arm.position.set(x, 10.9, -379.1);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.6), new THREE.MeshStandardMaterial({ color: 0xdfe4e6, roughness: 0.4, metalness: 0.6 }));
+    head.position.set(x, 10.85, -380.2);
+    const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.45), new THREE.MeshBasicMaterial({ color: 0xfff2cf }));
+    bulb.position.set(x, 10.68, -380.2);
+    south.add(mast, arm, head, bulb);
+  });
+  // cerca perimetral com mourões e árvores alinhadas
+  const cwFenceMat = new THREE.MeshStandardMaterial({ color: 0xb9c2bd, roughness: 0.7, metalness: 0.35, transparent: true, opacity: 0.85 });
+  for (let i = 0; i < 34; i += 1) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 0.12), trimMat);
+    post.position.set(322 + i * 4.4, 1.1, -404);
+    south.add(post);
+  }
+  const fencePanel = new THREE.Mesh(new THREE.BoxGeometry(146, 1.9, 0.06), cwFenceMat);
+  fencePanel.position.set(392, 1.1, -404);
+  south.add(fencePanel);
+  for (let i = 0; i < 8; i += 1) {
+    const tx = 326 + i * 19;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.4, 7), trunkMat);
+    trunk.position.set(tx, 1.2, -398);
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.7, 1), leafMat);
+    crown.position.set(tx, 3.2, -398);
+    south.add(trunk, crown);
+  }
   // vagas pintadas no pátio
   const clientBayMat = new THREE.MeshBasicMaterial({ color: 0xe8f2df, transparent: true, opacity: 0.55 });
   for (let i = 0; i < 12; i += 1) {

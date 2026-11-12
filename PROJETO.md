@@ -139,6 +139,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Overlay do React atualiza no máximo a cada 80 ms, sem competir com o loop 3D.
 - Diagnóstico: `window.__gettmsInfo` expõe updateMs, renderMs, fps, draw calls, triângulos, texturas e pixel ratio.
 
+## CD do cliente em nível executivo
+- Plataformas niveladoras, sapatas, bollards amarelos com tampo, luz verde de doca livre e placas "DOCA 01..05".
+- Cobertura com sheds translúcidos, guarda-corpo, exaustores com chapéu, calhas e condutores.
+- Fachadas laterais com faixa de vidro, montantes, porta de pessoal e placa de saída.
+- Pátio com setas de manobra, faixa de pedestre, marcação "PARE", três postes de iluminação, cerca perimetral com mourões e árvores alinhadas.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
