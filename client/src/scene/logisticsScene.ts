@@ -1821,6 +1821,24 @@ hub.scale.setScalar(1.15);
             if (/ground_slab|ground_slab_/i.test(o.name)) slabs.push(o);
           });
           slabs.forEach((o) => o.parent?.remove(o));
+          // paleta alinhada à cidade (o modelo original vem com tons salmão)
+          if (key === "bld-apartment") {
+            proto.traverse((o) => {
+              const mesh = o as THREE.Mesh;
+              if (!mesh.isMesh) return;
+              const std = mesh.material as THREE.MeshStandardMaterial;
+              const name = (std.name || "").toLowerCase();
+              const tint = new THREE.Color(0xefe4d8);
+              if (name.includes("mint")) tint.set(0xdde6e1);
+              else if (name.includes("stone")) tint.set(0xd8d5cb);
+              else if (name.includes("wood")) tint.set(0xc4ad92);
+              else if (name.includes("trim")) tint.set(0xf6f4ee);
+              const mat = std.clone();
+              mat.color.copy(tint);
+              mat.roughness = Math.min(mat.roughness ?? 0.8, 0.85);
+              mesh.material = mat;
+            });
+          }
           const bbox = new THREE.Box3().setFromObject(proto);
           const size = bbox.getSize(new THREE.Vector3());
           const center = bbox.getCenter(new THREE.Vector3());
@@ -1871,9 +1889,11 @@ hub.scale.setScalar(1.15);
       makeStyledFacadeTexture("grid", "#eef1ec", "#c3c9c6"),
       makeShopFacadeTexture("#e9e2d2", "#c9c2b2"),
       makeStyledFacadeTexture("glass", "#5d7c86", "#b9bfb5"),
+      makeStyledFacadeTexture("ribbon", "#dfe3e4", "#b9bfb5"),
+      makeShopFacadeTexture("#ecebe3", "#bdb6a6"),
     ];
     // tudo o que é estático entra em buckets e vira poucos meshes (menos draw calls)
-    const buildingBuckets: THREE.BufferGeometry[][] = [[], [], [], []];
+    const buildingBuckets: THREE.BufferGeometry[][] = [[], [], [], [], [], []];
     const parapetBucket: THREE.BufferGeometry[] = [];
     const roofBucket: THREE.BufferGeometry[] = [];
     const trunkBucket: THREE.BufferGeometry[] = [];
@@ -1917,6 +1937,8 @@ hub.scale.setScalar(1.15);
       return texture;
     })();
     const contactBucket: THREE.BufferGeometry[] = [];
+    const roofDeckBucket: THREE.BufferGeometry[] = [];
+    const plinthBucket: THREE.BufferGeometry[] = [];
     const parkCenter: [number, number] = [-64, 46];
     const lotCenter: [number, number] = [40, -96];
     const fill = (x: number, z: number, w: number, h: number, d: number, variant: number) => {
@@ -1925,8 +1947,10 @@ hub.scale.setScalar(1.15);
       const rv = Math.max(1, Math.round(h / 7));
       bakeUv(body, ru, rv);
       plainRoofUv(body, ru, rv);
-      buildingBuckets[variant % 4].push(place(body, x, h / 2, z));
+      buildingBuckets[variant % buildingBuckets.length].push(place(body, x, h / 2, z));
       parapetBucket.push(place(round(w + 0.3, 0.4, d + 0.3, 0.1, 1), x, h + 0.18, z));
+      roofDeckBucket.push(place(new THREE.BoxGeometry(w - 0.25, 0.1, d - 0.25), x, h + 0.07, z));
+      plinthBucket.push(place(new THREE.BoxGeometry(w + 0.14, 0.55, d + 0.14), x, 0.27, z));
       const contact = new THREE.PlaneGeometry(w + 3.5, d + 3.5);
       contact.rotateX(-Math.PI / 2);
       contactBucket.push(place(contact, x, 0.075, z));
@@ -1953,7 +1977,7 @@ hub.scale.setScalar(1.15);
         const w = 8 + Math.floor(rand() * 5);
         const d = 8 + Math.floor(rand() * 4);
         const h = 5 + Math.floor(rand() * 9);
-        fill(gx, gz, w, h, d, Math.floor(rand() * 4));
+        fill(gx, gz, w, h, d, Math.floor(rand() * 6));
         occupied.push([gx, gz]);
       }
     }
@@ -1993,7 +2017,7 @@ hub.scale.setScalar(1.15);
       scene.add(body, cabin);
     });
     // meshes agrupados: 4 fachadas + platibandas + caixas d'água + árvores
-    const facadeTints = [0xffffff, 0xf6e8d2, 0xe4efe0, 0xdfe7f1];
+    const facadeTints = [0xf2f2ec, 0xe7e5d9, 0xefe0c8, 0xd6e0e8, 0xdde4e0, 0xece8dc];
     buildingBuckets.forEach((bucket, index) => {
       if (!bucket.length) return;
       const merged = mergeGeometries(bucket, false);
@@ -2034,6 +2058,14 @@ hub.scale.setScalar(1.15);
         scene.add(contactMesh);
       }
     }
+    addMerged(
+      roofDeckBucket,
+      new THREE.MeshStandardMaterial({ color: 0x8b928e, roughness: 0.97, metalness: 0.02 }),
+    );
+    addMerged(
+      plinthBucket,
+      new THREE.MeshStandardMaterial({ color: 0x868d87, roughness: 0.93, metalness: 0.03 }),
+    );
     addMerged(roofBucket, shopAcMat);
     addMerged(trunkBucket, trunkMat);
     addMerged(crownBucket, leafMat);
