@@ -787,6 +787,63 @@ export function createLogisticsScene(
   // nuvens
   const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 });
   const cloudGeo = new THREE.SphereGeometry(1, 12, 10);
+  // junta malhas estáticas que compartilham material: menos draw calls sem perder detalhe
+  function mergeStatic(root: THREE.Object3D) {
+    root.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+    const byMat = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const remove: THREE.Mesh[] = [];
+    const world = new THREE.Matrix4();
+    root.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh || (mesh as unknown as { isSprite?: boolean }).isSprite || (mesh as unknown as { isSkinnedMesh?: boolean }).isSkinnedMesh) return;
+      if (!mesh.material || Array.isArray(mesh.material)) return;
+      let node: THREE.Object3D | null = mesh;
+      while (node && node !== root) {
+        if (node.userData.dynamic) return;
+        node = node.parent;
+      }
+      if (!mesh.geometry || !mesh.geometry.attributes.position) return;
+      const src = mesh.geometry as THREE.BufferGeometry;
+      if (src.attributes.color) return;
+      let geo = (src.index ? src.toNonIndexed() : src.clone()) as THREE.BufferGeometry;
+      ["position", "normal", "uv"].forEach((name) => {
+        if (!geo.attributes[name]) return;
+      });
+      Object.keys(geo.attributes).forEach((name) => {
+        if (name !== "position" && name !== "normal" && name !== "uv") geo.deleteAttribute(name);
+      });
+      const count = geo.attributes.position.count;
+      if (!geo.attributes.uv) geo.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(count * 2), 2));
+      if (!geo.attributes.normal) geo.computeVertexNormals();
+      // normaliza tipos: modelos quantizados usam atributos normalizados e o merge falharia
+      (["position", "normal", "uv"] as const).forEach((name) => {
+        const attr = geo.attributes[name];
+        if (!attr) return;
+        const size = attr.itemSize;
+        const data = new Float32Array(count * size);
+        for (let i = 0; i < count * size; i += 1) data[i] = attr.array[i] as number;
+        geo.setAttribute(name, new THREE.BufferAttribute(data, size));
+      });
+      geo.morphAttributes = {};
+      world.multiplyMatrices(inv, mesh.matrixWorld);
+      geo.applyMatrix4(world);
+      const mat = mesh.material as THREE.Material;
+      const bucket = byMat.get(mat);
+      if (bucket) bucket.push(geo);
+      else byMat.set(mat, [geo]);
+      remove.push(mesh);
+    });
+    remove.forEach((mesh) => mesh.parent?.remove(mesh));
+    byMat.forEach((geos, mat) => {
+      const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
+      if (!merged) return;
+      const mesh = new THREE.Mesh(merged, mat);
+      mesh.name = "merged-static";
+      root.add(mesh);
+    });
+  }
+
   const clouds = new THREE.Group();
   for (let c = 0; c < 9; c += 1) {
     const cluster = new THREE.Group();
@@ -2868,15 +2925,17 @@ hub.scale.setScalar(1.15);
   periph.add(
     makeRoadRibbon(
       [
+        [196, -203.2],
         [230, -203.2],
-        [246, -204.4],
-        [262, -207.2],
-        [277, -212.4],
-        [289, -221],
-        [295.4, -231],
-        [296.6, -242],
+        [262, -203.2],
+        [280, -203.6],
+        [287, -206],
+        [290.5, -211],
+        [291.6, -218],
+        [292, -226],
+        [292, -246],
       ],
-      7,
+      12,
       highMat,
       0.06,
     ),
@@ -6189,6 +6248,10 @@ hub.scale.setScalar(1.15);
   let infoRender = 0;
   let sceneActive = true;
   let frameCount = 0;
+  // otimização: funde o cenário urbano estático por material
+  [city, skyline, sidewalkGroup, treeGroup, periph, clientSite].forEach((group) => mergeStatic(group));
+
+  let lastDrawAt = 0;
   function render() {
     if (disposed) return;
     if (!sceneActive || document.hidden) {
@@ -6196,6 +6259,13 @@ hub.scale.setScalar(1.15);
       return;
     }
     const now = performance.now();
+    // teto de quadros: 30 fps no desktop, 24 no celular — sobra folga para o resto da página
+    const minFrameMs = low ? 1000 / 24 : 1000 / 30;
+    if (now - lastDrawAt < minFrameMs - 1) {
+      frame = requestAnimationFrame(render);
+      return;
+    }
+    lastDrawAt = now;
     frameCount += 1;
     perfFrames += 1;
     perfTime += Math.min(0.5, (now - lastTime) / 1000);
