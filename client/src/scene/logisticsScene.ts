@@ -68,8 +68,8 @@ const CAMERA_KEYS: CamKey[] = [
   { t: 0.7, pos: [240, 32, -180], look: [300, 2, -260] },
   { t: 0.8, pos: [318, 24, -300], look: [299, 2, -386] },
   { t: 0.86, pos: [344, 16, -404], look: [392, 4, -358] },
-  { t: 0.9, pos: [372, 18, -400], look: [390, 3.5, -356] },
-  { t: 0.915, pos: [386, 15, -392], look: [388, 3.5, -356] },
+  { t: 0.9, pos: [340, 24, -424], look: [394, 5, -356] },
+  { t: 0.915, pos: [356, 17, -410], look: [392, 4, -356] },
   { t: 0.95, pos: [412, 7.5, -368], look: [438, 5, -368] },
   { t: 0.975, pos: [352, 13, -384], look: [388, 3.2, -356] },
   { t: 0.99, pos: [300, 190, -320], look: [220, 0, -260] },
@@ -172,7 +172,7 @@ function makeShadowTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
   gradient.addColorStop(0, "rgba(0,0,0,0.9)");
   gradient.addColorStop(0.45, "rgba(0,0,0,0.38)");
@@ -188,7 +188,7 @@ function makeFeatureScreen(kind: number) {
   const canvas = document.createElement("canvas");
   canvas.width = 640;
   canvas.height = 400;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = "#0b1611";
   ctx.fillRect(0, 0, 640, 400);
   ctx.fillStyle = "rgba(143,224,74,0.16)";
@@ -272,7 +272,7 @@ function makeScreenTexture(kind: number) {
   const canvas = document.createElement("canvas");
   canvas.width = 320;
   canvas.height = 200;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = "#0b1611";
   ctx.fillRect(0, 0, 320, 200);
   ctx.fillStyle = "rgba(143,224,74,0.14)";
@@ -348,7 +348,7 @@ function makeTruckSideTexture(name: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 384;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.clearRect(0, 0, 1024, 384);
   ctx.fillStyle = "#0d150f";
   ctx.font = "800 150px Sora, Inter, sans-serif";
@@ -368,7 +368,7 @@ function makeContainerTexture(base: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 256, 128);
   // ondulação lateral
@@ -412,7 +412,7 @@ function heightToNormalTexture(source: HTMLCanvasElement, strength = 2.4) {
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   const out = ctx.createImageData(w, h);
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {
@@ -458,7 +458,7 @@ function makeShopFacadeTexture(base: string, trim: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 256, 256);
   // textura de reboco
@@ -504,7 +504,7 @@ function makeStyledFacadeTexture(style: "glass" | "grid" | "ribbon", base: strin
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 600; i += 1) {
@@ -574,7 +574,7 @@ function makeWallTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = "#f6f8f1";
   ctx.fillRect(0, 0, 256, 256);
   // ondulação do metal
@@ -605,7 +605,7 @@ function makeShopSignTexture(label: string, bg: string, fg: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 128;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, 512, 128);
   ctx.fillStyle = "rgba(255,255,255,0.16)";
@@ -628,7 +628,7 @@ function makeFacadeTexture(wall: string, glass: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
   canvas.height = 256;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = wall;
   ctx.fillRect(0, 0, 128, 256);
   const cols = 4;
@@ -1713,7 +1713,7 @@ hub.scale.setScalar(1.15);
     const canvas = document.createElement("canvas");
     canvas.width = 128;
     canvas.height = 128;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.fillStyle = "#f7f8f3";
     ctx.beginPath();
     ctx.arc(64, 64, 60, 0, Math.PI * 2);
@@ -1830,7 +1830,7 @@ hub.scale.setScalar(1.15);
                 const canvas = document.createElement("canvas");
                 canvas.width = image.width;
                 canvas.height = image.height;
-                const ctx = canvas.getContext("2d")!;
+                const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
                 ctx.drawImage(image, 0, 0);
                 const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const px = data.data;
@@ -1959,7 +1959,7 @@ hub.scale.setScalar(1.15);
       const canvas = document.createElement("canvas");
       canvas.width = 64;
       canvas.height = 64;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
       const grad = ctx.createRadialGradient(32, 32, 6, 32, 32, 32);
       grad.addColorStop(0, "rgba(18,24,20,0.34)");
       grad.addColorStop(0.55, "rgba(18,24,20,0.18)");
@@ -2315,7 +2315,7 @@ hub.scale.setScalar(1.15);
     const canvas = document.createElement("canvas");
     canvas.width = 1024;
     canvas.height = Math.round((1024 * h) / w);
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = bg;
     ctx.beginPath();
@@ -4625,7 +4625,7 @@ hub.scale.setScalar(1.15);
     const canvas = document.createElement("canvas");
     canvas.width = 560;
     canvas.height = 150;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.fillStyle = "rgba(10,16,11,0.9)";
     ctx.beginPath();
     ctx.roundRect(6, 6, 548, 138, 24);
@@ -6435,7 +6435,7 @@ hub.scale.setScalar(1.15);
         const canvas = document.createElement("canvas");
         canvas.width = image.width;
         canvas.height = image.height;
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
         if (!ctx) return texture;
         ctx.drawImage(image, 0, 0);
         const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
