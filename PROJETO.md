@@ -162,6 +162,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Sombras do sol desligadas (pedido do cliente); fica só a sombra de contato suave sob as quadras.
 - Baú: arte 4:1 centralizada (pino + wordmark + filete + assinatura), faixas verdes com offset proporcional e sem z-fighting.
 
+## Performance de GPU e mídia
+
+- Texturas dos modelos em WebP de alta qualidade (1024 na cabine e nos prédios, 768 no tráfego) com malha quantizada: hero 2,3 MB -> 1,2 MB sem perda visível; tráfego 544 KB; prédios 1,4 MB, 994 KB e 900 KB.
+- Download de modelos escalonado (220 ms entre arquivos) para não competir com a primeira pintura.
+- Pixel ratio limitado a 1,5 no desktop e 1 no celular, com escada adaptativa 1,5 -> 1,15 -> 1 -> 0,8 quando o fps cai.
+- Cache imutável de um ano para /models, /assets e /brand no Vercel.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

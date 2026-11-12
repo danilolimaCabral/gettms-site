@@ -677,7 +677,7 @@ export function createLogisticsScene(
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = false;
   renderer.toneMappingExposure = 1.09;
@@ -6271,7 +6271,7 @@ hub.scale.setScalar(1.15);
     perfTime += Math.min(0.5, (now - lastTime) / 1000);
     if (perfTime > 2.5) {
       const fps = perfFrames / perfTime;
-      const steps = [Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5), 1.25, 1, 0.8];
+      const steps = [Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5), 1.15, 1, 0.8];
       if (fps < 45 && qualityIndex < steps.length - 1) {
         qualityIndex += 1;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, steps[qualityIndex]));
