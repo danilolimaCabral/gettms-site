@@ -6971,7 +6971,10 @@ hub.scale.setScalar(1.15);
     avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 12.5, scale: item.group.scale.x })),
     highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 12.5 })),
   });
-  ["semi-truck", "semi-truck-low", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
+  ["semi-truck", "semi-truck-low", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key, keyIndex) => {
+    // escalona o download: o hero e o tráfego primeiro, o resto em seguida sem travar a página
+    setTimeout(() => {
+    if (disposed) return;
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
       glbSources[key] = gltf.scene;
@@ -6984,6 +6987,7 @@ hub.scale.setScalar(1.15);
     }, (error) => {
       console.warn("[scene] modelo não carregou", key, String(error));
     });
+    }, keyIndex * 220);
   });
 
   return {
