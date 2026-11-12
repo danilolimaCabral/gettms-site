@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 /**
@@ -1631,33 +1632,39 @@ hub.scale.setScalar(1.15);
     const facadePool = ["#e9e2d2", "#dfe4da", "#f0ede4", "#e3dccb"].map((base, i) =>
       makeShopFacadeTexture(base, ["#c9c2b2", "#b9c2bd", "#cfc6b4", "#c4bda9"][i]),
     );
+    // tudo o que é estático entra em buckets e vira poucos meshes (menos draw calls)
+    const buildingBuckets: THREE.BufferGeometry[][] = [[], [], [], []];
+    const parapetBucket: THREE.BufferGeometry[] = [];
+    const roofBucket: THREE.BufferGeometry[] = [];
+    const trunkBucket: THREE.BufferGeometry[] = [];
+    const crownBucket: THREE.BufferGeometry[] = [];
+    const bakeUv = (geo: THREE.BufferGeometry, ru: number, rv: number) => {
+      const uv = geo.getAttribute("uv") as THREE.BufferAttribute | undefined;
+      if (!uv) return geo;
+      for (let i = 0; i < uv.count; i += 1) {
+        uv.setXY(i, uv.getX(i) * ru, uv.getY(i) * rv);
+      }
+      uv.needsUpdate = true;
+      return geo;
+    };
+    const place = (geo: THREE.BufferGeometry, x: number, y: number, z: number) => {
+      geo.applyMatrix4(new THREE.Matrix4().makeTranslation(x, y, z));
+      return geo;
+    };
     const parkCenter: [number, number] = [-64, 46];
     const lotCenter: [number, number] = [40, -96];
     const fill = (x: number, z: number, w: number, h: number, d: number, variant: number) => {
-      const texture = facadePool[variant % facadePool.length].clone();
-      texture.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
-      texture.needsUpdate = true;
-      const tints = [0xffffff, 0xf6e8d2, 0xe4efe0, 0xdfe7f1];
-      const mesh = new THREE.Mesh(
-        round(w, h, d, 0.22, 1),
-        new THREE.MeshStandardMaterial({ map: texture, color: tints[variant % tints.length], roughness: 0.85, metalness: 0.05 }),
-      );
-      mesh.position.set(x, h / 2, z);
-      scene.add(mesh);
-      const parapet = new THREE.Mesh(round(w + 0.3, 0.4, d + 0.3, 0.1, 1), shopTrimMat);
-      parapet.position.set(x, h + 0.18, z);
-      const roofBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.3), shopAcMat);
-      roofBox.position.set(x + w * 0.18, h + 0.65, z - d * 0.15);
-      scene.add(parapet, roofBox);
+      const body = round(w, h, d, 0.22, 1);
+      bakeUv(body, Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
+      buildingBuckets[variant % 4].push(place(body, x, h / 2, z));
+      parapetBucket.push(place(round(w + 0.3, 0.4, d + 0.3, 0.1, 1), x, h + 0.18, z));
+      roofBucket.push(place(new THREE.BoxGeometry(1.6, 0.9, 1.3), x + w * 0.18, h + 0.65, z - d * 0.15));
       // árvores na esquina do lote
       if (rand() > 0.35) {
         const tx = x + (rand() > 0.5 ? w / 2 + 2.2 : -w / 2 - 2.2);
         const tz = z + (rand() > 0.5 ? d / 2 + 2 : -d / 2 - 2);
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 7), trunkMat);
-        trunk.position.set(tx, 1.1, tz);
-        const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6 + rand() * 0.6, 1), leafMat);
-        crown.position.set(tx, 2.9 + rand() * 0.4, tz);
-        scene.add(trunk, crown);
+        trunkBucket.push(place(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 7), tx, 1.1, tz));
+        crownBucket.push(place(new THREE.IcosahedronGeometry(1.6 + rand() * 0.6, 1), tx, 2.9 + rand() * 0.4, tz));
       }
     };
     const isFree = (x: number, z: number, radius: number) =>
@@ -1690,11 +1697,8 @@ hub.scale.setScalar(1.15);
       const angle = (i / 7) * Math.PI * 2;
       const tx = parkCenter[0] + Math.cos(angle) * (8 + rand() * 4);
       const tz = parkCenter[1] + Math.sin(angle) * (8 + rand() * 4);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 2.6, 7), trunkMat);
-      trunk.position.set(tx, 1.3, tz);
-      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2 + rand() * 0.8, 1), leafMat);
-      crown.position.set(tx, 3.6 + rand() * 0.5, tz);
-      scene.add(trunk, crown);
+      trunkBucket.push(place(new THREE.CylinderGeometry(0.26, 0.32, 2.6, 7), tx, 1.3, tz));
+      crownBucket.push(place(new THREE.IcosahedronGeometry(2 + rand() * 0.8, 1), tx, 3.6 + rand() * 0.5, tz));
     }
     // estacionamento com carros parados
     const lotPad = new THREE.Mesh(new THREE.PlaneGeometry(26, 22), new THREE.MeshStandardMaterial({ color: 0x54595a, roughness: 0.95 }));
@@ -1716,6 +1720,34 @@ hub.scale.setScalar(1.15);
       cabin.position.set(lotCenter[0] - 10 + i * 4, 1.2, lotCenter[1] + 3.9);
       scene.add(body, cabin);
     });
+    // meshes agrupados: 4 fachadas + platibandas + caixas d'água + árvores
+    const facadeTints = [0xffffff, 0xf6e8d2, 0xe4efe0, 0xdfe7f1];
+    buildingBuckets.forEach((bucket, index) => {
+      if (!bucket.length) return;
+      const merged = mergeGeometries(bucket, false);
+      bucket.forEach((geo) => geo.dispose());
+      if (!merged) return;
+      const mesh = new THREE.Mesh(
+        merged,
+        new THREE.MeshStandardMaterial({
+          map: facadePool[index % facadePool.length],
+          color: facadeTints[index],
+          roughness: 0.85,
+          metalness: 0.05,
+        }),
+      );
+      scene.add(mesh);
+    });
+    const addMerged = (bucket: THREE.BufferGeometry[], material: THREE.Material) => {
+      if (!bucket.length) return;
+      const merged = mergeGeometries(bucket, false);
+      bucket.forEach((geo) => geo.dispose());
+      if (merged) scene.add(new THREE.Mesh(merged, material));
+    };
+    addMerged(parapetBucket, shopTrimMat);
+    addMerged(roofBucket, shopAcMat);
+    addMerged(trunkBucket, trunkMat);
+    addMerged(crownBucket, leafMat);
     // horizonte: quadras distantes em poucos draw calls, com variação de tom
     const ringTints = [0xffffff, 0xdfe4dc, 0xcdd5cc];
     const ringMeshes: THREE.InstancedMesh[] = [];
@@ -3624,7 +3656,7 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
-  const truckVariants = ["semi-truck"];
+  const truckVariants = ["semi-truck-low"]; // LOD: tráfego usa malha simplificada
   // padrão único: mesmo modelo e mesmo comprimento para todo caminhão da cena
   const TRUCK_LENGTH = 12.5;
   const truckLengths: Record<string, number> = { "semi-truck": TRUCK_LENGTH };
@@ -5566,6 +5598,13 @@ hub.scale.setScalar(1.15);
   let perfTime = 0;
   let perfFrames = 0;
   let perfAdjusted = low;
+  let qualityIndex = 0;
+  let halfRate = false;
+  let halfSkip = false;
+  let infoSince = performance.now();
+  let infoFrames = 0;
+  let infoUpdate = 0;
+  let infoRender = 0;
   let sceneActive = true;
   let frameCount = 0;
   function render() {
@@ -5580,13 +5619,32 @@ hub.scale.setScalar(1.15);
     perfTime += Math.min(0.5, (now - lastTime) / 1000);
     if (perfTime > 2.5) {
       const fps = perfFrames / perfTime;
-      if (fps < 30 && !perfAdjusted) {
-        perfAdjusted = true;
-        renderer.setPixelRatio(1);
+      const steps = [Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5), 1.25, 1, 0.8];
+      if (fps < 45 && qualityIndex < steps.length - 1) {
+        qualityIndex += 1;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, steps[qualityIndex]));
         renderer.setSize(window.innerWidth, window.innerHeight, false);
+        halfRate = qualityIndex >= steps.length - 1 && fps < 28;
+        perfAdjusted = true;
+      } else if (fps < 26 && qualityIndex >= steps.length - 1) {
+        halfRate = true; // aparelhos muito fracos: metade dos quadros
+      } else if (fps > 56 && halfRate) {
+        halfRate = false;
+      } else if (fps > 58 && qualityIndex > 0 && perfAdjusted) {
+        qualityIndex -= 1;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, steps[qualityIndex]));
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        perfAdjusted = false;
       }
       perfTime = 0;
       perfFrames = 0;
+    }
+    if (halfRate) {
+      halfSkip = !halfSkip;
+      if (halfSkip) {
+        frame = requestAnimationFrame(render);
+        return;
+      }
     }
     const dt = Math.min(0.2, (now - lastTime) / 1000);
     lastTime = now;
@@ -5681,12 +5739,42 @@ hub.scale.setScalar(1.15);
       }
     }
 
+    const t0 = performance.now();
     applyProgress(current, elapsed);
+    const t1 = performance.now();
     if (!document.hidden) renderer.render(scene, camera);
+    const t2 = performance.now();
+    infoUpdate += (t1 - t0);
+    infoRender += (t2 - t1);
+    infoFrames += 1;
+    if (now - infoSince > 1500) {
+      (window as any).__gettmsInfo = {
+        updateMs: +(infoUpdate / Math.max(1, infoFrames)).toFixed(2),
+        renderMs: +(infoRender / Math.max(1, infoFrames)).toFixed(1),
+        fps: +(1000 * infoFrames / (now - infoSince)).toFixed(1),
+        calls: renderer.info.render.calls,
+        tris: renderer.info.render.triangles,
+        programs: renderer.info.programs?.length ?? 0,
+        textures: renderer.info.memory.textures,
+        geometries: renderer.info.memory.geometries,
+        dpr: renderer.getPixelRatio(),
+        shadows: renderer.shadowMap.enabled,
+      };
+      infoSince = now;
+      infoFrames = 0;
+      infoUpdate = 0;
+      infoRender = 0;
+    }
     frame = requestAnimationFrame(render);
   }
 
   resize();
+  // pré-compila todos os shaders antes do filme começar (evita travadas no meio)
+  try {
+    renderer.compile(scene, camera);
+  } catch {
+    /* ignora */
+  }
   frame = requestAnimationFrame(render);
 
 
@@ -6170,7 +6258,7 @@ hub.scale.setScalar(1.15);
     avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 12.5, scale: item.group.scale.x })),
     highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 12.5 })),
   });
-  ["semi-truck", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
+  ["semi-truck", "semi-truck-low", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
       glbSources[key] = gltf.scene;

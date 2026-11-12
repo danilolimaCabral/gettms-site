@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight, CloudRain, Moon, Play, RotateCw, Sparkles, Sun, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Play, RotateCw } from "lucide-react";
 import type { LogisticsSceneHandle } from "@/scene/logisticsScene";
 import StockPanel from "@/components/site/StockPanel";
 import CustomerTrackPanel from "@/components/site/CustomerTrackPanel";
@@ -21,12 +21,6 @@ type Chapter = {
 };
 
 type WeatherMode = "auto" | "day" | "night" | "rain";
-const WEATHERS: { id: WeatherMode; label: string; icon: typeof Sun }[] = [
-  { id: "auto", label: "Auto", icon: Sparkles },
-  { id: "day", label: "Dia", icon: Sun },
-  { id: "night", label: "Noite", icon: Moon },
-  { id: "rain", label: "Chuva", icon: CloudRain },
-];
 
 const CHAPTERS: Chapter[] = [
   {
@@ -146,6 +140,7 @@ export default function ScrollStage() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const vhRef = useRef<number>(typeof window !== "undefined" ? window.innerHeight : 800);
   const [progress, setProgress] = useState(0);
+  const lastOverlayRef = useRef(0);
   const [orbit, setOrbit] = useState(false);
   const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -162,9 +157,8 @@ export default function ScrollStage() {
     typeof window === "undefined" ? true : !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const autoRef = useRef(true);
-  const [weather, setWeather] = useState<WeatherMode>("auto");
+  const weather: WeatherMode = "auto";
   const [truckInfo, setTruckInfo] = useState<TruckInfo | null>(null);
-  const [sound, setSound] = useState(false);
   const ambienceRef = useRef<Ambience | null>(null);
   const soundProgressRef = useRef(0);
 
@@ -173,30 +167,34 @@ export default function ScrollStage() {
     soundProgressRef.current = progress;
     const ambience = ambienceRef.current;
     if (!ambience || !ambience.running) return;
-    let mode: AmbienceMode;
-    if (weather === "day") mode = "day";
-    else if (weather === "night") mode = "night";
-    else if (weather === "rain") mode = "rain";
-    else mode = progress > 0.8 ? "night" : progress > 0.56 ? "rain" : "day";
+    const mode: AmbienceMode = progress > 0.8 ? "night" : progress > 0.56 ? "rain" : "day";
     ambience.setMode(mode);
-  }, [weather, progress]);
+  }, [progress]);
 
   useEffect(() => () => ambienceRef.current?.dispose(), []);
 
-  const toggleSound = () => {
-    if (!ambienceRef.current) ambienceRef.current = new Ambience();
-    const ambience = ambienceRef.current;
-    if (sound) {
-      ambience.disable();
-      setSound(false);
-      return;
-    }
-    void ambience.enable().then(() => {
-      const p = soundProgressRef.current;
-      ambience.setMode(weather === "day" ? "day" : weather === "night" ? "night" : weather === "rain" ? "rain" : p > 0.8 ? "night" : p > 0.56 ? "rain" : "day");
-    });
-    setSound(true);
-  };
+  // som ambiente entra sozinho no primeiro gesto (política de autoplay dos navegadores)
+  useEffect(() => {
+    const start = () => {
+      if (!ambienceRef.current) ambienceRef.current = new Ambience();
+      const ambience = ambienceRef.current;
+      void ambience.enable().then(() => {
+        const p = soundProgressRef.current;
+        ambience.setMode(p > 0.8 ? "night" : p > 0.56 ? "rain" : "day");
+      });
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("wheel", start);
+      window.removeEventListener("touchstart", start);
+    };
+    window.addEventListener("pointerdown", start, { once: true, passive: true });
+    window.addEventListener("wheel", start, { once: true, passive: true });
+    window.addEventListener("touchstart", start, { once: true, passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("wheel", start);
+      window.removeEventListener("touchstart", start);
+    };
+  }, []);
   const weatherRef = useRef<WeatherMode>("auto");
   const stageRef = useRef<HTMLElement | null>(null);
   const viewObserverRef = useRef<IntersectionObserver | null>(null);
@@ -304,8 +302,9 @@ export default function ScrollStage() {
           }
         }
         scene?.setProgress(p);
-        if (Math.abs(p - progressRef.current) > 0.008) {
+        if (Math.abs(p - progressRef.current) > 0.008 && now - lastOverlayRef.current > 80) {
           progressRef.current = p;
+          lastOverlayRef.current = now;
           setProgress(p);
         }
 
@@ -415,43 +414,6 @@ export default function ScrollStage() {
           </button>
         </div>
 
-        {/* seletor de clima */}
-        <div className="absolute left-6 top-[10.5rem] z-20 md:left-12">
-          <div className="flex items-center gap-0.5 rounded-full border border-ink/10 bg-paper/80 p-1 backdrop-blur">
-            <span className="hidden px-2 text-[9px] font-medium uppercase tracking-[0.22em] text-ink/35 sm:inline">Clima</span>
-            {WEATHERS.map(({ id, label, icon: Icon }) => {
-              const active = weather === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setWeather(id)}
-                  aria-pressed={active}
-                  aria-label={`Clima: ${label}`}
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] transition ${
-                    active ? "bg-brand text-[#0a0f0b]" : "text-ink/55 hover:text-ink"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="hidden md:inline">{label}</span>
-                </button>
-              );
-            })}
-            <span className="mx-1 h-4 w-px bg-ink/10" />
-            <button
-              type="button"
-              onClick={toggleSound}
-              aria-pressed={sound}
-              aria-label={sound ? "Desligar som ambiente" : "Ligar som ambiente"}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] transition ${
-                sound ? "bg-brand text-[#0a0f0b]" : "text-ink/55 hover:text-ink"
-              }`}
-            >
-              {sound ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-              <span className="hidden md:inline">Som</span>
-            </button>
-          </div>
-        </div>
         {/* painel split-screen do capítulo ativo */}
         {splitChapter && (
           <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[40%] border-r border-ink/10 bg-paper/95 backdrop-blur-[2px] md:flex md:flex-col md:justify-end md:pb-28 md:pl-12 md:pr-10 lg:w-[36%]">

@@ -130,6 +130,15 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Autoplay desligado quando o sistema pede `prefers-reduced-motion`; animações e transições reduzidas por CSS nessa preferência.
 - Torre de controle: `role="tablist"/"tab"/"tabpanel"`, `aria-selected`, `aria-controls`, navegação por setas.
 
+## Clima automático e performance
+- Removida a barra de clima/som: o clima segue o roteiro (dia → chuva → noite) e o som ambiente entra sozinho no primeiro gesto do usuário.
+- LOD do caminhão: `semi-truck-low.glb` (18.908 triângulos, 683 KB, textura 512) para todo o tráfego; o hero mantém o modelo completo. Triângulos na vista da cidade: 1,14M → 637 mil.
+- Prédios das quadras, platibandas, caixas d'água e árvores agrupados com `mergeGeometries` (poucos meshes em vez de centenas).
+- `renderer.compile()` antes do filme, para evitar travadas na primeira exibição de cada material.
+- Qualidade adaptativa em degraus: pixel ratio 1,5 → 1,25 → 1 → 0,8; abaixo de 26 fps renderiza metade dos quadros; sobe de novo se passar de 58 fps.
+- Overlay do React atualiza no máximo a cada 80 ms, sem competir com o loop 3D.
+- Diagnóstico: `window.__gettmsInfo` expõe updateMs, renderMs, fps, draw calls, triângulos, texturas e pixel ratio.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
