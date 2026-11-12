@@ -2827,9 +2827,9 @@ hub.scale.setScalar(1.15);
   tagCtx.fillText("Tracking em tempo real · getTMS", 74, 166);
   const tagTex = track(new THREE.CanvasTexture(tagCanvas));
   tagTex.colorSpace = THREE.SRGBColorSpace;
-  const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false, depthTest: false }));
-  tagSprite.scale.set(8.6, 2.7, 1);
-  tagSprite.position.set(0, 7.8, -2);
+  const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false, depthTest: true }));
+  tagSprite.scale.set(6.4, 2, 1);
+  tagSprite.position.set(0, 7.2, -2);
   truck.add(tagSprite);
 
   const doneCanvas = document.createElement("canvas");
