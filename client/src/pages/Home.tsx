@@ -19,7 +19,7 @@ export default function Home() {
   return (
     <div id="top" className="relative min-h-screen bg-paper">
       <SiteHeader />
-      <main className="relative z-10">
+      <main id="conteudo" className="relative z-10">
         <ScrollStage />
         <SegmentsScenes />
         <Modalities />

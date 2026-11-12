@@ -158,7 +158,9 @@ export default function ScrollStage() {
   const [active, setActive] = useState(-1);
   const sceneRef = useRef<LogisticsSceneHandle | null>(null);
   const activeRef = useRef(-1);
-  const [auto, setAuto] = useState(true);
+  const [auto, setAuto] = useState(() =>
+    typeof window === "undefined" ? true : !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const autoRef = useRef(true);
   const [weather, setWeather] = useState<WeatherMode>("auto");
   const [truckInfo, setTruckInfo] = useState<TruckInfo | null>(null);
@@ -369,9 +371,14 @@ export default function ScrollStage() {
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         <canvas
           ref={canvasRef}
+          aria-hidden="true"
           className="pointer-events-none fixed inset-0 z-0 h-full w-full transition-opacity duration-500"
           style={{ opacity: canvasVisible ? 1 : 0 }}
         />
+        <p className="sr-only">
+          Animação 3D: o caminhão getTMS sai do centro de distribuição, percorre a cidade e a via expressa e
+          entrega a carga no CD do cliente Horizonte. As informações da jornada estão descritas nas seções abaixo.
+        </p>
 
         {/* atmosfera / vinheta */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(245,247,242,0)_0%,rgba(245,247,242,0.05)_62%,rgba(245,247,242,0.35)_100%)]" />

@@ -172,15 +172,28 @@ export default function ControlTower() {
 
           {/* abas */}
           <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-            <div className="flex gap-1.5 overflow-x-auto lg:flex-col [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div role="tablist" aria-label="Painéis da torre de controle" className="flex gap-1.5 overflow-x-auto lg:flex-col [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {TABS.map(({ id, label, icon: Icon }) => {
                 const active = tab === id;
                 return (
                   <button
                     key={id}
                     type="button"
+                    id={`tab-${id}`}
+                    role="tab"
+                    aria-selected={active}
+                    aria-controls={`panel-${id}`}
+                    tabIndex={active ? 0 : -1}
                     onClick={() => setTab(id)}
-                    aria-pressed={active}
+                    onKeyDown={(event) => {
+                      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+                      event.preventDefault();
+                      const index = TABS.findIndex((t) => t.id === id);
+                      const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+                      const next = TABS[(index + step + TABS.length) % TABS.length];
+                      setTab(next.id);
+                      document.getElementById(`tab-${next.id}`)?.focus();
+                    }}
                     className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[13px] font-medium transition ${
                       active
                         ? "border-[#8fe04a]/50 bg-[#8fe04a]/12 text-white"
@@ -195,7 +208,13 @@ export default function ControlTower() {
               })}
             </div>
 
-            <div className="min-h-[300px] rounded-2xl border border-white/10 bg-[#0f1712] p-3 md:min-h-[330px] md:p-4">
+            <div
+              role="tabpanel"
+              id={`panel-${tab}`}
+              aria-labelledby={`tab-${tab}`}
+              tabIndex={0}
+              className="min-h-[300px] rounded-2xl border border-white/10 bg-[#0f1712] p-3 md:min-h-[330px] md:p-4"
+            >
               {tab === "monitoramento" ? (
                 <div>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-white/40">

@@ -122,6 +122,14 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Horizonte: ~330 quadras distantes em 3 InstancedMesh (1 draw call cada) com tons variados e clareiras, mantendo livre a faixa da via expressa.
 - Densidade reduzida (42% dos lotes ficam livres) para preservar o desempenho em celular.
 
+## Acessibilidade e SEO
+- Pré-renderização: `build:static` roda `scripts/prerender.py`, que abre o build em Chromium e grava o DOM final em `dist/public/index.html` (244 KB com hero, seções e FAQ). O Google passa a ver o conteúdo sem executar JS; o React assume normalmente no navegador.
+- `robots.txt` e `sitemap.xml` publicados.
+- Link "Pular para o conteúdo" (`.skip-link`) e foco visível em links, botões e elementos com `tabindex`.
+- Canvas da cena com `aria-hidden` e descrição textual da jornada para leitores de tela.
+- Autoplay desligado quando o sistema pede `prefers-reduced-motion`; animações e transições reduzidas por CSS nessa preferência.
+- Torre de controle: `role="tablist"/"tab"/"tabpanel"`, `aria-selected`, `aria-controls`, navegação por setas.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

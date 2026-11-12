@@ -365,3 +365,39 @@
     animation: none;
   }
 }
+
+/* acessibilidade: pular para o conteúdo e foco visível */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #0f1712;
+  color: #f5f7f2;
+  font: 600 14px/1 Sora, Inter, sans-serif;
+  transition: top 160ms ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #63b32e;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* respeita quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

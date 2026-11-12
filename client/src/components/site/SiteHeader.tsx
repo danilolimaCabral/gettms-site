@@ -79,6 +79,7 @@ export default function SiteHeader() {
 
   return (
     <>
+      <a href="#conteudo" className="skip-link">Pular para o conteúdo</a>
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
           scrolled
