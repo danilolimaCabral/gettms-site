@@ -1617,6 +1617,147 @@ hub.scale.setScalar(1.15);
   avenueBusStop.add(shelterRoof, shelterGlass, shelterBack, shelterBench, busSign);
   avenueBusStop.position.set(8.2, 0.22, 52);
   scene.add(avenueBusStop);
+  // preenchimento das quadras vazias: prédios baixos, praça, estacionamento e árvores
+  {
+    let seed = 20261111;
+    const rand = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+    const occupied: [number, number][] = [];
+    towerLayout.forEach((t) => occupied.push([t.x, t.z]));
+    shopRows.forEach(([x, z]) => occupied.push([x, z]));
+    occupied.push([15, -16], [0, 84], [-40, 84], [0, 40]);
+    const facadePool = ["#e9e2d2", "#dfe4da", "#f0ede4", "#e3dccb"].map((base, i) =>
+      makeShopFacadeTexture(base, ["#c9c2b2", "#b9c2bd", "#cfc6b4", "#c4bda9"][i]),
+    );
+    const parkCenter: [number, number] = [-64, 46];
+    const lotCenter: [number, number] = [40, -96];
+    const fill = (x: number, z: number, w: number, h: number, d: number, variant: number) => {
+      const texture = facadePool[variant % facadePool.length].clone();
+      texture.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
+      texture.needsUpdate = true;
+      const tints = [0xffffff, 0xf6e8d2, 0xe4efe0, 0xdfe7f1];
+      const mesh = new THREE.Mesh(
+        round(w, h, d, 0.22, 1),
+        new THREE.MeshStandardMaterial({ map: texture, color: tints[variant % tints.length], roughness: 0.85, metalness: 0.05 }),
+      );
+      mesh.position.set(x, h / 2, z);
+      scene.add(mesh);
+      const parapet = new THREE.Mesh(round(w + 0.3, 0.4, d + 0.3, 0.1, 1), shopTrimMat);
+      parapet.position.set(x, h + 0.18, z);
+      const roofBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.3), shopAcMat);
+      roofBox.position.set(x + w * 0.18, h + 0.65, z - d * 0.15);
+      scene.add(parapet, roofBox);
+      // árvores na esquina do lote
+      if (rand() > 0.35) {
+        const tx = x + (rand() > 0.5 ? w / 2 + 2.2 : -w / 2 - 2.2);
+        const tz = z + (rand() > 0.5 ? d / 2 + 2 : -d / 2 - 2);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 7), trunkMat);
+        trunk.position.set(tx, 1.1, tz);
+        const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6 + rand() * 0.6, 1), leafMat);
+        crown.position.set(tx, 2.9 + rand() * 0.4, tz);
+        scene.add(trunk, crown);
+      }
+    };
+    const isFree = (x: number, z: number, radius: number) =>
+      occupied.every(([ox, oz]) => Math.hypot(ox - x, oz - z) > radius);
+    for (let gx = -88; gx <= 88; gx += 15) {
+      if (Math.abs(gx) < 18) continue;
+      for (let gz = -128; gz <= 112; gz += 16) {
+        if (gz > -30 && gz < 30 && Math.abs(gx) < 34) continue; // corredor do CD e avenida
+        if (Math.hypot(gx - parkCenter[0], gz - parkCenter[1]) < 18) continue;
+        if (Math.hypot(gx - lotCenter[0], gz - lotCenter[1]) < 18) continue;
+        if (gx > 120) continue;
+        if (!isFree(gx, gz, 9.5)) continue;
+        if (rand() < 0.42) continue; // deixa terrenos livres (praças, quintais)
+        const w = 8 + Math.floor(rand() * 5);
+        const d = 8 + Math.floor(rand() * 4);
+        const h = 5 + Math.floor(rand() * 9);
+        fill(gx, gz, w, h, d, Math.floor(rand() * 4));
+        occupied.push([gx, gz]);
+      }
+    }
+    // praça com lago e árvores
+    const lawn = new THREE.Mesh(new THREE.CircleGeometry(15, 28), new THREE.MeshStandardMaterial({ color: 0x7fae57, roughness: 0.95 }));
+    lawn.rotation.x = -Math.PI / 2;
+    lawn.position.set(parkCenter[0], 0.06, parkCenter[1]);
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(5.2, 24), new THREE.MeshStandardMaterial({ color: 0x5f97ad, roughness: 0.25, metalness: 0.3 }));
+    pond.rotation.x = -Math.PI / 2;
+    pond.position.set(parkCenter[0] + 3, 0.08, parkCenter[1] - 2);
+    scene.add(lawn, pond);
+    for (let i = 0; i < 7; i += 1) {
+      const angle = (i / 7) * Math.PI * 2;
+      const tx = parkCenter[0] + Math.cos(angle) * (8 + rand() * 4);
+      const tz = parkCenter[1] + Math.sin(angle) * (8 + rand() * 4);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 2.6, 7), trunkMat);
+      trunk.position.set(tx, 1.3, tz);
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2 + rand() * 0.8, 1), leafMat);
+      crown.position.set(tx, 3.6 + rand() * 0.5, tz);
+      scene.add(trunk, crown);
+    }
+    // estacionamento com carros parados
+    const lotPad = new THREE.Mesh(new THREE.PlaneGeometry(26, 22), new THREE.MeshStandardMaterial({ color: 0x54595a, roughness: 0.95 }));
+    lotPad.rotation.x = -Math.PI / 2;
+    lotPad.position.set(lotCenter[0], 0.05, lotCenter[1]);
+    scene.add(lotPad);
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xe7ebdf });
+    for (let i = 0; i < 6; i += 1) {
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 5), lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(lotCenter[0] - 10 + i * 4, 0.07, lotCenter[1] + 4);
+      scene.add(line);
+    }
+    const parkedColors = [0xe8ede4, 0x2f3a34, 0x4a6f8a, 0xb03a2e, 0xc9d2d6, 0x63b32e];
+    parkedColors.forEach((color, i) => {
+      const body = new THREE.Mesh(round(1.9, 0.7, 4.2, 0.3, 3), new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.5 }));
+      body.position.set(lotCenter[0] - 10 + i * 4, 0.68, lotCenter[1] + 4);
+      const cabin = new THREE.Mesh(round(1.66, 0.6, 2.1, 0.28, 3), shopGlassMat);
+      cabin.position.set(lotCenter[0] - 10 + i * 4, 1.2, lotCenter[1] + 3.9);
+      scene.add(body, cabin);
+    });
+    // horizonte: quadras distantes em poucos draw calls, com variação de tom
+    const ringTints = [0xffffff, 0xdfe4dc, 0xcdd5cc];
+    const ringMeshes: THREE.InstancedMesh[] = [];
+    const ringDummy = new THREE.Object3D();
+    ringTints.forEach((tint, variant) => {
+      const texture = facadePool[variant % facadePool.length].clone();
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2.5, 2.5);
+      texture.needsUpdate = true;
+      const mesh = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ map: texture, color: tint, roughness: 0.9, metalness: 0.05 }),
+        110,
+      );
+      let placed = 0;
+      let guard = 0;
+      while (placed < 110 && guard < 6000) {
+        guard += 1;
+        const x = (rand() * 2 - 1) * 330;
+        const z = -180 + rand() * 360;
+        const ax = Math.abs(x);
+        if (ax < 122) continue;
+        if (ax > 172 && ax < 208) continue; // mantém a via expressa livre
+        if (rand() < 0.3) continue; // deixa clareiras
+        const w = 9 + rand() * 12;
+        const d = 9 + rand() * 12;
+        const h = 4 + rand() * 14;
+        ringDummy.position.set(x, h / 2, z);
+        ringDummy.scale.set(w, h, d);
+        ringDummy.rotation.y = rand() < 0.5 ? 0 : Math.PI / 2;
+        ringDummy.updateMatrix();
+        mesh.setMatrixAt(placed, ringDummy.matrix);
+        placed += 1;
+      }
+      mesh.count = placed;
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.frustumCulled = false;
+      ringMeshes.push(mesh);
+      scene.add(mesh);
+    });
+  }
 
   // faixas de pedestre e semaforos nos cruzamentos da avenida
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
