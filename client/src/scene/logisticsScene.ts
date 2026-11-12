@@ -4107,6 +4107,17 @@ hub.scale.setScalar(1.15);
       color,
       keepWheels: true,
     });
+    // motorista e passageiro sentados nos bancos da frente
+    const seatDriverMat = new THREE.MeshStandardMaterial({ color: 0x2b333a, roughness: 0.85 });
+    const seatPassengerMat = new THREE.MeshStandardMaterial({ color: 0x7c8794, roughness: 0.85 });
+    const skinSeatMat = new THREE.MeshStandardMaterial({ color: 0xd8a87f, roughness: 0.7 });
+    [-0.42, 0.42].forEach((dx, seat) => {
+      const torso = new THREE.Mesh(round(0.34, 0.44, 0.3, 0.1, 1), seat === 0 ? seatDriverMat : seatPassengerMat);
+      torso.position.set(dx, 0.74, 0.3);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 8), skinSeatMat);
+      head.position.set(dx, 1.02, 0.3);
+      group.add(torso, head);
+    });
     const startZ = dir > 0 ? lerp(-130, 50, offset) : lerp(50, -130, offset);
     cars.push({ group, wheels: carWheels, speed, offset, lane, dir, delay, z: startZ, v: speed * 180 });
   }
