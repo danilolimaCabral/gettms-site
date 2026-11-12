@@ -106,6 +106,10 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Trânsito de carros: modelo de seguir o da frente, com frenagem proporcional a partir de 26 m e folga mínima de 9 m (antes o carro era empurrado de volta e dava tranco).
 - Contêineres do pátio e da cena do pedido ganharam textura ondulada, travessas, postes de canto e marcação getTMS/22G1.
 
+## Frota padronizada
+- Todos os caminhões (hero, avenida, via expressa, pátio, doca e cliente) usam o mesmo modelo de semi e o mesmo comprimento: 12,5 m, escala 1. Só a cor da livery muda.
+- Caminhões param mais longe do caminhão do hero na avenida (folga de 17-19 m), mantendo a regra de faixa separada: caminhões nas faixas externas, carros nas centrais.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

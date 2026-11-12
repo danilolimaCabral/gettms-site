@@ -3354,10 +3354,10 @@ hub.scale.setScalar(1.15);
     traffic.add(light);
   });
 
-  const truckVariants = ["semi-truck", "tanker-truck", "delivery-truck"];
-  // padrão único de tamanho: todo caminhão da cena tem 15,5 m de comprimento
-  const TRUCK_LENGTH = 15.5;
-  const truckLengths: Record<string, number> = { "semi-truck": TRUCK_LENGTH, "tanker-truck": TRUCK_LENGTH, "delivery-truck": TRUCK_LENGTH };
+  const truckVariants = ["semi-truck"];
+  // padrão único: mesmo modelo e mesmo comprimento para todo caminhão da cena
+  const TRUCK_LENGTH = 12.5;
+  const truckLengths: Record<string, number> = { "semi-truck": TRUCK_LENGTH };
   const truckColors = [0xffffff, 0x8fe04a, 0x63b32e, 0x2f6f4f, 0xdbe3d2, 0x2b3a30];
   let truckVariantIndex = 0;
   function makeSimpleTruck(name: string) {
@@ -5090,7 +5090,7 @@ hub.scale.setScalar(1.15);
       const z = item.dir > 0 ? lerp(-130, 50, progress) : lerp(50, -130, progress);
       const sameLane = Math.abs(item.group.position.x - truck.position.x) < 4.6;
       const gap = (z - truck.position.z) * item.dir;
-      if (!(sameLane && gap > -14 && gap < 18)) item.group.position.z = z;
+      if (!(sameLane && gap > -17 && gap < 19)) item.group.position.z = z;
       item.group.visible = p < 0.66;
     });
     // avião taxia na pista do aeroporto
@@ -5871,7 +5871,7 @@ hub.scale.setScalar(1.15);
     key: "semi-truck",
     holder: truck,
     parts: [...truck.children],
-    length: 17.0,
+    length: TRUCK_LENGTH,
     rotY: 0,
     wheelScale: 1,
     label: "GT-1024",
@@ -5898,9 +5898,9 @@ hub.scale.setScalar(1.15);
   }
   (window as unknown as { __gettmsSceneRef?: THREE.Scene }).__gettmsSceneRef = scene;
   (window as unknown as { __gettmsVehicles?: () => unknown }).__gettmsVehicles = () => ({
-    truck: { x: truck.position.x, z: truck.position.z, len: 17 },
+    truck: { x: truck.position.x, z: truck.position.z, len: 12.5 },
     cars: cars.map((car) => ({ x: car.group.position.x, z: car.group.position.z, dir: car.dir, len: 4.3, scale: car.group.scale.x })),
-    avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 15.4, scale: item.group.scale.x })),
+    avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 12.5, scale: item.group.scale.x })),
     highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 15 })),
   });
   ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
