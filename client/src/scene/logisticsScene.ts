@@ -6259,6 +6259,9 @@ hub.scale.setScalar(1.15);
     });
   }
 
+  // reduz chamadas de desenho sem fundir a cidade inteira
+  [city, skyline, periph].forEach((group) => mergeSiblings(group));
+
   // culling por distância: detalhes pequenos e distantes deixam de ser desenhados
   const detailCull: { mesh: THREE.Mesh; radius: number }[] = [];
   city.traverse((obj) => {
@@ -6271,6 +6274,44 @@ hub.scale.setScalar(1.15);
     else if (size < 14) detailCull.push({ mesh, radius: low ? 190 : 260 });
   });
   let cullFrame = 0;
+  let cullCursor = 0;
+  const cullTmp = new THREE.Vector3();
+
+  // agrupa apenas malhas irmãs com o mesmo material: menos chamadas sem perder o culling por quadra
+  function mergeSiblings(root: THREE.Object3D) {
+    const groups: THREE.Object3D[] = [];
+    root.traverse((o) => { if (o !== root && o.children.length > 2) groups.push(o); });
+    groups.forEach((parent) => {
+      const buckets = new Map<string, THREE.Mesh[]>();
+      parent.children.forEach((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh || (mesh as unknown as { isSprite?: boolean }).isSprite || mesh.userData.dynamic) return;
+        const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (!mat) return;
+        const list = buckets.get(mat.uuid) ?? [];
+        list.push(mesh);
+        buckets.set(mat.uuid, list);
+      });
+      buckets.forEach((list) => {
+        if (list.length < 3) return;
+        parent.updateMatrixWorld(true);
+        const inv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+        const merged: THREE.BufferGeometry[] = [];
+        list.forEach((mesh) => {
+          const geo = mesh.geometry.clone();
+          geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, mesh.matrixWorld));
+          merged.push(geo);
+        });
+        const combined = mergeGeometries(merged, false);
+        merged.forEach((g) => g.dispose());
+        if (!combined) return; // nada é removido se a fusão não der certo
+        list.forEach((mesh) => mesh.removeFromParent());
+        const mesh = new THREE.Mesh(combined, list[0].material as THREE.Material);
+        mesh.userData.dynamic = false;
+        parent.add(mesh);
+      });
+    });
+  }
 
   function render() {
     if (disposed) return;
@@ -6281,13 +6322,15 @@ hub.scale.setScalar(1.15);
     const now = performance.now();
     lastDrawAt = now;
     cullFrame += 1;
-    if (cullFrame % 15 === 0 && detailCull.length) {
+    if (detailCull.length) {
+      // varredura dividida: um oitavo da lista por quadro, custo fracionado e constante
       const camPos = camera.position;
-      const tmp = new THREE.Vector3();
-      for (let i = 0; i < detailCull.length; i += 1) {
-        const item = detailCull[i];
-        item.mesh.getWorldPosition(tmp);
-        item.mesh.visible = tmp.distanceTo(camPos) < item.radius;
+      const slice = Math.ceil(detailCull.length / 8);
+      for (let n = 0; n < slice; n += 1) {
+        const item = detailCull[cullCursor];
+        cullCursor = (cullCursor + 1) % detailCull.length;
+        item.mesh.getWorldPosition(cullTmp);
+        item.mesh.visible = cullTmp.distanceTo(camPos) < item.radius;
       }
     }
     frameCount += 1;
