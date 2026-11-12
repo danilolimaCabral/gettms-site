@@ -6168,9 +6168,9 @@ hub.scale.setScalar(1.15);
     truck: { x: truck.position.x, z: truck.position.z, len: 12.5 },
     cars: cars.map((car) => ({ x: car.group.position.x, z: car.group.position.z, dir: car.dir, len: 4.3, scale: car.group.scale.x })),
     avenue: avenueTrucks.map((item) => ({ x: item.group.position.x, z: item.group.position.z, dir: item.dir, len: 12.5, scale: item.group.scale.x })),
-    highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 15 })),
+    highway: highwayTraffic.map((item) => ({ x: item.mesh.position.x, z: item.mesh.position.z, dir: item.dir, len: 12.5 })),
   });
-  ["semi-truck", "delivery-truck", "delivery-van", "tanker-truck", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
+  ["semi-truck", "car-sedan", "car-hatchback", "car-suv", "car-ev", "forklift"].forEach((key) => {
     new GLTFLoader().load(`/models/${key}.glb`, (gltf) => {
       if (disposed) return;
       glbSources[key] = gltf.scene;
