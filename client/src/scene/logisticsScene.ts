@@ -1396,7 +1396,38 @@ hub.scale.setScalar(1.15);
     scene.add(dash);
   }
   // calcadas continuas com meio-fio ao longo da avenida
-  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xe9ebe3, roughness: 0.95 });
+  const sidewalkCanvas = document.createElement("canvas");
+  sidewalkCanvas.width = 128;
+  sidewalkCanvas.height = 128;
+  {
+    const ctx = sidewalkCanvas.getContext("2d")!;
+    ctx.fillStyle = "#e9ebe3";
+    ctx.fillRect(0, 0, 128, 128);
+    for (let y = 0; y < 128; y += 32) {
+      for (let x = 0; x < 128; x += 32) {
+        ctx.fillStyle = (x / 32 + y / 32) % 2 === 0 ? "#dfe3d8" : "#eaede3";
+        ctx.fillRect(x + 1, y + 1, 30, 30);
+      }
+    }
+    ctx.strokeStyle = "rgba(104,112,102,0.55)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= 128; i += 32) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, 128);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(128, i);
+      ctx.stroke();
+    }
+  }
+  const sidewalkTexture = new THREE.CanvasTexture(sidewalkCanvas);
+  sidewalkTexture.colorSpace = THREE.SRGBColorSpace;
+  sidewalkTexture.wrapS = THREE.RepeatWrapping;
+  sidewalkTexture.wrapT = THREE.RepeatWrapping;
+  sidewalkTexture.repeat.set(1.6, 5);
+  const sidewalkMat = new THREE.MeshStandardMaterial({ map: sidewalkTexture, roughness: 0.95 });
   const avenueCurbMat = new THREE.MeshStandardMaterial({ color: 0xd2d5cb, roughness: 0.9 });
   const sidewalkGroup = new THREE.Group();
   for (let z = -150; z <= 92; z += 10) {
@@ -1488,6 +1519,104 @@ hub.scale.setScalar(1.15);
   shopRows.forEach(([sx, sz, f], i) => {
     addShop(sx, sz, 8 + (i % 3), 8 + ((i + 1) % 3), 6 + (i % 4) * 2.5, f === 0 ? -1 : 1, i);
   });
+  // mobiliário urbano: bancos, lixeiras, hidrantes, placas e parada de ônibus
+  const benchWood = new THREE.MeshStandardMaterial({ color: 0x9a6b45, roughness: 0.85 });
+  const streetMetal = new THREE.MeshStandardMaterial({ color: 0x46514b, roughness: 0.5, metalness: 0.55 });
+  const binMat = new THREE.MeshStandardMaterial({ color: 0x2f6f4f, roughness: 0.7, metalness: 0.2 });
+  const hydrantMat = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.55 });
+  const makeSpeedSign = (limit: string) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#f7f8f3";
+    ctx.beginPath();
+    ctx.arc(64, 64, 60, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#c0392b";
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(64, 64, 52, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#2b332c";
+    ctx.font = "bold 58px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(limit, 64, 68);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  };
+  const speedTexture = makeSpeedSign("40");
+  for (let z = -132; z <= 96; z += 38) {
+    [-1, 1].forEach((side) => {
+      if (Math.abs(z - 52) < 22) return;
+      const x = side * 8.55;
+      const bench = new THREE.Group();
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 0.62), benchWood);
+      seat.position.y = 0.46;
+      const back = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.5, 0.12), benchWood);
+      back.position.set(0, 0.72, -0.26);
+      bench.add(seat, back);
+      [-0.88, 0.88].forEach((dx) => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.46, 0.52), streetMetal);
+        leg.position.set(dx, 0.23, 0);
+        bench.add(leg);
+      });
+      bench.position.set(x, 0.22, z);
+      bench.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      scene.add(bench);
+      const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.86, 12), binMat);
+      bin.position.set(x, 0.65, z + 2.6);
+      const binRim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 6, 14), streetMetal);
+      binRim.rotation.x = Math.PI / 2;
+      binRim.position.set(x, 1.08, z + 2.6);
+      scene.add(bin, binRim);
+      if (Math.abs(z) % 76 < 1) {
+        const hydrant = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.72, 12), hydrantMat);
+        hydrant.position.set(x, 0.58, z - 3.4);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 8), hydrantMat);
+        cap.position.set(x, 0.95, z - 3.4);
+        scene.add(hydrant, cap);
+      }
+      if (Math.abs(z + 56) < 1 || Math.abs(z - 58) < 1) {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), streetMetal);
+        pole.position.set(x - side * 0.35, 1.52, z);
+        const plate = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.9, 0.9),
+          new THREE.MeshStandardMaterial({ map: speedTexture, roughness: 0.7 }),
+        );
+        plate.position.set(x - side * 0.35, 2.5, z + (side > 0 ? -0.05 : 0.05));
+        plate.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+        scene.add(pole, plate);
+      }
+    });
+  }
+  // parada de ônibus coberta
+  const avenueBusStop = new THREE.Group();
+  const shelterGlassMat = new THREE.MeshStandardMaterial({ color: 0x9fc0c6, roughness: 0.15, metalness: 0.2, transparent: true, opacity: 0.45 });
+  const shelterRoof = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.12, 4.6), streetMetal);
+  shelterRoof.position.set(0, 2.6, 0);
+  const shelterGlass = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.1, 4.4), shelterGlassMat);
+  shelterGlass.position.set(0.86, 1.35, 0);
+  const shelterBack = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.2, 4.4), shelterGlassMat);
+  shelterBack.position.set(-0.86, 1.4, 0);
+  const shelterBench = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 3.2), benchWood);
+  shelterBench.position.set(-0.5, 0.55, 0);
+  [-2.1, 2.1].forEach((dz) => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.55, 8), streetMetal);
+    post.position.set(0.86, 1.28, dz);
+    avenueBusStop.add(post);
+  });
+  const busSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.6, 0.5),
+    new THREE.MeshBasicMaterial({ map: track(makeShopSignTexture("PONTO · LINHA 22", "#2f5f8a", "#ffffff")) }),
+  );
+  busSign.position.set(1.0, 2.1, 0);
+  busSign.rotation.y = -Math.PI / 2;
+  avenueBusStop.add(shelterRoof, shelterGlass, shelterBack, shelterBench, busSign);
+  avenueBusStop.position.set(8.2, 0.22, 52);
+  scene.add(avenueBusStop);
 
   // faixas de pedestre e semaforos nos cruzamentos da avenida
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf4f6ef, roughness: 0.9 });
@@ -2307,7 +2436,7 @@ hub.scale.setScalar(1.15);
   [-1.9, 1.9].forEach((x) => {
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.6, 0.12), poleMat);
     post.position.set(x, 1.3, -0.6);
-    busStop.add(post);
+    avenueBusStop.add(post);
   });
   const bench = new THREE.Mesh(round(3.4, 0.14, 0.6, 0.05, 1), new THREE.MeshStandardMaterial({ color: 0x8d6a45, roughness: 0.8 }));
   bench.position.set(0, 0.5, 0.2);
@@ -3891,9 +4020,6 @@ hub.scale.setScalar(1.15);
     vehicle.position.set(item.from, 0, item.lane);
     scene.add(vehicle);
     highwayTraffic.push({ mesh: vehicle, lane: item.lane, speed: item.speed, offset: item.offset, dir: item.dir, from: item.from, to: item.to, x: item.from + (item.dir > 0 ? item.offset : -item.offset) });
-    if (index === 0) {
-      vehicle.add(makeStatusTag(item.name, "PEDIDO #4830 · EM TRÂNSITO", "Cliente Horizonte"));
-    }
   });
   const peripheryTraffic: { mesh: THREE.Group; speed: number; offset: number; z: number }[] = [];
   ["GT-8810"].forEach((name) => {

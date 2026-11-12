@@ -110,6 +110,11 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Todos os caminhões (hero, avenida, via expressa, pátio, doca e cliente) usam o mesmo modelo de semi e o mesmo comprimento: 12,5 m, escala 1. Só a cor da livery muda.
 - Caminhões param mais longe do caminhão do hero na avenida (folga de 17-19 m), mantendo a regra de faixa separada: caminhões nas faixas externas, carros nas centrais.
 
+## Refino urbano final
+- Calçada com textura de lajota (contraste suave) em vez de branco liso.
+- Mobiliário urbano na avenida: bancos de madeira, lixeiras com aro metálico, hidrantes, placas de limite 40 km/h e parada de ônibus coberta com painel "Ponto · Linha 22".
+- Removida a etiqueta flutuante do caminhão da via expressa (aparecia como cartão preto sobre a pista).
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
