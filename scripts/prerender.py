@@ -59,4 +59,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:  # ambiente sem Chromium (ex.: build da Vercel)
+        print(f"prerender: ignorado ({type(exc).__name__}: {exc}) — o HTML estático do #root continua servindo de fallback")
+        sys.exit(0)
