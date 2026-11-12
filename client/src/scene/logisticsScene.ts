@@ -2703,7 +2703,7 @@ hub.scale.setScalar(1.15);
   clientWarehouse.add(clientLight);
   // projeto executivo: niveladoras, bollards, numeração de doca e sinalização
   const dockSteelMat = new THREE.MeshStandardMaterial({ color: 0x8d9497, roughness: 0.42, metalness: 0.72 });
-  const dockYellowMat = new THREE.MeshStandardMaterial({ color: 0xf2b705, roughness: 0.55, metalness: 0.1 });
+  const dockYellowMat = new THREE.MeshStandardMaterial({ color: 0xffc21a, roughness: 0.5, metalness: 0.1, emissive: 0x2a1d00 });
   const dockLampMat = new THREE.MeshBasicMaterial({ color: 0x63e07a });
   const dockNumbers = ["01", "02", "03", "04", "05"];
   [360, 376, 392, 408, 424].forEach((x, index) => {
@@ -2805,15 +2805,15 @@ hub.scale.setScalar(1.15);
   stopSign.rotation.x = -Math.PI / 2;
   stopSign.position.set(318, 0.12, -382);
   south.add(stopSign);
-  [348, 392, 436].forEach((x) => {
+  [352, 412, 448].forEach((x) => {
     const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 11, 10), poleMat);
-    mast.position.set(x, 5.5, -378);
+    mast.position.set(x, 5.5, -370);
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 2.4), poleMat);
-    arm.position.set(x, 10.9, -379.1);
+    arm.position.set(x, 10.9, -371.1);
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.6), new THREE.MeshStandardMaterial({ color: 0xdfe4e6, roughness: 0.4, metalness: 0.6 }));
-    head.position.set(x, 10.85, -380.2);
+    head.position.set(x, 10.85, -372.2);
     const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.45), new THREE.MeshBasicMaterial({ color: 0xfff2cf }));
-    bulb.position.set(x, 10.68, -380.2);
+    bulb.position.set(x, 10.68, -372.2);
     south.add(mast, arm, head, bulb);
   });
   // cerca perimetral com mourões e árvores alinhadas
