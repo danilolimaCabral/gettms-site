@@ -115,6 +115,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Mobiliário urbano na avenida: bancos de madeira, lixeiras com aro metálico, hidrantes, placas de limite 40 km/h e parada de ônibus coberta com painel "Ponto · Linha 22".
 - Removida a etiqueta flutuante do caminhão da via expressa (aparecia como cartão preto sobre a pista).
 
+## Cidade preenchida (vazios)
+- Quadras vazias ganharam prédios baixos (5-14 m) com fachada de janelas, platibanda e caixa d'água na laje, sorteados de forma determinística (seed fixa) e sem encostar nos prédios, lojas, CD e avenida já existentes.
+- Praça na quadra oeste com gramado, lago, sete árvores e o mobiliário da avenida.
+- Estacionamento com faixas pintadas e seis carros parados.
+- Horizonte: ~330 quadras distantes em 3 InstancedMesh (1 draw call cada) com tons variados e clareiras, mantendo livre a faixa da via expressa.
+- Densidade reduzida (42% dos lotes ficam livres) para preservar o desempenho em celular.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
