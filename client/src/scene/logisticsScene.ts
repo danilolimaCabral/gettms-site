@@ -19,6 +19,8 @@ export type TruckInfo = {
   eta: string;
 };
 export type LogisticsSceneHandle = {
+  scene3d?: THREE.Scene;
+  camera3d?: THREE.PerspectiveCamera;
   setProgress: (p: number) => void;
   setWeather: (mode: "auto" | "day" | "night" | "rain") => void;
   setActive: (active: boolean) => void;
@@ -1368,7 +1370,7 @@ export function createLogisticsScene(
   const towerLayout = [
     { x: -40, z: 6, w: 10, d: 10, h: 26 },
     { x: -26, z: -12, w: 12, d: 12, h: 36 },
-    { x: -16, z: 12, w: 9, d: 9, h: 18 },
+    { x: -25, z: 14, w: 9, d: 9, h: 18 },
     { x: 34, z: -24, w: 11, d: 11, h: 30 },
     { x: 26, z: 6, w: 10, d: 10, h: 22 },
     { x: 54, z: -16, w: 12, d: 12, h: 40 },
@@ -1420,7 +1422,23 @@ export function createLogisticsScene(
         ...(skyNormal ? { normalMap: skyNormal, normalScale: new THREE.Vector2(0.45, 0.45) } : {}),
       }),
     );
-    tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 60);
+    const towerX = Math.cos(angle) * radius;
+    const towerZ = Math.sin(angle) * radius - 60;
+    // não deixa torre do horizonte cair sobre a rota do caminhão
+    let routeGap = Infinity;
+    for (let k = 0; k < HERO_ROUTE.length - 1; k += 1) {
+      const [ax, az] = HERO_ROUTE[k];
+      const [bx, bz] = HERO_ROUTE[k + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const len2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((towerX - ax) * dx + (towerZ - az) * dz) / len2));
+      const px = ax + dx * t;
+      const pz = az + dz * t;
+      routeGap = Math.min(routeGap, Math.hypot(towerX - px, towerZ - pz));
+    }
+    if (routeGap < 30 + w / 2) continue;
+    tower.position.set(towerX, h / 2 - 2, towerZ);
     skyline.add(tower);
     // detalhes de cobertura: caixa d'água, casa de máquinas ou antena
     if (i % 3 === 0) {
@@ -1440,6 +1458,28 @@ export function createLogisticsScene(
     }
   }
   scene.add(skyline);
+  const routeGapAt = (x: number, z: number) => {
+    let best = Infinity;
+    let nx = x;
+    let nz = z;
+    for (let k = 0; k < HERO_ROUTE.length - 1; k += 1) {
+      const [ax, az] = HERO_ROUTE[k];
+      const [bx, bz] = HERO_ROUTE[k + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const len2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2));
+      const px = ax + dx * t;
+      const pz = az + dz * t;
+      const d = Math.hypot(x - px, z - pz);
+      if (d < best) {
+        best = d;
+        nx = px;
+        nz = pz;
+      }
+    }
+    return { gap: best, px: nx, pz: nz };
+  };
   const boxTowers: THREE.Mesh[] = [];
   towerLayout.forEach((tower, index) => {
     const pick = [3, 1, 2, 5, 3, 1][index % 6];
@@ -1887,7 +1927,20 @@ hub.scale.setScalar(1.15);
               (tower.d * 1.02) / size.z,
             );
             holder.scale.setScalar(fit);
-            holder.position.set(tower.x, 0, tower.z);
+            // garante folga da pista: empurra a torre para fora da rota
+            const half = 0.5 * Math.max(size.x, size.z) * fit;
+            const { gap, px, pz } = routeGapAt(tower.x, tower.z);
+            const need = 12 + half;
+            let hx = tower.x;
+            let hz = tower.z;
+            if (gap < need) {
+              const dx = tower.x - px;
+              const dz = tower.z - pz;
+              const d = Math.hypot(dx, dz) || 1;
+              hx = px + (dx / d) * need;
+              hz = pz + (dz / d) * need;
+            }
+            holder.position.set(hx, 0, hz);
             holder.rotation.y = ((index * 3) % 4) * (Math.PI / 2);
             city.add(holder);
             const box = boxTowers[index];
@@ -6898,6 +6951,8 @@ hub.scale.setScalar(1.15);
       };
     },
     resize,
+    scene3d: scene,
+    camera3d: camera,
     setOnTruckClick(cb) {
       truckClickRef.cb = cb;
     },
