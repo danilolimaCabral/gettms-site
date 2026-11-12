@@ -152,8 +152,13 @@ export default function ScrollStage() {
     const timer = window.setInterval(() => {
       const info = (window as unknown as { __gettmsInfo?: { fps?: number; calls?: number; updateMs?: number } }).__gettmsInfo;
       if (!info) return;
-      samples.push({ t: Date.now(), fps: info.fps, calls: info.calls, updateMs: info.updateMs });
+      samples.push({ t: Date.now(), fps: info.fps, calls: info.calls, updateMs: info.updateMs, ...({ geometries: (info as { geometries?: number }).geometries, textures: (info as { textures?: number }).textures } as object) });
       if (samples.length > 40) samples.shift();
+      const gpu = info as { geometries?: number; textures?: number };
+      const last = samples[samples.length - 2] as unknown as { geometries?: number; textures?: number } | undefined;
+      if (last && typeof gpu.geometries === "number" && typeof last.geometries === "number" && gpu.geometries > last.geometries + 20) {
+        console.warn("[gettms] recursos de GPU crescendo", { geometries: gpu.geometries, textures: gpu.textures });
+      }
       if (typeof info.fps === "number" && info.fps > 0 && info.fps < 24) {
         console.warn("[gettms] fps baixo", { fps: info.fps, calls: info.calls, updateMs: info.updateMs });
       }

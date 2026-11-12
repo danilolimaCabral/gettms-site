@@ -6262,6 +6262,8 @@ hub.scale.setScalar(1.15);
   // reduz chamadas de desenho sem fundir a cidade inteira
   [city, skyline, periph].forEach((group) => mergeSiblings(group));
 
+  fixDecals(scene);
+
   // culling por distância: detalhes pequenos e distantes deixam de ser desenhados
   const detailCull: { mesh: THREE.Mesh; radius: number }[] = [];
   city.traverse((obj) => {
@@ -6310,6 +6312,30 @@ hub.scale.setScalar(1.15);
         mesh.userData.dynamic = false;
         parent.add(mesh);
       });
+    });
+  }
+
+  // decalques (faixas, placas, adesivos) sempre à frente da superfície: fim do z-fighting
+  function fixDecals(root: THREE.Object3D) {
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.geometry) return;
+      const g = mesh.geometry;
+      g.computeBoundingBox();
+      const bb = g.boundingBox!;
+      const dims = [bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z].sort((a, b) => a - b);
+      const flat = g.type === "PlaneGeometry" || dims[0] < 0.12;
+      if (!flat) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((mat) => {
+        const m = mat as THREE.Material & { polygonOffset?: boolean; polygonOffsetFactor?: number; polygonOffsetUnits?: number };
+        if (!m) return;
+        m.polygonOffset = true;
+        m.polygonOffsetFactor = -4;
+        m.polygonOffsetUnits = -4;
+        m.needsUpdate = true;
+      });
+      mesh.renderOrder = Math.max(mesh.renderOrder, 2);
     });
   }
 
@@ -6627,6 +6653,7 @@ hub.scale.setScalar(1.15);
     const once = request as unknown as { __applied?: boolean };
     if (once.__applied) return;
     once.__applied = true;
+    fixDecals(source);
     source.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(source);
     const size = box.getSize(new THREE.Vector3());
