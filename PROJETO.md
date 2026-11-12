@@ -169,6 +169,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Pixel ratio limitado a 1,5 no desktop e 1 no celular, com escada adaptativa 1,5 -> 1,15 -> 1 -> 0,8 quando o fps cai.
 - Cache imutável de um ano para /models, /assets e /brand no Vercel.
 
+## Otimização de CPU e chamadas de desenho
+
+- Varredura de distância dividida em oito fatias por quadro (cursor circular), custo de CPU fracionado e constante.
+- Descarte por distância: detalhes até 5 unidades somem acima de 120 (celular) / 170 (desktop); peças até 14 unidades acima de 190 / 260.
+- Agrupamento de malhas irmãs por material dentro de cada quadra, sem fundir a cidade inteira (culling preservado). Se a fusão falhar, nada é removido.
+- Teste de estresse em 360x640 com CPU 6x mais lenta e rede a 1,5 Mbps: atualização de 5,19 ms com a CPU limitada (cerca de 0,9 ms em CPU normal), 1.194 chamadas na vista aérea, 578 mil triângulos, e os sete alertas de fps baixo registrados pelo monitor.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
