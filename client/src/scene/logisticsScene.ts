@@ -1370,10 +1370,10 @@ export function createLogisticsScene(
   const towerLayout = [
     { x: -40, z: 6, w: 10, d: 10, h: 26 },
     { x: -26, z: -12, w: 12, d: 12, h: 36 },
-    { x: -25, z: 14, w: 9, d: 9, h: 18 },
-    { x: 34, z: -24, w: 11, d: 11, h: 30 },
+    { x: -16, z: 12, w: 9, d: 9, h: 18 },
+    { x: 16, z: -14, w: 11, d: 11, h: 30 },
     { x: 26, z: 6, w: 10, d: 10, h: 22 },
-    { x: 54, z: -16, w: 12, d: 12, h: 40 },
+    { x: 40, z: -10, w: 12, d: 12, h: 40 },
     { x: -50, z: -18, w: 9, d: 9, h: 16 },
     { x: 52, z: 10, w: 9, d: 9, h: 20 },
     { x: -22, z: 24, w: 8, d: 8, h: 14 },
@@ -1940,6 +1940,18 @@ hub.scale.setScalar(1.15);
               hx = px + (dx / d) * need;
               hz = pz + (dz / d) * need;
             }
+            // avenida central tem 24 de largura: nada dentro dela
+            const avenueEdge = 12 + half + 2;
+            if (Math.abs(hx) < avenueEdge) hx = (hx < 0 ? -1 : 1) * avenueEdge;
+            // corredor da via expressa (z entre -214 e -182)
+            if (hz < -182 && hz > -214) hz = hz > -198 ? -181 : -215;
+            // e também longe das ruas do grid (faixas de 20 de largura)
+            [-210, -150, -60, 64, 128, 190, 250].forEach((streetX) => {
+              const clearance = 10 + half + 2;
+              if (Math.abs(hx - streetX) < clearance) {
+                hx = streetX + (hx >= streetX ? clearance : -clearance);
+              }
+            });
             holder.position.set(hx, 0, hz);
             holder.rotation.y = ((index * 3) % 4) * (Math.PI / 2);
             city.add(holder);
