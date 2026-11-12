@@ -54,6 +54,16 @@
     />
   </head>
 
+    <script>
+      // cache do site: o primeiro acesso guarda tudo, os próximos rodam sem rede
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          const register = () => navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+          if ("requestIdleCallback" in window) requestIdleCallback(register, { timeout: 4000 });
+          else setTimeout(register, 2500);
+        });
+      }
+    </script>
   <body>
     <div id="root">
       <div style="min-height:100vh;background:#f5f7f2;color:#0f1712;font-family:Inter,system-ui,sans-serif;padding:48px 24px">
