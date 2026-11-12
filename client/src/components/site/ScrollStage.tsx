@@ -144,6 +144,23 @@ export default function ScrollStage() {
   const [orbit, setOrbit] = useState(false);
   const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    // monitor contínuo de performance: amostras no console e em window.__gettmsPerf
+    const samples: Array<{ t: number; fps?: number; calls?: number; updateMs?: number }> = [];
+    (window as unknown as { __gettmsPerf?: unknown }).__gettmsPerf = samples;
+    const timer = window.setInterval(() => {
+      const info = (window as unknown as { __gettmsInfo?: { fps?: number; calls?: number; updateMs?: number } }).__gettmsInfo;
+      if (!info) return;
+      samples.push({ t: Date.now(), fps: info.fps, calls: info.calls, updateMs: info.updateMs });
+      if (samples.length > 40) samples.shift();
+      if (typeof info.fps === "number" && info.fps > 0 && info.fps < 24) {
+        console.warn("[gettms] fps baixo", { fps: info.fps, calls: info.calls, updateMs: info.updateMs });
+      }
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const heroRef = useRef<HTMLDivElement>(null);
   const lastUserRef = useRef(0);
   const chapterRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -198,7 +215,7 @@ export default function ScrollStage() {
   const weatherRef = useRef<WeatherMode>("auto");
   const stageRef = useRef<HTMLElement | null>(null);
   const viewObserverRef = useRef<IntersectionObserver | null>(null);
-  const [canvasVisible, setCanvasVisible] = useState(true);
+  const [canvasVisible, setCanvasVisible] = useState(false);
 
   useEffect(() => {
     autoRef.current = auto;
@@ -233,6 +250,8 @@ export default function ScrollStage() {
       .then(({ createLogisticsScene }) => {
         if (cancelled) return;
         scene = createLogisticsScene(canvas, { quality: low ? "low" : "high" });
+        // libera a cena no primeiro quadro: os modelos seguem chegando por trás
+        window.setTimeout(() => setCanvasVisible(true), 250);
         scene.setWeather(weatherRef.current);
         scene.setOnTruckClick?.((info) => setTruckInfo(info));
         sceneRef.current = scene;
@@ -368,6 +387,17 @@ export default function ScrollStage() {
   return (
     <section id="experiencia" ref={sectionRef} className="relative h-[1400svh]" aria-label="A jornada da carga no GetTMS">
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700"
+          style={{
+            opacity: canvasVisible ? 0 : 1,
+            background:
+              "radial-gradient(120% 90% at 70% 20%, #f4f8ef 0%, #eef4e6 45%, #e6efd8 100%)",
+          }}
+        >
+          <div className="absolute inset-0 opacity-[0.35]" style={{ backgroundImage: "linear-gradient(#cfe0bf 1px, transparent 1px), linear-gradient(90deg, #cfe0bf 1px, transparent 1px)", backgroundSize: "64px 64px" }} />
+        </div>
         <canvas
           ref={canvasRef}
           aria-hidden="true"
