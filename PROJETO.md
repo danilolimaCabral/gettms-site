@@ -156,6 +156,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - `heightToNormalTexture()` converte a luminância da textura de fachada em normal map (Sobel), gerado no cliente: peso extra de download zero.
 - Aplicado nas lojas, nas torres e nas quadras mescladas (normalScale 0.45–0.5), dando relevo às janelas e ao rodapé.
 
+## Prédios de catálogo, sombras e baú
+- Torres da avenida substituídas por 3 modelos CC0 (Grab3D): arranha-céu de vidro, prédio comercial e residencial, com texturas 1024, quantização e `ground_slab` removida. Caixas continuam como fallback e no anel distante.
+- Fachadas procedurais ganharam estilos (vidro, grade e faixa horizontal) com normal map gerado por luminância; `ensureNormal()` resolve o normal map após clonar texturas.
+- Sombras do sol desligadas (pedido do cliente); fica só a sombra de contato suave sob as quadras.
+- Baú: arte 4:1 centralizada (pino + wordmark + filete + assinatura), faixas verdes com offset proporcional e sem z-fighting.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

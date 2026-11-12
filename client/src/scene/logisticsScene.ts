@@ -436,6 +436,24 @@ function heightToNormalTexture(source: HTMLCanvasElement, strength = 2.4) {
   texture.wrapT = THREE.RepeatWrapping;
   return texture;
 }
+const normalCache = new WeakMap<object, THREE.Texture>();
+function ensureNormal(tex: THREE.Texture): THREE.Texture | null {
+  const stored = tex.userData.normal as THREE.Texture | undefined;
+  const image = tex.image as HTMLCanvasElement | undefined;
+  if (stored && stored.isTexture) {
+    stored.repeat.copy(tex.repeat);
+    return stored;
+  }
+  if (!image || !image.width) return null;
+  let normal = normalCache.get(image);
+  if (!normal) {
+    normal = heightToNormalTexture(image);
+    normalCache.set(image, normal);
+  }
+  normal.repeat.copy(tex.repeat);
+  tex.userData.normal = normal;
+  return normal;
+}
 function makeShopFacadeTexture(base: string, trim: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
@@ -480,6 +498,76 @@ function makeShopFacadeTexture(base: string, trim: string) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.userData.normal = heightToNormalTexture(canvas);
+  return texture;
+}
+function makeStyledFacadeTexture(style: "glass" | "grid" | "ribbon", base: string, patch = "#b9bfb5") {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 600; i += 1) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+  }
+  if (style === "glass") {
+    for (let y = 0; y < 256; y += 32) {
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.fillRect(0, y, 256, 3);
+      for (let x = 0; x < 256; x += 16) {
+        const g = ctx.createLinearGradient(x, y, x, y + 29);
+        g.addColorStop(0, "#7e9aa6");
+        g.addColorStop(0.45, "#40606c");
+        g.addColorStop(1, "#54727e");
+        ctx.fillStyle = g;
+        ctx.fillRect(x + 1, y + 3, 14, 26);
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.16)";
+      ctx.fillRect(0, y + 3, 256, 5);
+    }
+  } else if (style === "grid") {
+    for (let y = 18; y < 250; y += 40) {
+      for (let x = 12; x < 250; x += 36) {
+        ctx.fillStyle = "rgba(70,90,96,0.9)";
+        ctx.fillRect(x, y, 26, 26);
+        const g = ctx.createLinearGradient(x, y, x + 26, y + 26);
+        g.addColorStop(0, "#6f8c98");
+        g.addColorStop(1, "#33494f");
+        ctx.fillStyle = g;
+        ctx.fillRect(x + 2, y + 2, 22, 22);
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        ctx.fillRect(x + 2, y + 2, 22, 3);
+      }
+    }
+  } else {
+    for (let y = 16; y < 250; y += 30) {
+      const g = ctx.createLinearGradient(0, y, 0, y + 16);
+      g.addColorStop(0, "#6b8894");
+      g.addColorStop(1, "#3c565f");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y, 256, 16);
+      for (let x = 0; x < 256; x += 20) {
+        ctx.fillStyle = "rgba(240,244,240,0.6)";
+        ctx.fillRect(x, y, 2, 16);
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      ctx.fillRect(0, y, 256, 3);
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.fillRect(0, y - 2, 256, 2);
+    }
+  }
+  // teto sem janelas
+  ctx.fillStyle = patch;
+  ctx.fillRect(0, 0, 34, 34);
+  ctx.fillStyle = "rgba(52,58,52,0.16)";
+  ctx.fillRect(0, 0, 34, 34);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.userData.normal = heightToNormalTexture(canvas);
+  texture.userData.style = style;
   return texture;
 }
 function makeWallTexture() {
@@ -571,6 +659,7 @@ function makeFacadeTexture(wall: string, glass: string) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
+  texture.userData.normal = heightToNormalTexture(canvas);
   return texture;
 }
 
@@ -588,8 +677,7 @@ export function createLogisticsScene(
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = false;
   renderer.toneMappingExposure = 1.09;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -733,18 +821,7 @@ export function createLogisticsScene(
   }
   const key = new THREE.DirectionalLight(0xfff8ec, 2.7);
   key.position.set(30, 50, 30);
-  key.castShadow = true;
-  key.shadow.mapSize.set(768, 768);
-  key.shadow.camera.left = -34;
-  key.shadow.camera.right = 34;
-  key.shadow.camera.top = 34;
-  key.shadow.camera.bottom = -34;
-  key.shadow.camera.near = 1;
-  key.shadow.camera.far = 140;
-  key.shadow.bias = -0.0006;
-  key.shadow.normalBias = 0.6;
   scene.add(key);
-  scene.add(key.target);
 
   const rim = new THREE.DirectionalLight(0xb8e88f, 0.6);
   rim.position.set(-40, 18, -34);
@@ -1259,8 +1336,11 @@ export function createLogisticsScene(
 
   const facadeTextures = [
     track(makeFacadeTexture("#eef2e9", "rgba(40,56,44,0.55)")),
-    track(makeFacadeTexture("#f4f7f0", "rgba(60,78,64,0.45)")),
+    track(makeStyledFacadeTexture("grid", "#eef1ec")),
+    track(makeStyledFacadeTexture("ribbon", "#e2e7ea")),
+    track(makeStyledFacadeTexture("glass", "#5d7c86")),
     track(makeFacadeTexture("#e6ecdf", "rgba(30,44,34,0.6)")),
+    track(makeStyledFacadeTexture("grid", "#e4eae2")),
   ];
 
   const shopNames = [
@@ -1328,15 +1408,16 @@ export function createLogisticsScene(
     facade.repeat.set(Math.max(1, Math.round(w / 8)), Math.max(2, Math.round(h / 8)));
     facade.needsUpdate = true;
     const towerPalette = [0xd7e0e8, 0xe9e2d2, 0xf2f4ef, 0xccd6ce, 0xdfd9d2];
+    const skyGlass = (facade.userData.style as string) === "glass";
+    const skyNormal = ensureNormal(facade);
     const tower = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, w * 0.9),
       new THREE.MeshStandardMaterial({
         map: facade,
         color: towerPalette[i % towerPalette.length],
-        roughness: 0.9,
-        metalness: 0.06,
-        normalMap: facade.userData.normal as THREE.Texture,
-        normalScale: new THREE.Vector2(0.45, 0.45),
+        roughness: skyGlass ? 0.22 : 0.65,
+        metalness: skyGlass ? 0.4 : 0.12,
+        ...(skyNormal ? { normalMap: skyNormal, normalScale: new THREE.Vector2(0.45, 0.45) } : {}),
       }),
     );
     tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 60);
@@ -1359,21 +1440,43 @@ export function createLogisticsScene(
     }
   }
   scene.add(skyline);
+  const boxTowers: THREE.Mesh[] = [];
   towerLayout.forEach((tower, index) => {
-    const texture = facadeTextures[index % facadeTextures.length].clone();
+    const pick = [3, 1, 2, 5, 3, 1][index % 6];
+    const texture = facadeTextures[pick].clone();
     texture.repeat.set(Math.max(1, Math.round(tower.w / 8)), Math.max(2, Math.round(tower.h / 12)));
     texture.needsUpdate = true;
-    const mat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.8, metalness: 0.1 });
+    const style = (texture.userData.style as string) || "classic";
+    const glass = style === "glass";
+    const towerNormal = ensureNormal(texture);
+    const mat = new THREE.MeshStandardMaterial({
+      map: texture,
+      ...(towerNormal ? { normalMap: towerNormal, normalScale: new THREE.Vector2(glass ? 0.3 : 0.4, glass ? 0.3 : 0.4) } : {}),
+      roughness: glass ? 0.16 : style === "classic" ? 0.8 : 0.35,
+      metalness: glass ? 0.5 : style === "classic" ? 0.1 : 0.22,
+      color: glass ? 0xbcd2da : 0xffffff,
+    });
     const mesh = new THREE.Mesh(round(tower.w, tower.h, tower.d, 0.35, 2), mat);
     mesh.position.set(tower.x, tower.h / 2, tower.z);
     mesh.scale.y = 0.001;
     city.add(mesh);
+    // recuo escalonado nos prédios altos (silhueta moderna)
+    if (tower.h >= 22) {
+      const tierH = tower.h * 0.34;
+      const tier = new THREE.Mesh(round(tower.w * 0.68, tierH, tower.d * 0.68, 0.3, 2), mat);
+      tier.position.set(tower.x, tower.h + tierH / 2, tower.z);
+      tier.scale.y = 0.001;
+      city.add(tier);
+      mesh.userData.tier = tier;
+      mesh.userData.tierH = tierH;
+    }
     const cap = new THREE.Mesh(round(tower.w * 0.6, 0.6, tower.d * 0.6, 0.2, 2), unitMat);
     cap.position.set(tower.x, tower.h + 0.3, tower.z);
     cap.scale.y = 0.001;
     city.add(cap);
     towers.push({ mesh, height: tower.h, delay: index * 0.03 });
     mesh.userData.cap = cap;
+    boxTowers[index] = mesh;
 
     // térreo comercial: vitrine, toldo e placa com nome da loja
     if (Math.abs(tower.x) >= 12 && tower.z > -30) {
@@ -1558,12 +1661,12 @@ hub.scale.setScalar(1.15);
     const g = new THREE.Group();
     const facade = makeShopFacadeTexture(shopWallColors[i % shopWallColors.length], shopTrimColors[i % shopTrimColors.length]);
     facade.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
+    const shopNormal = ensureNormal(facade);
     const bodyMat = new THREE.MeshStandardMaterial({
       map: facade,
       roughness: 0.85,
       metalness: 0.05,
-      normalMap: facade.userData.normal as THREE.Texture,
-      normalScale: new THREE.Vector2(0.5, 0.5),
+      ...(shopNormal ? { normalMap: shopNormal, normalScale: new THREE.Vector2(0.5, 0.5) } : {}),
     });
     const body = new THREE.Mesh(round(w, h, d, 0.18, 1), bodyMat);
     body.position.y = h / 2;
@@ -1699,6 +1802,59 @@ hub.scale.setScalar(1.15);
   avenueBusStop.add(shelterRoof, shelterGlass, shelterBack, shelterBench, busSign);
   avenueBusStop.position.set(8.2, 0.22, 52);
   scene.add(avenueBusStop);
+  // torres com modelos de catálogo (CC0) no lugar das caixas
+  {
+    const bldLoader = new GLTFLoader();
+    const bldKeys = ["bld-skyscraper", "bld-office", "bld-apartment"];
+    bldKeys.forEach((key, modelIndex) => {
+      bldLoader.load(
+        `${import.meta.env.BASE_URL}models/${key}.glb`,
+        (gltf) => {
+          const proto = gltf.scene;
+          const slabs: THREE.Object3D[] = [];
+          proto.traverse((o) => {
+            const mesh = o as THREE.Mesh;
+            if (mesh.isMesh) {
+              mesh.castShadow = false;
+              mesh.receiveShadow = false;
+            }
+            if (/ground_slab|ground_slab_/i.test(o.name)) slabs.push(o);
+          });
+          slabs.forEach((o) => o.parent?.remove(o));
+          const bbox = new THREE.Box3().setFromObject(proto);
+          const size = bbox.getSize(new THREE.Vector3());
+          const center = bbox.getCenter(new THREE.Vector3());
+          towerLayout.forEach((tower, index) => {
+            if (index % bldKeys.length !== modelIndex) return;
+            const clone = proto.clone(true);
+            clone.position.set(-center.x, -bbox.min.y, -center.z);
+            const holder = new THREE.Group();
+            holder.add(clone);
+            const fit = Math.min(
+              tower.h / size.y,
+              (Math.max(tower.w, tower.d) * 1.12) / Math.max(size.x, size.z),
+            );
+            holder.scale.setScalar(fit);
+            holder.position.set(tower.x, 0, tower.z);
+            holder.rotation.y = ((index * 3) % 4) * (Math.PI / 2);
+            city.add(holder);
+            const box = boxTowers[index];
+            if (box) {
+              box.visible = false;
+              const cap = box.userData.cap as THREE.Mesh | undefined;
+              const tier = box.userData.tier as THREE.Mesh | undefined;
+              if (cap) cap.visible = false;
+              if (tier) tier.visible = false;
+            }
+          });
+        },
+        undefined,
+        () => {
+          /* sem modelo: as caixas continuam como estão */
+        },
+      );
+    });
+  }
   // preenchimento das quadras vazias: prédios baixos, praça, estacionamento e árvores
   {
     let seed = 20261111;
@@ -1710,9 +1866,12 @@ hub.scale.setScalar(1.15);
     towerLayout.forEach((t) => occupied.push([t.x, t.z]));
     shopRows.forEach(([x, z]) => occupied.push([x, z]));
     occupied.push([15, -16], [0, 84], [-40, 84], [0, 40]);
-    const facadePool = ["#e9e2d2", "#dfe4da", "#f0ede4", "#e3dccb"].map((base, i) =>
-      makeShopFacadeTexture(base, ["#c9c2b2", "#b9c2bd", "#cfc6b4", "#c4bda9"][i]),
-    );
+    const facadePool = [
+      makeStyledFacadeTexture("ribbon", "#e6eaec", "#c3c9c6"),
+      makeStyledFacadeTexture("grid", "#eef1ec", "#c3c9c6"),
+      makeShopFacadeTexture("#e9e2d2", "#c9c2b2"),
+      makeStyledFacadeTexture("glass", "#5d7c86", "#b9bfb5"),
+    ];
     // tudo o que é estático entra em buckets e vira poucos meshes (menos draw calls)
     const buildingBuckets: THREE.BufferGeometry[][] = [[], [], [], []];
     const parapetBucket: THREE.BufferGeometry[] = [];
@@ -1748,8 +1907,8 @@ hub.scale.setScalar(1.15);
       canvas.height = 64;
       const ctx = canvas.getContext("2d")!;
       const grad = ctx.createRadialGradient(32, 32, 6, 32, 32, 32);
-      grad.addColorStop(0, "rgba(18,24,20,0.55)");
-      grad.addColorStop(0.55, "rgba(18,24,20,0.3)");
+      grad.addColorStop(0, "rgba(18,24,20,0.34)");
+      grad.addColorStop(0.55, "rgba(18,24,20,0.18)");
       grad.addColorStop(1, "rgba(18,24,20,0)");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
@@ -1840,15 +1999,18 @@ hub.scale.setScalar(1.15);
       const merged = mergeGeometries(bucket, false);
       bucket.forEach((geo) => geo.dispose());
       if (!merged) return;
+      const poolTex = facadePool[index % facadePool.length];
+      const style = (poolTex.userData.style as string) || "classic";
+      const glass = style === "glass";
+      const poolNormal = ensureNormal(poolTex);
       const mesh = new THREE.Mesh(
         merged,
         new THREE.MeshStandardMaterial({
-          map: facadePool[index % facadePool.length],
-          normalMap: facadePool[index % facadePool.length].userData.normal as THREE.Texture,
-          normalScale: new THREE.Vector2(0.45, 0.45),
+          map: poolTex,
+          ...(poolNormal ? { normalMap: poolNormal, normalScale: new THREE.Vector2(glass ? 0.3 : 0.45, glass ? 0.3 : 0.45) } : {}),
           color: facadeTints[index],
-          roughness: 0.85,
-          metalness: 0.05,
+          roughness: glass ? 0.18 : style === "classic" ? 0.85 : 0.4,
+          metalness: glass ? 0.45 : style === "classic" ? 0.05 : 0.2,
         }),
       );
       scene.add(mesh);
@@ -1885,7 +2047,13 @@ hub.scale.setScalar(1.15);
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2.5, 2.5);
       texture.needsUpdate = true;
-      const facadeMat = new THREE.MeshStandardMaterial({ map: texture, color: tint, roughness: 0.9, metalness: 0.05 });
+      const ringGlass = (texture.userData.style as string) === "glass";
+      const facadeMat = new THREE.MeshStandardMaterial({
+        map: texture,
+        color: tint,
+        roughness: ringGlass ? 0.25 : 0.6,
+        metalness: ringGlass ? 0.35 : 0.12,
+      });
       const roofMat = new THREE.MeshStandardMaterial({ color: 0xb9bfb5, roughness: 0.95 });
       const mesh = new THREE.InstancedMesh(
         new THREE.BoxGeometry(1, 1, 1),
@@ -5557,9 +5725,15 @@ hub.scale.setScalar(1.15);
       tower.mesh.scale.y = Math.max(0.001, t);
       tower.mesh.position.y = (tower.height / 2) * t;
       const cap = tower.mesh.userData.cap as THREE.Mesh | undefined;
+      const tier = tower.mesh.userData.tier as THREE.Mesh | undefined;
+      const tierH = (tower.mesh.userData.tierH as number) || 0;
+      if (tier) {
+        tier.scale.y = Math.max(0.001, t);
+        tier.position.y = tower.height * t + (tierH * t) / 2;
+      }
       if (cap) {
         cap.scale.y = Math.max(0.001, t);
-        cap.position.y = tower.height * t + 0.3;
+        cap.position.y = tower.height * t + tierH * t + 0.3;
       }
     });
 
@@ -6004,11 +6178,6 @@ hub.scale.setScalar(1.15);
 
     const t0 = performance.now();
     applyProgress(current, elapsed);
-    key.position.set(truck.position.x + 30, 50, truck.position.z + 30);
-    key.target.position.set(truck.position.x, 0, truck.position.z);
-    key.target.updateMatrixWorld();
-    const wantShadows = qualityIndex < 2;
-    if (renderer.shadowMap.enabled !== wantShadows) renderer.shadowMap.enabled = wantShadows;
     const t1 = performance.now();
     if (!document.hidden) renderer.render(scene, camera);
     const t2 = performance.now();
@@ -6206,8 +6375,19 @@ hub.scale.setScalar(1.15);
           const r = px[i];
           const g = px[i + 1];
           const b = px[i + 2];
-          // coral do modelo original -> verde getTMS
-          if (r > 110 && r > g * 1.22 && r > b * 1.3) {
+          // coral do modelo original -> verde getTMS (por matiz, pega variações)
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const sat = max === 0 ? 0 : (max - min) / max;
+          let hue = 0;
+          if (max !== min) {
+            if (max === r) hue = ((g - b) / (max - min)) % 6;
+            else if (max === g) hue = (b - r) / (max - min) + 2;
+            else hue = (r - g) / (max - min) + 4;
+            hue *= 60;
+            if (hue < 0) hue += 360;
+          }
+          if (sat > 0.22 && hue >= 2 && hue <= 34) {
             px[i] = 0x63;
             px[i + 1] = 0xb3;
             px[i + 2] = 0x2e;
@@ -6229,13 +6409,34 @@ hub.scale.setScalar(1.15);
     clone.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
-      mesh.castShadow = true;
+      mesh.castShadow = false;
+      const stripeMesh = request.livery && /stripe|coral|accent|faixa/i.test(mesh.name);
       const tint = (material: THREE.Material) => {
         const std = material.clone() as THREE.MeshStandardMaterial;
+        if (request.livery && !std.map && std.color) {
+          const hsl = { h: 0, s: 0, l: 0 };
+          std.color.getHSL(hsl);
+          const hue = hsl.h * 360;
+          if (hsl.s > 0.25 && hue >= 2 && hue <= 34) {
+            std.color.set(0x63b32e);
+            std.needsUpdate = true;
+            return std;
+          }
+        }
+        if (stripeMesh) {
+          std.map = null;
+          std.color.set(0x63b32e);
+          std.metalness = 0.2;
+          std.roughness = 0.45;
+          std.needsUpdate = true;
+          return std;
+        }
         const matName = (material.name || "").toLowerCase();
+        if (request.livery && std.map) std.map = recolorStripes(std.map);
         if (request.livery && std.color) {
           // pintura getTMS: carroceria branca, faixa verde e vidro escuro
           if (matName.includes("stripe") || matName.includes("coral")) {
+            if (std.map) std.map = recolorStripes(std.map);
             std.color.set(0x63b32e);
             std.metalness = 0.2;
             std.roughness = 0.45;
@@ -6279,10 +6480,12 @@ hub.scale.setScalar(1.15);
             return std;
           }
           if (matName.includes("trim")) {
+            if (std.map) std.map = recolorStripes(std.map);
             std.needsUpdate = true;
             return std;
           }
         }
+        if (request.livery && std.map) std.map = recolorStripes(std.map);
         if (std.color) {
           const lum = 0.2126 * std.color.r + 0.7152 * std.color.g + 0.0722 * std.color.b;
           if (request.color !== undefined && lum > 0.32) {
@@ -6394,15 +6597,23 @@ hub.scale.setScalar(1.15);
       plateCanvas.height = 256;
       const plateCtx = plateCanvas.getContext("2d")!;
       plateCtx.clearRect(0, 0, 1024, 256);
-      plateCtx.fillStyle = "#63b32e";
-      plateCtx.fillRect(232, 4, 560, 8);
-      plateCtx.fillRect(232, 244, 560, 8);
       plateCtx.textBaseline = "middle";
-      // pino getTMS
-      const pinX = 244;
-      const pinY = 44;
-      const pinW = 78;
-      const pinH = 132;
+      // bloco centralizado: pino + wordmark
+      const wordFont = "500 96px Sora, Inter, sans-serif";
+      const boldFont = "800 96px Sora, Inter, sans-serif";
+      plateCtx.font = wordFont;
+      const getW = plateCtx.measureText("get").width;
+      plateCtx.font = boldFont;
+      const tmsW = plateCtx.measureText("TMS").width;
+      const pinW = 66;
+      const gapPin = 30;
+      const gapWord = 6;
+      const blockW = pinW + gapPin + getW + gapWord + tmsW;
+      const startX = (1024 - blockW) / 2;
+      const midY = 118;
+      const pinH = 112;
+      const pinY = midY - pinH / 2;
+      const pinX = startX;
       plateCtx.beginPath();
       plateCtx.moveTo(pinX + pinW / 2, pinY + pinH);
       plateCtx.bezierCurveTo(pinX + pinW * 0.14, pinY + pinH * 0.62, pinX, pinY + pinH * 0.44, pinX, pinY + pinH * 0.29);
@@ -6412,70 +6623,89 @@ hub.scale.setScalar(1.15);
       plateCtx.fillStyle = "#63b32e";
       plateCtx.fill();
       plateCtx.strokeStyle = "#ffffff";
-      plateCtx.lineWidth = 12;
+      plateCtx.lineWidth = 9;
       plateCtx.lineCap = "round";
       plateCtx.lineJoin = "round";
       plateCtx.beginPath();
-      plateCtx.moveTo(pinX + 22, pinY + 56);
-      plateCtx.lineTo(pinX + 36, pinY + 72);
-      plateCtx.lineTo(pinX + 58, pinY + 44);
+      plateCtx.moveTo(pinX + 19, pinY + 48);
+      plateCtx.lineTo(pinX + 30, pinY + 61);
+      plateCtx.lineTo(pinX + 49, pinY + 37);
       plateCtx.stroke();
-      // wordmark
+      const textX = pinX + pinW + gapPin;
       plateCtx.fillStyle = "#4d4d4d";
-      plateCtx.font = "500 92px Sora, Inter, sans-serif";
-      plateCtx.fillText("get", 352, 104);
+      plateCtx.font = wordFont;
+      plateCtx.fillText("get", textX, midY);
       plateCtx.fillStyle = "#63b32e";
-      plateCtx.font = "800 92px Sora, Inter, sans-serif";
-      plateCtx.fillText("TMS", 512, 104);
-      plateCtx.fillStyle = "#6b7a6d";
-      plateCtx.font = "600 40px Inter, sans-serif";
-      plateCtx.fillText(request.label, 330, 186);
-      plateCtx.fillStyle = "#1d2a20";
-      plateCtx.font = "700 34px Inter, sans-serif";
+      plateCtx.font = boldFont;
+      plateCtx.fillText("TMS", textX + getW + gapWord, midY);
+      // filete fino sob a assinatura
+      plateCtx.fillStyle = "#63b32e";
+      plateCtx.fillRect(textX, midY + 58, getW + gapWord + tmsW, 6);
+      // assinatura discreta
+      plateCtx.fillStyle = "#7d8a80";
+      plateCtx.font = "600 30px Inter, sans-serif";
+      plateCtx.textAlign = "center";
+      plateCtx.fillText("LOGÍSTICA SOB CONTROLE", 512, 214);
       plateCtx.textAlign = "right";
-      plateCtx.fillText("PLATAFORMA TMS", 900, 186);
+      plateCtx.fillStyle = "#9aa59c";
+      plateCtx.font = "700 26px Inter, sans-serif";
+      plateCtx.fillText(request.label, 996, 40);
       plateCtx.textAlign = "left";
       const plateTex = track(new THREE.CanvasTexture(plateCanvas));
       plateTex.colorSpace = THREE.SRGBColorSpace;
-      const plateMat = new THREE.MeshBasicMaterial({ map: plateTex, transparent: true });
-      const trailerMesh = request.livery ? clone.getObjectByName("semi-truck_trailer") : null;
+      const plateMat = new THREE.MeshBasicMaterial({
+        map: plateTex,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+      });
+      let trailerMesh: THREE.Object3D | null = null;
+      if (request.livery) {
+        clone.traverse((o) => {
+          if (!trailerMesh && /trailer|ba[uú]|box/i.test(o.name)) trailerMesh = o;
+        });
+      }
       if (trailerMesh) {
         clone.updateMatrixWorld(true);
-        const tb = new THREE.Box3().setFromObject(trailerMesh);
+        // bbox no espaço local do clone (evita deslocar logo e faixas)
+        const inv = new THREE.Matrix4().copy(clone.matrixWorld).invert();
+        const tb = new THREE.Box3().setFromObject(trailerMesh).applyMatrix4(inv);
         const tSize = tb.getSize(new THREE.Vector3());
         const tCenter = tb.getCenter(new THREE.Vector3());
         const lengthAlongX = tSize.x >= tSize.z;
         const trailerLength = Math.max(tSize.x, tSize.z);
-        const plateW = trailerLength * 0.52;
-        const plateH = Math.min(tSize.y * 0.5, plateW * 0.25);
+        const plateH = Math.min(tSize.y * 0.44, (trailerLength * 0.34) / 4);
+        const plateW = plateH * 4;
         [-1, 1].forEach((side) => {
           const plate = new THREE.Mesh(new THREE.PlaneGeometry(plateW, plateH), plateMat);
           if (lengthAlongX) {
-            plate.position.set(tCenter.x, tCenter.y, tCenter.z + side * (tSize.z / 2 + 0.04));
+            plate.position.set(tCenter.x, tCenter.y, tCenter.z + side * (tSize.z / 2 + Math.max(0.06, tSize.z * 0.03)));
             plate.rotation.y = side > 0 ? 0 : Math.PI;
           } else {
-            plate.position.set(tCenter.x + side * (tSize.x / 2 + 0.04), tCenter.y, tCenter.z);
+            plate.position.set(tCenter.x + side * (tSize.x / 2 + Math.max(0.06, tSize.x * 0.03)), tCenter.y, tCenter.z);
             plate.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
           }
-          wrapper.add(plate);
+          clone.add(plate);
         });
         const stripeMat = new THREE.MeshStandardMaterial({ color: 0x63b32e, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });
-        const bandH = Math.max(0.22, Math.min(tSize.y * 0.14, 0.5));
-        const bandY = tCenter.y - tSize.y * 0.18;
+        const bandH = Math.max(0.3, Math.min(tSize.y * 0.17, 0.62));
+        const bandY = tCenter.y - tSize.y * 0.17;
         [-1, 1].forEach((side) => {
-          [bandY, tCenter.y - tSize.y * 0.44].forEach((y, index) => {
+          [bandY, tCenter.y - tSize.y * 0.42].forEach((y, index) => {
             const band = new THREE.Mesh(
-              new THREE.PlaneGeometry(trailerLength * (index === 0 ? 0.96 : 0.98), index === 0 ? bandH : 0.16),
+              new THREE.PlaneGeometry(trailerLength * (index === 0 ? 0.94 : 0.96), index === 0 ? bandH : 0.14),
               stripeMat,
             );
             if (lengthAlongX) {
-              band.position.set(tCenter.x, y, tCenter.z + side * (tSize.z / 2 + 0.05));
+              band.position.set(tCenter.x, y, tCenter.z + side * (tSize.z / 2 + Math.max(0.07, tSize.z * 0.035)));
               band.rotation.y = side > 0 ? 0 : Math.PI;
             } else {
-              band.position.set(tCenter.x + side * (tSize.x / 2 + 0.05), y, tCenter.z);
+              band.position.set(tCenter.x + side * (tSize.x / 2 + Math.max(0.07, tSize.x * 0.035)), y, tCenter.z);
               band.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
             }
-            wrapper.add(band);
+            clone.add(band);
           });
         });
       } else {
@@ -6483,7 +6713,7 @@ hub.scale.setScalar(1.15);
           const plate = new THREE.Mesh(new THREE.PlaneGeometry(7.4, 1.85), plateMat);
           plate.position.set(side * 1.32, 2.5, -4.2);
           plate.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
-          wrapper.add(plate);
+          clone.add(plate);
         });
       }
     }
