@@ -2,30 +2,9 @@
 const VERSION = "gettms-v1";
 const SHELL = `${VERSION}-shell`;
 const MEDIA = `${VERSION}-media`;
-const MODELS = [
-  "/models/semi-truck.glb",
-  "/models/semi-truck-low.glb",
-  "/models/car-sedan.glb",
-  "/models/car-hatchback.glb",
-  "/models/car-suv.glb",
-  "/models/car-ev.glb",
-  "/models/forklift.glb",
-  "/models/bld-office.glb",
-  "/models/bld-apartment.glb",
-  "/models/bld-skyscraper.glb",
-];
-
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    (async () => {
-      const shell = await caches.open(SHELL);
-      await shell.addAll(["/", "/index.html"]).catch(() => undefined);
-      const media = await caches.open(MEDIA);
-      // baixa os modelos em segundo plano, um por um, sem travar a instalação
-      await Promise.all(MODELS.map((url) => media.add(new Request(url, { cache: "reload" })).catch(() => undefined)));
-      await self.skipWaiting();
-    })(),
-  );
+  // nada é baixado aqui: o cache se enche com o que a própria cena já carrega
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {

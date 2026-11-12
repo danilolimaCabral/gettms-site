@@ -59,8 +59,8 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           const register = () => navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-          if ("requestIdleCallback" in window) requestIdleCallback(register, { timeout: 4000 });
-          else setTimeout(register, 2500);
+          if ("requestIdleCallback" in window) requestIdleCallback(register, { timeout: 8000 });
+          else setTimeout(register, 6000);
         });
       }
     </script>
