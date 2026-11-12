@@ -1369,9 +1369,9 @@ export function createLogisticsScene(
     { x: -40, z: 6, w: 10, d: 10, h: 26 },
     { x: -26, z: -12, w: 12, d: 12, h: 36 },
     { x: -16, z: 12, w: 9, d: 9, h: 18 },
-    { x: 16, z: -14, w: 11, d: 11, h: 30 },
+    { x: 34, z: -24, w: 11, d: 11, h: 30 },
     { x: 26, z: 6, w: 10, d: 10, h: 22 },
-    { x: 40, z: -10, w: 12, d: 12, h: 40 },
+    { x: 54, z: -16, w: 12, d: 12, h: 40 },
     { x: -50, z: -18, w: 9, d: 9, h: 16 },
     { x: 52, z: 10, w: 9, d: 9, h: 20 },
     { x: -22, z: 24, w: 8, d: 8, h: 14 },
@@ -1821,22 +1821,54 @@ hub.scale.setScalar(1.15);
             if (/ground_slab|ground_slab_/i.test(o.name)) slabs.push(o);
           });
           slabs.forEach((o) => o.parent?.remove(o));
-          // paleta alinhada à cidade (o modelo original vem com tons salmão)
+          // paleta alinhada à cidade (o modelo original vem com tons salmão na textura)
           if (key === "bld-apartment") {
+            const calmTexture = (texture: THREE.Texture | null, keep = 0.12): THREE.Texture | null => {
+              if (!texture || !texture.image) return texture;
+              try {
+                const image = texture.image as HTMLImageElement;
+                const canvas = document.createElement("canvas");
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext("2d")!;
+                ctx.drawImage(image, 0, 0);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const px = data.data;
+                for (let i = 0; i < px.length; i += 4) {
+                  const r = px[i] / 255;
+                  const g = px[i + 1] / 255;
+                  const b = px[i + 2] / 255;
+                  const max = Math.max(r, g, b);
+                  const min = Math.min(r, g, b);
+                  const l = (max + min) / 2;
+                  if (l < 0.55 || l > 0.97) continue;
+                  const grey = l;
+                  px[i] = (grey + (r - grey) * keep) * 255;
+                  px[i + 1] = (grey + (g - grey) * keep) * 255;
+                  px[i + 2] = (grey + (b - grey) * keep) * 255;
+                }
+                ctx.putImageData(data, 0, 0);
+                const out = new THREE.CanvasTexture(canvas);
+                out.colorSpace = texture.colorSpace;
+                out.flipY = texture.flipY;
+                out.wrapS = texture.wrapS;
+                out.wrapT = texture.wrapT;
+                out.needsUpdate = true;
+                return out;
+              } catch {
+                return texture;
+              }
+            };
             proto.traverse((o) => {
               const mesh = o as THREE.Mesh;
               if (!mesh.isMesh) return;
-              const std = mesh.material as THREE.MeshStandardMaterial;
+              const std = (mesh.material as THREE.MeshStandardMaterial).clone();
               const name = (std.name || "").toLowerCase();
-              const tint = new THREE.Color(0xefe4d8);
-              if (name.includes("mint")) tint.set(0xdde6e1);
-              else if (name.includes("stone")) tint.set(0xd8d5cb);
-              else if (name.includes("wood")) tint.set(0xc4ad92);
-              else if (name.includes("trim")) tint.set(0xf6f4ee);
-              const mat = std.clone();
-              mat.color.copy(tint);
-              mat.roughness = Math.min(mat.roughness ?? 0.8, 0.85);
-              mesh.material = mat;
+              if (name.includes("mint")) std.map = calmTexture(std.map, 0.3);
+              else if (name.includes("wood")) std.map = calmTexture(std.map, 0.45);
+              else if (!name.includes("glass")) std.map = calmTexture(std.map, 0.1);
+              std.color.set(0xffffff);
+              mesh.material = std;
             });
           }
           const bbox = new THREE.Box3().setFromObject(proto);
@@ -1848,9 +1880,11 @@ hub.scale.setScalar(1.15);
             clone.position.set(-center.x, -bbox.min.y, -center.z);
             const holder = new THREE.Group();
             holder.add(clone);
+            // limita cada eixo ao lote para o prédio não invadir a rua
             const fit = Math.min(
               tower.h / size.y,
-              (Math.max(tower.w, tower.d) * 1.12) / Math.max(size.x, size.z),
+              (tower.w * 1.02) / size.x,
+              (tower.d * 1.02) / size.z,
             );
             holder.scale.setScalar(fit);
             holder.position.set(tower.x, 0, tower.z);
@@ -1977,6 +2011,9 @@ hub.scale.setScalar(1.15);
         const w = 8 + Math.floor(rand() * 5);
         const d = 8 + Math.floor(rand() * 4);
         const h = 5 + Math.floor(rand() * 9);
+        // recuo mínimo da pista: nenhuma quadra encosta no asfalto
+        if (Math.abs(gx) - w / 2 < 21) continue;
+        if (gz < -30 && gz > -70 && Math.abs(gx) - w / 2 < 26) continue;
         fill(gx, gz, w, h, d, Math.floor(rand() * 6));
         occupied.push([gx, gz]);
       }
