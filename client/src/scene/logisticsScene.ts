@@ -677,7 +677,7 @@ export function createLogisticsScene(
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = false;
   renderer.toneMappingExposure = 1.09;
@@ -6248,9 +6248,6 @@ hub.scale.setScalar(1.15);
   let infoRender = 0;
   let sceneActive = true;
   let frameCount = 0;
-  // otimização: funde o cenário urbano estático por material
-  [city, skyline, sidewalkGroup, treeGroup, periph, clientSite].forEach((group) => mergeStatic(group));
-
   let lastDrawAt = 0;
   function render() {
     if (disposed) return;
@@ -6259,12 +6256,6 @@ hub.scale.setScalar(1.15);
       return;
     }
     const now = performance.now();
-    // teto de quadros: 30 fps no desktop, 24 no celular — sobra folga para o resto da página
-    const minFrameMs = low ? 1000 / 24 : 1000 / 30;
-    if (now - lastDrawAt < minFrameMs - 1) {
-      frame = requestAnimationFrame(render);
-      return;
-    }
     lastDrawAt = now;
     frameCount += 1;
     perfFrames += 1;
