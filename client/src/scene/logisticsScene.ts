@@ -6249,6 +6249,16 @@ hub.scale.setScalar(1.15);
   let sceneActive = true;
   let frameCount = 0;
   let lastDrawAt = 0;
+  function mergeStaticChunks(root: THREE.Object3D) {
+    // cada quadra/lote é um Group: fundir dentro dele reduz draw calls sem perder o culling por região
+    const chunks = root.children.filter((child) => child.type === "Group") as THREE.Group[];
+    chunks.forEach((chunk) => {
+      let meshes = 0;
+      chunk.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes += 1; });
+      if (meshes > 6) mergeStatic(chunk);
+    });
+  }
+
   function render() {
     if (disposed) return;
     if (!sceneActive || document.hidden) {
