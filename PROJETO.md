@@ -152,6 +152,10 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Iluminação baseada em ambiente (IBL) via PMREM + RoomEnvironment, sem download.
 - Sombras reais: sol com shadow map 768² seguindo o caminhão (±34 m); desligam sozinhas quando a qualidade adaptativa cai.
 
+## Normal maps nas fachadas
+- `heightToNormalTexture()` converte a luminância da textura de fachada em normal map (Sobel), gerado no cliente: peso extra de download zero.
+- Aplicado nas lojas, nas torres e nas quadras mescladas (normalScale 0.45–0.5), dando relevo às janelas e ao rodapé.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

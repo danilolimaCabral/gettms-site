@@ -400,6 +400,42 @@ function makeContainerTexture(base: string) {
   texture.wrapT = THREE.ClampToEdgeWrapping;
   return texture;
 }
+function heightToNormalTexture(source: HTMLCanvasElement, strength = 2.4) {
+  const w = source.width;
+  const h = source.height;
+  const sctx = source.getContext("2d")!;
+  const data = sctx.getImageData(0, 0, w, h).data;
+  const lum = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i += 1) {
+    lum[i] = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114) / 255;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  const out = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const left = lum[y * w + Math.max(0, x - 1)];
+      const right = lum[y * w + Math.min(w - 1, x + 1)];
+      const up = lum[Math.max(0, y - 1) * w + x];
+      const down = lum[Math.min(h - 1, y + 1) * w + x];
+      const nx = (left - right) * strength;
+      const ny = (up - down) * strength;
+      const len = Math.hypot(nx, ny, 1) || 1;
+      const i4 = (y * w + x) * 4;
+      out.data[i4] = ((nx / len) * 0.5 + 0.5) * 255;
+      out.data[i4 + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+      out.data[i4 + 2] = ((1 / len) * 0.5 + 0.5) * 255;
+      out.data[i4 + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
 function makeShopFacadeTexture(base: string, trim: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
@@ -443,6 +479,7 @@ function makeShopFacadeTexture(base: string, trim: string) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
+  texture.userData.normal = heightToNormalTexture(canvas);
   return texture;
 }
 function makeWallTexture() {
@@ -1293,7 +1330,14 @@ export function createLogisticsScene(
     const towerPalette = [0xd7e0e8, 0xe9e2d2, 0xf2f4ef, 0xccd6ce, 0xdfd9d2];
     const tower = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, w * 0.9),
-      new THREE.MeshStandardMaterial({ map: facade, color: towerPalette[i % towerPalette.length], roughness: 0.9, metalness: 0.06 }),
+      new THREE.MeshStandardMaterial({
+        map: facade,
+        color: towerPalette[i % towerPalette.length],
+        roughness: 0.9,
+        metalness: 0.06,
+        normalMap: facade.userData.normal as THREE.Texture,
+        normalScale: new THREE.Vector2(0.45, 0.45),
+      }),
     );
     tower.position.set(Math.cos(angle) * radius, h / 2 - 2, Math.sin(angle) * radius - 60);
     skyline.add(tower);
@@ -1514,7 +1558,13 @@ hub.scale.setScalar(1.15);
     const g = new THREE.Group();
     const facade = makeShopFacadeTexture(shopWallColors[i % shopWallColors.length], shopTrimColors[i % shopTrimColors.length]);
     facade.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
-    const bodyMat = new THREE.MeshStandardMaterial({ map: facade, roughness: 0.85, metalness: 0.05 });
+    const bodyMat = new THREE.MeshStandardMaterial({
+      map: facade,
+      roughness: 0.85,
+      metalness: 0.05,
+      normalMap: facade.userData.normal as THREE.Texture,
+      normalScale: new THREE.Vector2(0.5, 0.5),
+    });
     const body = new THREE.Mesh(round(w, h, d, 0.18, 1), bodyMat);
     body.position.y = h / 2;
     const glass = new THREE.Mesh(round(w * 0.82, h * 0.34, 0.16, 0.06, 1), shopGlassMat);
@@ -1794,6 +1844,8 @@ hub.scale.setScalar(1.15);
         merged,
         new THREE.MeshStandardMaterial({
           map: facadePool[index % facadePool.length],
+          normalMap: facadePool[index % facadePool.length].userData.normal as THREE.Texture,
+          normalScale: new THREE.Vector2(0.45, 0.45),
           color: facadeTints[index],
           roughness: 0.85,
           metalness: 0.05,
