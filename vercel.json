@@ -5,5 +5,10 @@
   "buildCommand": "pnpm build:static",
   "outputDirectory": "dist/public",
   "cleanUrls": true,
-  "rewrites": [{ "source": "/((?!assets|img|favicon).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/((?!assets|img|brand|models|favicon|robots\\.txt|sitemap\\.xml|api).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
