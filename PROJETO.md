@@ -145,6 +145,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Fachadas laterais com faixa de vidro, montantes, porta de pessoal e placa de saída.
 - Pátio com setas de manobra, faixa de pedestre, marcação "PARE", três postes de iluminação, cerca perimetral com mourões e árvores alinhadas.
 
+## Realismo e telhados
+- Teto dos prédios sem janelas: a textura de fachada ganhou uma área lisa usada por UV nos vértices com normal vertical; o horizonte usa material de cobertura separado por face.
+- Coberturas levemente mais escuras que a parede, com platibanda e caixa d'água.
+- Sombra de contato (gradiente radial) em uma única malha mesclada sob as quadras, para os prédios "assentarem" no chão.
+- Iluminação baseada em ambiente (IBL) via PMREM + RoomEnvironment, sem download.
+- Sombras reais: sol com shadow map 768² seguindo o caminhão (±34 m); desligam sozinhas quando a qualidade adaptativa cai.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

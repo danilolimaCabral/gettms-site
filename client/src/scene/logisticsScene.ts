@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 /**
@@ -414,6 +415,13 @@ function makeShopFacadeTexture(base: string, trim: string) {
   // faixa do rodapé
   ctx.fillStyle = trim;
   ctx.fillRect(0, 232, 256, 24);
+  // área lisa (canto superior esquerdo) usada nos tetos, sem janelas
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 34, 34);
+  ctx.fillStyle = "rgba(52,58,52,0.16)";
+  ctx.fillRect(0, 0, 34, 34);
+  ctx.fillStyle = trim;
+  ctx.fillRect(0, 30, 34, 4);
   // janelas em duas fileiras
   [64, 156].forEach((y) => {
     for (let x = 18; x < 240; x += 62) {
@@ -543,6 +551,8 @@ export function createLogisticsScene(
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMappingExposure = 1.09;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -674,9 +684,30 @@ export function createLogisticsScene(
   const ambient = new THREE.AmbientLight(0xffffff, 0.34);
   scene.add(ambient);
 
+  try {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    scene.environment = pmrem.fromScene(room, 0.04).texture;
+    scene.environmentIntensity = 0.35;
+    room.dispose?.();
+    pmrem.dispose();
+  } catch {
+    /* ambiente opcional */
+  }
   const key = new THREE.DirectionalLight(0xfff8ec, 2.7);
   key.position.set(30, 50, 30);
+  key.castShadow = true;
+  key.shadow.mapSize.set(768, 768);
+  key.shadow.camera.left = -34;
+  key.shadow.camera.right = 34;
+  key.shadow.camera.top = 34;
+  key.shadow.camera.bottom = -34;
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 140;
+  key.shadow.bias = -0.0006;
+  key.shadow.normalBias = 0.6;
   scene.add(key);
+  scene.add(key.target);
 
   const rim = new THREE.DirectionalLight(0xb8e88f, 0.6);
   rim.position.set(-40, 18, -34);
@@ -1638,6 +1669,16 @@ hub.scale.setScalar(1.15);
     const roofBucket: THREE.BufferGeometry[] = [];
     const trunkBucket: THREE.BufferGeometry[] = [];
     const crownBucket: THREE.BufferGeometry[] = [];
+    const plainRoofUv = (geo: THREE.BufferGeometry, ru: number, rv: number) => {
+      const normal = geo.getAttribute("normal") as THREE.BufferAttribute | undefined;
+      const uv = geo.getAttribute("uv") as THREE.BufferAttribute | undefined;
+      if (!normal || !uv) return geo;
+      for (let i = 0; i < normal.count; i += 1) {
+        if (Math.abs(normal.getY(i)) > 0.5) uv.setXY(i, 0.06 / ru, 0.06 / rv);
+      }
+      uv.needsUpdate = true;
+      return geo;
+    };
     const bakeUv = (geo: THREE.BufferGeometry, ru: number, rv: number) => {
       const uv = geo.getAttribute("uv") as THREE.BufferAttribute | undefined;
       if (!uv) return geo;
@@ -1651,13 +1692,35 @@ hub.scale.setScalar(1.15);
       geo.applyMatrix4(new THREE.Matrix4().makeTranslation(x, y, z));
       return geo;
     };
+    const contactTex = (() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext("2d")!;
+      const grad = ctx.createRadialGradient(32, 32, 6, 32, 32, 32);
+      grad.addColorStop(0, "rgba(18,24,20,0.55)");
+      grad.addColorStop(0.55, "rgba(18,24,20,0.3)");
+      grad.addColorStop(1, "rgba(18,24,20,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    })();
+    const contactBucket: THREE.BufferGeometry[] = [];
     const parkCenter: [number, number] = [-64, 46];
     const lotCenter: [number, number] = [40, -96];
     const fill = (x: number, z: number, w: number, h: number, d: number, variant: number) => {
       const body = round(w, h, d, 0.22, 1);
-      bakeUv(body, Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 7)));
+      const ru = Math.max(1, Math.round(w / 6));
+      const rv = Math.max(1, Math.round(h / 7));
+      bakeUv(body, ru, rv);
+      plainRoofUv(body, ru, rv);
       buildingBuckets[variant % 4].push(place(body, x, h / 2, z));
       parapetBucket.push(place(round(w + 0.3, 0.4, d + 0.3, 0.1, 1), x, h + 0.18, z));
+      const contact = new THREE.PlaneGeometry(w + 3.5, d + 3.5);
+      contact.rotateX(-Math.PI / 2);
+      contactBucket.push(place(contact, x, 0.075, z));
       roofBucket.push(place(new THREE.BoxGeometry(1.6, 0.9, 1.3), x + w * 0.18, h + 0.65, z - d * 0.15));
       // árvores na esquina do lote
       if (rand() > 0.35) {
@@ -1745,6 +1808,18 @@ hub.scale.setScalar(1.15);
       if (merged) scene.add(new THREE.Mesh(merged, material));
     };
     addMerged(parapetBucket, shopTrimMat);
+    if (contactBucket.length) {
+      const merged = mergeGeometries(contactBucket, false);
+      contactBucket.forEach((geo) => geo.dispose());
+      if (merged) {
+        const contactMesh = new THREE.Mesh(
+          merged,
+          new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.95 }),
+        );
+        contactMesh.renderOrder = 4;
+        scene.add(contactMesh);
+      }
+    }
     addMerged(roofBucket, shopAcMat);
     addMerged(trunkBucket, trunkMat);
     addMerged(crownBucket, leafMat);
@@ -1758,9 +1833,11 @@ hub.scale.setScalar(1.15);
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2.5, 2.5);
       texture.needsUpdate = true;
+      const facadeMat = new THREE.MeshStandardMaterial({ map: texture, color: tint, roughness: 0.9, metalness: 0.05 });
+      const roofMat = new THREE.MeshStandardMaterial({ color: 0xb9bfb5, roughness: 0.95 });
       const mesh = new THREE.InstancedMesh(
         new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshStandardMaterial({ map: texture, color: tint, roughness: 0.9, metalness: 0.05 }),
+        [facadeMat, facadeMat, roofMat, roofMat, facadeMat, facadeMat],
         110,
       );
       let placed = 0;
@@ -1934,6 +2011,7 @@ hub.scale.setScalar(1.15);
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(x, y, z);
+    mesh.receiveShadow = true;
     return mesh;
   };
 
@@ -5874,6 +5952,11 @@ hub.scale.setScalar(1.15);
 
     const t0 = performance.now();
     applyProgress(current, elapsed);
+    key.position.set(truck.position.x + 30, 50, truck.position.z + 30);
+    key.target.position.set(truck.position.x, 0, truck.position.z);
+    key.target.updateMatrixWorld();
+    const wantShadows = qualityIndex < 2;
+    if (renderer.shadowMap.enabled !== wantShadows) renderer.shadowMap.enabled = wantShadows;
     const t1 = performance.now();
     if (!document.hidden) renderer.render(scene, camera);
     const t2 = performance.now();
@@ -6094,7 +6177,7 @@ hub.scale.setScalar(1.15);
     clone.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
-      mesh.castShadow = false;
+      mesh.castShadow = true;
       const tint = (material: THREE.Material) => {
         const std = material.clone() as THREE.MeshStandardMaterial;
         const matName = (material.name || "").toLowerCase();
