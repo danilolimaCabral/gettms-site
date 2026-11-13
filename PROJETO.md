@@ -176,6 +176,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Agrupamento de malhas irmãs por material dentro de cada quadra, sem fundir a cidade inteira (culling preservado). Se a fusão falhar, nada é removido.
 - Teste de estresse em 360x640 com CPU 6x mais lenta e rede a 1,5 Mbps: atualização de 5,19 ms com a CPU limitada (cerca de 0,9 ms em CPU normal), 1.194 chamadas na vista aérea, 578 mil triângulos, e os sete alertas de fps baixo registrados pelo monitor.
 
+## Pooling de veículos
+
+- Geometrias das rodas, pneus e lanternas dos veículos vêm de um cache único (`cachedGeo`), compartilhado por todos os modelos que chegam via GLB. Materiais continuam clonados por veículo, então a pintura e a faixa não se misturam.
+- Bug corrigido: o cache era declarado depois do primeiro uso (TDZ), o que derrubava a cena em produção. Agora é declarado no topo, junto de `disposables`.
+- Sombras seguem desligadas no renderer (`shadowMap.enabled = false`).
+- Medição com três ciclos completos em 390x844: heap estável em 125 MB, geometrias 729 → 2.663 → ~2.990, texturas 85 → 269, sem erros no console. O salto inicial é o carregamento dos modelos; o crescimento residual por ciclo caiu com o cache, mas ainda existe.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
