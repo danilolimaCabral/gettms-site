@@ -75,12 +75,14 @@ with sync_playwright() as p:
     cycle()  # aquecimento: modelos terminam de chegar
     # espera o carregamento estabilizar antes de medir o crescimento real
     prev = geo()
-    for _ in range(20):
+    stable = 0
+    for _ in range(30):
         page.wait_for_timeout(2000)
         now = geo()
-        if abs(now - prev) <= 10:
-            break
+        stable = stable + 1 if abs(now - prev) <= 10 else 0
         prev = now
+        if stable >= 3:
+            break
     cycle()
     first = geo()
     cycle()

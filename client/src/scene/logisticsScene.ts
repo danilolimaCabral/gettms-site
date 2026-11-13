@@ -6276,6 +6276,7 @@ hub.scale.setScalar(1.15);
   [city, skyline, periph].forEach((group) => mergeSiblings(group));
 
   fixDecals(scene);
+  [city, periph].forEach((g) => instanceStatic(g));
   // congelamento seguro: só os grupos puramente estáticos (nada animado vive neles)
   [city, skyline, periph].forEach((root) => {
     root.updateMatrixWorld(true);
@@ -6371,6 +6372,41 @@ hub.scale.setScalar(1.15);
   }
 
   (window as unknown as { __gettmsAudit?: () => unknown }).__gettmsAudit = geoAudit;
+
+  // instancing: objetos estáticos que compartilham geometria e material viram uma chamada só
+  function instanceStatic(root: THREE.Object3D) {
+    const buckets = new Map<string, THREE.Mesh[]>();
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.geometry || mesh.userData.dynamic) return;
+      const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      if (!mat) return;
+      const key = `${mesh.geometry.uuid}|${mat.uuid}`;
+      const list = buckets.get(key) ?? [];
+      list.push(mesh);
+      buckets.set(key, list);
+    });
+    buckets.forEach((list) => {
+      if (list.length < 8) return;
+      const geo = list[0].geometry;
+      const pos = geo.getAttribute("position");
+      if (!pos || pos.count > 4000) return;
+      const inst = new THREE.InstancedMesh(geo, (Array.isArray(list[0].material) ? list[0].material[0] : list[0].material) as THREE.Material, list.length);
+      const m4 = new THREE.Matrix4();
+      list.forEach((mesh, i) => {
+        mesh.updateMatrixWorld(true);
+        inst.setMatrixAt(i, m4.copy(mesh.matrixWorld));
+      });
+      inst.instanceMatrix.needsUpdate = true;
+      inst.frustumCulled = true;
+      inst.userData.dynamic = false;
+      inst.name = "instanced";
+      inst.matrixAutoUpdate = false;
+      inst.updateMatrixWorld(true);
+      list.forEach((mesh) => mesh.removeFromParent());
+      scene.add(inst);
+    });
+  }
 
   function render() {
     if (disposed) return;

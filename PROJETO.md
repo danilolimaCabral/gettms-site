@@ -189,6 +189,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Pixel ratio teto: 1 no aparelho modesto e 1,5 no desktop (antes 1,75), somado à escada adaptativa já existente.
 - Portão de qualidade (`npm run predeploy`) aprovado depois da mudança: cena inicializa, sem erros, canvas visível, geometrias +45 num ciclo.
 
+## Instancing de objetos repetidos
+
+- Passe `instanceStatic` em quadras e periferia: malhas com a mesma geometria e o mesmo material, em lotes de 8 ou mais e até 4 mil vértices, viram uma `InstancedMesh` com matrizes assentadas. Os originais só são removidos depois de a instância ser criada.
+- Efeito medido em 1440x900: chamadas de desenho 1.510 -> 1.498. O ganho é pequeno porque as quadras já haviam sido agrupadas por material antes.
+- Portão de qualidade: agora espera três leituras estáveis antes de medir. Resultado: APROVADO, geometrias 2.608 -> 2.718 (+110) num ciclo.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
