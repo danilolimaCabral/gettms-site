@@ -195,6 +195,13 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Efeito medido em 1440x900: chamadas de desenho 1.510 -> 1.498. O ganho é pequeno porque as quadras já haviam sido agrupadas por material antes.
 - Portão de qualidade: agora espera três leituras estáveis antes de medir. Resultado: APROVADO, geometrias 2.608 -> 2.718 (+110) num ciclo.
 
+## LOD de silhueta da cidade
+
+- `cityProxy`: uma caixa de cor média por quadra, montada a partir da bounding box de cada quadra no build.
+- Troca automática quando a câmera passa de 60 de altura: detalhe desliga, silhueta liga (e vice-versa), sem transição.
+- Medido em 1440x900 na vista alta: chamadas 2.416 -> 2.320 e triângulos 1,36 M -> 896 mil. Na rua, 541 chamadas / 230 mil triângulos.
+- Limite: o proxy só cobre o grupo `city`; torres do skyline e periferia seguem em detalhe, por isso o corte é parcial.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)

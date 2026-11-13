@@ -6276,6 +6276,28 @@ hub.scale.setScalar(1.15);
   [city, skyline, periph].forEach((group) => mergeSiblings(group));
 
   fixDecals(scene);
+  // LOD de silhueta: na vista alta, quadras viram blocos de cor média (uma chamada cada)
+  const cityProxy = new THREE.Group();
+  const proxyMats = [
+    new THREE.MeshLambertMaterial({ color: 0xb9c2ba }),
+    new THREE.MeshLambertMaterial({ color: 0xaab4ad }),
+    new THREE.MeshLambertMaterial({ color: 0xc4ccc3 }),
+  ];
+  city.children.forEach((quadra, qi) => {
+    const box = new THREE.Box3().setFromObject(quadra);
+    if (box.isEmpty()) return;
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), proxyMats[qi % proxyMats.length]);
+    mesh.position.copy(center);
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
+    cityProxy.add(mesh);
+  });
+  cityProxy.visible = false;
+  scene.add(cityProxy);
+  let proxyOn = false;
+
   [city, periph].forEach((g) => instanceStatic(g));
   // congelamento seguro: só os grupos puramente estáticos (nada animado vive neles)
   [city, skyline, periph].forEach((root) => {
@@ -6587,6 +6609,13 @@ hub.scale.setScalar(1.15);
     const t0 = performance.now();
     applyProgress(current, elapsed);
     const t1 = performance.now();
+    // vista alta: detalhe vira silhueta
+    const aerial = camera.position.y > 60;
+    if (aerial !== proxyOn) {
+      proxyOn = aerial;
+      cityProxy.visible = aerial;
+      city.visible = !aerial;
+    }
     if (!document.hidden) renderer.render(scene, camera);
     const t2 = performance.now();
     infoUpdate += (t1 - t0);
