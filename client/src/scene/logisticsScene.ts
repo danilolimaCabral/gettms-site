@@ -6611,16 +6611,16 @@ hub.scale.setScalar(1.15);
     rear.position.set(0, 2.94, -9.12);
     root.add(rear);
     [-0.8, 0.8].forEach((x) => {
-      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.06), rearLamp);
+      const tail = new THREE.Mesh(cachedGeo("box:tail", () => new THREE.BoxGeometry(0.3, 0.16, 0.06)), rearLamp);
       tail.position.set(x, 1.32, -9.16);
       root.add(tail);
     });
     // rodas
     const tire = new THREE.MeshStandardMaterial({ color: 0x20241f, roughness: 0.9 });
     const rim = new THREE.MeshStandardMaterial({ color: 0xcfd4d6, roughness: 0.3, metalness: 0.8 });
-    const wheelGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.4, 20);
+    const wheelGeo = cachedGeo("wheel:062", () => new THREE.CylinderGeometry(0.62, 0.62, 0.4, 20));
     wheelGeo.rotateZ(Math.PI / 2);
-    const rimGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.42, 16);
+    const rimGeo = cachedGeo("rim:034", () => new THREE.CylinderGeometry(0.34, 0.34, 0.42, 16));
     rimGeo.rotateZ(Math.PI / 2);
     [6.4, 0.6, -0.8, -8.4, -7.0, -5.6].forEach((z) => {
       [-1.12, 1.12].forEach((x) => {
@@ -6643,6 +6643,16 @@ hub.scale.setScalar(1.15);
       child.castShadow = false;
     });
     return root;
+  }
+
+  // pooling de geometrias: uma malha base por dimensão, compartilhada por todos os veículos
+  const geoCache = new Map<string, THREE.BufferGeometry>();
+  function cachedGeo(key: string, make: () => THREE.BufferGeometry): THREE.BufferGeometry {
+    const hit = geoCache.get(key);
+    if (hit) return hit;
+    const geo = make();
+    geoCache.set(key, geo);
+    return geo;
   }
 
   function queueGlb(request: GlbRequest) {
@@ -6828,7 +6838,7 @@ hub.scale.setScalar(1.15);
       const wheelR = (request.length / 17) * 0.5;
       const wheelW = (request.length / 17) * 0.4;
       const tireMat = new THREE.MeshStandardMaterial({ color: 0x14181a, roughness: 0.88 });
-      const tireGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22);
+      const tireGeo = cachedGeo(`tire:${wheelR.toFixed(2)}:${wheelW.toFixed(2)}`, () => new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22));
       const box = new THREE.Box3().setFromObject(clone);
       const size = box.getSize(new THREE.Vector3());
       const alongZ = size.z >= size.x;
@@ -6853,7 +6863,7 @@ hub.scale.setScalar(1.15);
       const wheelW = (request.length / 17) * 0.42;
       const tireMat = new THREE.MeshStandardMaterial({ color: 0x14181a, roughness: 0.88 });
       const rimMat = new THREE.MeshStandardMaterial({ color: 0x8d968d, roughness: 0.4, metalness: 0.6 });
-      const tireGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22);
+      const tireGeo = cachedGeo(`tire:${wheelR.toFixed(2)}:${wheelW.toFixed(2)}`, () => new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 22));
       const rimGeo = new THREE.CylinderGeometry(wheelR * 0.62, wheelR * 0.62, wheelW * 0.55, 18);
       // eixos a partir da posição da cabine (vidros), com bitola fixa
       const cloneBox = new THREE.Box3().setFromObject(clone);
