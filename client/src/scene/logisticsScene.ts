@@ -6408,6 +6408,37 @@ hub.scale.setScalar(1.15);
     });
   }
 
+  // fusão quadra a quadra: uma malha por material dentro da quadra, culling preservado
+  function mergeQuadra(quadra: THREE.Object3D) {
+    quadra.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(quadra.matrixWorld).invert();
+    const buckets = new Map<string, THREE.Mesh[]>();
+    quadra.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (mesh === quadra || !mesh.isMesh || !mesh.geometry || mesh.userData.dynamic) return;
+      const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      if (!mat) return;
+      const list = buckets.get(mat.uuid) ?? [];
+      list.push(mesh);
+      buckets.set(mat.uuid, list);
+    });
+    buckets.forEach((list) => {
+      if (list.length < 2) return;
+      const geos: THREE.BufferGeometry[] = [];
+      list.forEach((mesh) => {
+        const g = mesh.geometry.clone();
+        g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, mesh.matrixWorld));
+        geos.push(g);
+      });
+      const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
+      if (!merged) { geos.forEach((g) => g.dispose()); return; } // fallback: nada é removido
+      geos.forEach((g) => { if (g !== merged) g.dispose(); });
+      const mesh = new THREE.Mesh(merged, (Array.isArray(list[0].material) ? list[0].material[0] : list[0].material) as THREE.Material);
+      list.forEach((old) => old.removeFromParent());
+      quadra.add(mesh);
+    });
+  }
+
   function render() {
     if (disposed) return;
     if (!sceneActive || document.hidden) {
