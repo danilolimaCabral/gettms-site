@@ -6363,6 +6363,8 @@ hub.scale.setScalar(1.15);
     return { total: rows.reduce((a, r) => a + r.geos, 0), rows: rows.slice(0, 12) };
   }
 
+  (window as unknown as { __gettmsAudit?: () => unknown }).__gettmsAudit = geoAudit;
+
   function render() {
     if (disposed) return;
     if (!sceneActive || document.hidden) {
