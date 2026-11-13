@@ -677,7 +677,7 @@ export function createLogisticsScene(
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = false;
   renderer.toneMappingExposure = 1.09;
@@ -6276,6 +6276,13 @@ hub.scale.setScalar(1.15);
   [city, skyline, periph].forEach((group) => mergeSiblings(group));
 
   fixDecals(scene);
+  // congelamento seguro: só os grupos puramente estáticos (nada animado vive neles)
+  [city, skyline, periph].forEach((root) => {
+    root.updateMatrixWorld(true);
+    root.traverse((o) => { o.matrixAutoUpdate = false; });
+  });
+
+
 
   // culling por distância: detalhes pequenos e distantes deixam de ser desenhados
   const detailCull: { mesh: THREE.Mesh; radius: number }[] = [];

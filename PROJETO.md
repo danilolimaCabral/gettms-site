@@ -183,6 +183,12 @@ O caminhão protagonista GT-1024 sai do CD, pega a avenida inteira, entra na via
 - Sombras seguem desligadas no renderer (`shadowMap.enabled = false`).
 - Medição com três ciclos completos em 390x844: heap estável em 125 MB, geometrias 729 → 2.663 → ~2.990, texturas 85 → 269, sem erros no console. O salto inicial é o carregamento dos modelos; o crescimento residual por ciclo caiu com o cache, mas ainda existe.
 
+## Renderização: matrizes estáticas e pixel ratio
+
+- Quadras, horizonte e periferia (grupos puramente estáticos) têm `matrixAutoUpdate = false` depois de `updateMatrixWorld`, tirando recálculo de matriz por quadro. Veículos, pessoas e caminhão ficam de fora para não congelar animação.
+- Pixel ratio teto: 1 no aparelho modesto e 1,5 no desktop (antes 1,75), somado à escada adaptativa já existente.
+- Portão de qualidade (`npm run predeploy`) aprovado depois da mudança: cena inicializa, sem erros, canvas visível, geometrias +45 num ciclo.
+
 ## Pendências
 - Ré dos caminhões em algumas docas
 - Conteúdo de Steps/Clients fora da página após virar cenas (arquivos mantidos)
