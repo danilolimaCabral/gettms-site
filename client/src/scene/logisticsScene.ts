@@ -692,6 +692,17 @@ export function createLogisticsScene(
 
   const shadowTexture = makeShadowTexture();
   const disposables: { dispose: () => void }[] = [];
+  // pooling de geometrias: uma malha base por dimensão, compartilhada por todos os veículos
+  const geoCache = new Map<string, THREE.BufferGeometry>();
+  function cachedGeo(key: string, make: () => THREE.BufferGeometry): THREE.BufferGeometry {
+    const hit = geoCache.get(key);
+    if (hit) return hit;
+    const geo = make();
+    geoCache.set(key, geo);
+    return geo;
+  }
+
+
   const track = <T extends { dispose: () => void }>(item: T) => {
     disposables.push(item);
     return item;
@@ -6643,16 +6654,6 @@ hub.scale.setScalar(1.15);
       child.castShadow = false;
     });
     return root;
-  }
-
-  // pooling de geometrias: uma malha base por dimensão, compartilhada por todos os veículos
-  const geoCache = new Map<string, THREE.BufferGeometry>();
-  function cachedGeo(key: string, make: () => THREE.BufferGeometry): THREE.BufferGeometry {
-    const hit = geoCache.get(key);
-    if (hit) return hit;
-    const geo = make();
-    geoCache.set(key, geo);
-    return geo;
   }
 
   function queueGlb(request: GlbRequest) {
