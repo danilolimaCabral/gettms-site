@@ -1387,7 +1387,7 @@ export function createLogisticsScene(
     mesh.position.set(layout.x, layout.y + 8, layout.z);
     mesh.scale.setScalar(0.001);
     scene.add(mesh);
-    if (index < 3) {
+    if (false && index < 3) {
       const shadow = new THREE.Mesh(
         new THREE.PlaneGeometry(9, 7),
         new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity: 0.4, depthWrite: false }),
@@ -4157,6 +4157,7 @@ hub.scale.setScalar(1.15);
       new THREE.PlaneGeometry(3.4, 6),
       new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, opacity: 0.45, depthWrite: false }),
     );
+    shadow.visible = false;
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.12;
     group.add(shadow);
@@ -5757,6 +5758,7 @@ hub.scale.setScalar(1.15);
     const raw = clamp01((p - a.t) / (b.t - a.t));
     const t = raw * raw * (3 - 2 * raw);
     return {
+    geoAudit,
       ahead: lerp(a.ahead, b.ahead, t),
       height: lerp(a.height, b.height, t),
       side: lerp(a.side, b.side, t),
@@ -6348,6 +6350,17 @@ hub.scale.setScalar(1.15);
       });
       mesh.renderOrder = Math.max(mesh.renderOrder, 2);
     });
+  }
+
+  function geoAudit() {
+    const rows: { group: string; geos: number }[] = [];
+    scene.children.forEach((child) => {
+      let n = 0;
+      child.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.geometry) n += 1; });
+      if (n > 0) rows.push({ group: child.name || child.type, geos: n });
+    });
+    rows.sort((a, b) => b.geos - a.geos);
+    return { total: rows.reduce((a, r) => a + r.geos, 0), rows: rows.slice(0, 12) };
   }
 
   function render() {
